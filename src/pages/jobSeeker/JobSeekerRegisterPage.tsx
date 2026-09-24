@@ -160,6 +160,24 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        console.error('Error logging in with Google:', error.message);
+        setErrors((prev) => ({ ...prev, general: error.message }));
+      }
+    } catch (err: any) {
+      console.error('Error logging in with Google:', err);
+      setErrors((prev) => ({ ...prev, general: err?.message || 'Failed to initiate Google sign-in' }));
+    }
+  };
+
   const handleGoogleSuccess = async (googleUser: { name: string; email: string; avatar: string }) => {
     setIsSubmitting(true);
     try {
@@ -296,7 +314,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
           <div>
             <button
               type="button"
-              onClick={() => setIsGoogleModalOpen(true)}
+              onClick={handleGoogleLogin}
               className="w-full py-3.5 px-4 rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm sm:text-base transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.99] cursor-pointer"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">

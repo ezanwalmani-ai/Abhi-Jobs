@@ -53,7 +53,15 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function AppContent() {
-  const [currentRoute, setCurrentRoute] = useState<string>('/');
+  const [currentRoute, setCurrentRoute] = useState<string>(() => {
+    try {
+      const path = window.location.pathname;
+      if (path && path !== '/') {
+        return path;
+      }
+    } catch {}
+    return '/';
+  });
   const [routeParams, setRouteParams] = useState<{ id?: string; query?: string; location?: string; email?: string; registered?: string }>({});
   const { currentRole, currentUser, logout, isGlobalLoading, globalLoadingMessage } = useApp();
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
@@ -198,10 +206,13 @@ function AppContent() {
     checkSession();
 
     // Sync auth state in real time
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       const active = Boolean(session);
       setHasValidSession(active);
+      if (event === 'SIGNED_IN' && window.location.pathname.includes('/dashboard')) {
+        setCurrentRoute('/dashboard');
+      }
       if (checkIsPrivateRoute(currentRoute) && !active) {
         navigate('/login');
       }

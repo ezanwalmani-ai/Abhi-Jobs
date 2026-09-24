@@ -352,6 +352,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseConnected(true);
+        const userEmail = session.user.email?.toLowerCase();
+        if (userEmail) {
+          const found = users.find((u) => u.email.toLowerCase() === userEmail);
+          if (found) {
+            const normalizedRole = found.role === 'candidate' ? 'job_seeker' : found.role;
+            setCurrentUser({ ...found, role: normalizedRole });
+            setCurrentRole(normalizedRole);
+          } else {
+            const userName =
+              session.user.user_metadata?.full_name ||
+              session.user.user_metadata?.name ||
+              userEmail.split('@')[0];
+            const newOAuthUser: User = {
+              id: session.user.id || `user-${Date.now()}`,
+              name: userName,
+              email: userEmail,
+              role: 'job_seeker',
+              avatar:
+                session.user.user_metadata?.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`,
+              createdAt: new Date().toISOString(),
+              lastActive: new Date().toISOString(),
+              status: 'active',
+            };
+            setCurrentUser(newOAuthUser);
+            setCurrentRole('job_seeker');
+            setUsers((prev) => (prev.some((u) => u.email.toLowerCase() === userEmail) ? prev : [...prev, newOAuthUser]));
+          }
+        }
       }
     });
 

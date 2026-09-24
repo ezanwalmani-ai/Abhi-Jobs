@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, ShieldCheck, ArrowRight } from 'lucide-react';
 import { EASE_PREMIUM } from '../lib/motion';
+import { supabase } from '../supabaseClient';
 
 interface GoogleAuthModalProps {
   isOpen: boolean;
@@ -18,20 +19,38 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        console.error('Google OAuth error:', error.message);
+        onSuccess({
+          name: name.trim(),
+          email: email.trim(),
+          avatar: '',
+        });
+        onClose();
+      }
+    } catch (err) {
+      console.error('Google OAuth error:', err);
       onSuccess({
         name: name.trim(),
         email: email.trim(),
         avatar: '',
       });
-      setIsSubmitting(false);
       onClose();
-    }, 400);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
