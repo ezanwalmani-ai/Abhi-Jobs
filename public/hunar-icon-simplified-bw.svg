@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- ABHI JOBS Simplified Icon - Monochrome B&W Version -->
+  <!-- 1. Beacon Star -->
+  <path d="M60 10L62.4 17.6L70 20L62.4 22.4L60 30L57.6 22.4L50 20L57.6 17.6L60 10Z" fill="#000000" />
+
+  <!-- 2. Cap -->
+  <polygon points="60,26 100,42 60,58 20,42" fill="#000000" />
+  <path d="M38 52L38 64C38 69 49 74 60 74C71 74 82 69 82 64L82 52" stroke="#000000" stroke-width="4.5" stroke-linecap="round" />
+
+  <!-- 3. Tassel -->
+  <path d="M60 42L92 55L92 72" stroke="#000000" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="92" cy="74" r="4" fill="#000000" />
+
+  <!-- 4. Laurel Arc -->
+  <path d="M22 84C28 98 42 106 60 106C78 106 92 98 98 84" stroke="#000000" stroke-width="5" stroke-linecap="round" />
+  <path d="M22 84C17 79 16 72 22 68C26 73 26 80 22 84Z" fill="#000000" />
+  <path d="M98 84C103 79 104 72 98 68C94 73 94 80 98 84Z" fill="#000000" />
+
+  <!-- 5. "H" Stem & Pedestal -->
+  <path d="M52 80L52 96M68 80L68 96M52 88L68 88" stroke="#000000" stroke-width="4.5" stroke-linecap="round" />
+</svg>

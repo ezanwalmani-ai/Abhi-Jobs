@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" fill="none">
+  <!-- ABHI JOBS 5 Graduates Emblem -->
+  <!-- Center Tall Figure (Graduate 3) -->
+  <!-- Cap -->
+  <polygon points="80,12 100,21 80,30 60,21" fill="currentColor" />
+  <rect x="74" y="27" width="12" height="6" rx="1.5" fill="currentColor" />
+  <path d="M80,21 L97,29 L97,36" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Head -->
+  <circle cx="80" cy="38" r="7.5" fill="currentColor" />
+  <!-- Body & Limbs -->
+  <path d="M72,48 C72,46 75,44 80,44 C85,44 88,46 88,48 L88,78 L85,78 L85,116 L81.5,116 L81.5,84 L78.5,84 L78.5,116 L75,116 L75,78 L72,78 Z" fill="currentColor" />
+  <!-- Arms -->
+  <path d="M68,54 C68,50 71,48 74,48 L74,74 C74,76 72,78 70,78 C68,78 68,76 68,74 Z" fill="currentColor" />
+  <path d="M92,54 C92,50 89,48 86,48 L86,74 C86,76 88,78 90,78 C92,78 92,76 92,74 Z" fill="currentColor" />
+
+  <!-- Left Inner Figure (Graduate 2) -->
+  <!-- Cap -->
+  <polygon points="52,22 68,29 52,36 36,29" fill="currentColor" opacity="0.95" />
+  <rect x="47" y="33" width="10" height="5" rx="1" fill="currentColor" opacity="0.95" />
+  <path d="M52,29 L66,35 L66,41" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" />
+  <!-- Head -->
+  <circle cx="52" cy="44" r="6.5" fill="currentColor" opacity="0.95" />
+  <!-- Body & Limbs -->
+  <path d="M45,52 C45,50 48,48 52,48 C56,48 59,50 59,52 L59,76 L56.5,76 L56.5,108 L53.5,108 L53.5,80 L50.5,80 L50.5,108 L47.5,108 L47.5,76 L45,76 Z" fill="currentColor" opacity="0.95" />
+  <!-- Arms -->
+  <path d="M41,56 C41,53 43,51 46,51 L46,72 C46,74 44,75 42.5,75 C41,75 41,73 41,72 Z" fill="currentColor" opacity="0.95" />
+
+  <!-- Right Inner Figure (Graduate 4) -->
+  <!-- Cap -->
+  <polygon points="108,22 124,29 108,36 92,29" fill="currentColor" opacity="0.95" />
+  <rect x="103" y="33" width="10" height="5" rx="1" fill="currentColor" opacity="0.95" />
+  <path d="M108,29 L122,35 L122,41" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" />
+  <!-- Head -->
+  <circle cx="108" cy="44" r="6.5" fill="currentColor" opacity="0.95" />
+  <!-- Body & Limbs -->
+  <path d="M101,52 C101,50 104,48 108,48 C112,48 115,50 115,52 L115,76 L112.5,76 L112.5,108 L109.5,108 L109.5,80 L106.5,80 L106.5,108 L103.5,108 L103.5,76 L101,76 Z" fill="currentColor" opacity="0.95" />
+  <!-- Arms -->
+  <path d="M119,56 C119,53 117,51 114,51 L114,72 C114,74 116,75 117.5,75 C119,75 119,73 119,72 Z" fill="currentColor" opacity="0.95" />
+
+  <!-- Far Left Figure (Graduate 1) -->
+  <!-- Cap -->
+  <polygon points="26,30 40,36 26,42 12,36" fill="currentColor" opacity="0.9" />
+  <rect x="22" y="39" width="8" height="4" rx="1" fill="currentColor" opacity="0.9" />
+  <path d="M26,36 L38,41 L38,46" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+  <!-- Head -->
+  <circle cx="26" cy="49" r="5.5" fill="currentColor" opacity="0.9" />
+  <!-- Body & Limbs -->
+  <path d="M20,56 C20,54 22.5,53 26,53 C29.5,53 32,54 32,56 L32,74 L30,74 L30,100 L27.5,100 L27.5,77 L24.5,77 L24.5,100 L22,100 L22,74 L20,74 Z" fill="currentColor" opacity="0.9" />
+  <!-- Arm -->
+  <path d="M16,60 C16,57 18,55 21,55 L21,70 C21,72 19,73 17.5,73 C16,73 16,71 16,70 Z" fill="currentColor" opacity="0.9" />
+
+  <!-- Far Right Figure (Graduate 5) -->
+  <!-- Cap -->
+  <polygon points="134,30 148,36 134,42 120,36" fill="currentColor" opacity="0.9" />
+  <rect x="130" y="39" width="8" height="4" rx="1" fill="currentColor" opacity="0.9" />
+  <path d="M134,36 L146,41 L146,46" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+  <!-- Head -->
+  <circle cx="134" cy="49" r="5.5" fill="currentColor" opacity="0.9" />
+  <!-- Body & Limbs -->
+  <path d="M128,56 C128,54 130.5,53 134,53 C137.5,53 140,54 140,56 L140,74 L138,74 L138,100 L135.5,100 L135.5,77 L132.5,77 L132.5,100 L130,100 L130,74 L128,74 Z" fill="currentColor" opacity="0.9" />
+  <!-- Arm -->
+  <path d="M144,60 C144,57 142,55 139,55 L139,70 C139,72 141,73 142.5,73 C144,73 144,71 144,70 Z" fill="currentColor" opacity="0.9" />
+</svg>

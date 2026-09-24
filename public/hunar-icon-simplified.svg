@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- ABHI JOBS Simplified Icon (Micro-Scale & Favicon Optimized) -->
+  <!-- 1. Beacon Achievement Star -->
+  <path d="M60 10L62.4 17.6L70 20L62.4 22.4L60 30L57.6 22.4L50 20L57.6 17.6L60 10Z" fill="#F59E0B" />
+  <circle cx="60" cy="20" r="1.5" fill="#FFFFFF" opacity="0.8" />
+
+  <!-- 2. Bold Academic Mortarboard Cap -->
+  <polygon points="60,26 100,42 60,58 20,42" fill="#062E22" />
+  <path d="M38 52L38 64C38 69 49 74 60 74C71 74 82 69 82 64L82 52" stroke="#062E22" stroke-width="4.5" stroke-linecap="round" />
+
+  <!-- 3. Dynamic Golden Tassel -->
+  <path d="M60 42L92 55L92 72" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="92" cy="74" r="4" fill="#F59E0B" />
+
+  <!-- 4. Laurel Victory Arch Framing Base -->
+  <path d="M22 84C28 98 42 106 60 106C78 106 92 98 98 84" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+  <path d="M22 84C17 79 16 72 22 68C26 73 26 80 22 84Z" fill="#10B981" />
+  <path d="M98 84C103 79 104 72 98 68C94 73 94 80 98 84Z" fill="#10B981" />
+
+  <!-- 5. Geometric "H" (Abhi Jobs) & Upward Career Stepping Pedestal -->
+  <path d="M52 80L52 96M68 80L68 96M52 88L68 88" stroke="#062E22" stroke-width="4.5" stroke-linecap="round" />
+</svg>

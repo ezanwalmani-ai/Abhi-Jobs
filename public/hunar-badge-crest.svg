@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <!-- ABHI JOBS Official Accreditation Seal / Crest Variation -->
+  <!-- Outer Rings -->
+  <circle cx="120" cy="120" r="114" stroke="#062E22" stroke-width="4.5" />
+  <circle cx="120" cy="120" r="105" stroke="#10B981" stroke-width="2" stroke-dasharray="4 4" />
+  <circle cx="120" cy="120" r="82" stroke="#062E22" stroke-width="2.5" />
+
+  <!-- Upper Arc Curved Text -->
+  <path id="sealUpper" d="M38 120 A82 82 0 0 1 202 120" fill="none" />
+  <text font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#062E22" letter-spacing="4.5">
+    <textPath href="#sealUpper" startOffset="50%" textAnchor="middle">
+      ★ ABHI JOBS ACCREDITED ★
+    </textPath>
+  </text>
+
+  <!-- Lower Arc Curved Text -->
+  <path id="sealLower" d="M202 120 A82 82 0 0 1 38 120" fill="none" />
+  <text font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="800" fill="#0B3B2C" letter-spacing="3.2">
+    <textPath href="#sealLower" startOffset="50%" textAnchor="middle">
+      DISCOVER. APPLY. GROW.
+    </textPath>
+  </text>
+
+  <!-- Central Star of Achievement -->
+  <path d="M120 48L122 55L129 57L122 59L120 66L118 59L111 57L118 55L120 48Z" fill="#F59E0B" />
+
+  <!-- Center Graduate Mortarboard & Laurel Symbol -->
+  <polygon points="120,64 150,76 120,88 90,76" fill="#062E22" />
+  <path d="M104 84L104 94C104 98 112 101 120 101C128 101 136 98 136 94L136 84" stroke="#062E22" stroke-width="3" stroke-linecap="round" />
+  <path d="M120 76L144 86L144 100" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" />
+  <circle cx="144" cy="101" r="2.5" fill="#F59E0B" />
+
+  <!-- Laurel Arc in Seal Center -->
+  <path d="M92 110C96 122 108 128 120 128C132 128 144 122 148 110" stroke="#10B981" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="120" cy="128" r="2" fill="#F59E0B" />
+
+  <!-- Founding Year -->
+  <text x="120" y="148" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="900" fill="#F59E0B" letter-spacing="2">
+    EST. 2026
+  </text>
+</svg>
