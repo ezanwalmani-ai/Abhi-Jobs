@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Eye, EyeOff, AlertCircle, ArrowRight, Building2, User, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  User,
+  Sparkles,
+  CheckCircle2,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldAlert,
+} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { GoogleAuthModal } from '../../components/GoogleAuthModal';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
@@ -37,6 +50,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(redirectMessage || '');
+  const [unauthorizedDomainInfo, setUnauthorizedDomainInfo] = useState<{
+    domain: string;
+    show: boolean;
+  } | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState(false);
   const [successMessage, setSuccessMessage] = useState(() => {
     if (isSignupSuccess) {
       return 'Your account has been created. Please check your email and verify your address before logging in.';
@@ -135,22 +153,42 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
+  const handleCopyDomain = () => {
+    const domain = unauthorizedDomainInfo?.domain || (typeof window !== 'undefined' ? window.location.hostname : '');
+    if (domain && navigator.clipboard) {
+      navigator.clipboard.writeText(domain).then(() => {
+        setCopiedDomain(true);
+        setTimeout(() => setCopiedDomain(false), 2500);
+      });
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
     setError('');
+    setUnauthorizedDomainInfo(null);
     try {
       const res = await loginWithFirebaseGooglePopup();
       if (res.success && res.user) {
         routeUserByRole(res.user.role);
         return;
       }
-      if (res.error?.toLowerCase().includes('popup') || res.error?.toLowerCase().includes('cancel')) {
+      if (res.isUnauthorizedDomain || res.error?.includes('unauthorized-domain')) {
+        const domain = res.hostname || (typeof window !== 'undefined' ? window.location.hostname : '');
+        setUnauthorizedDomainInfo({ domain, show: true });
+        setError('');
+      } else if (res.error?.toLowerCase().includes('popup') || res.error?.toLowerCase().includes('cancel')) {
         setIsGoogleModalOpen(true);
       } else {
         setError(res.error || 'Failed to complete Google authentication');
       }
-    } catch {
-      setIsGoogleModalOpen(true);
+    } catch (err: any) {
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : '';
+        setUnauthorizedDomainInfo({ domain, show: true });
+      } else {
+        setIsGoogleModalOpen(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -212,6 +250,85 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {/* Dedicated Firebase Authorized Domain Notice Banner */}
+            {unauthorizedDomainInfo?.show && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-200 text-slate-800 space-y-3.5 shadow-sm">
+                <div className="flex items-start gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                      Firebase Domain Authorization Required
+                    </h4>
+                    <p className="text-xs text-amber-900/90 mt-1 leading-relaxed">
+                      Firebase Authentication restricts Google OAuth until this app host is listed in your project's Authorized Domains.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white/95 p-3 rounded-xl border border-amber-200 space-y-2">
+                  <div className="text-[11px] font-semibold text-slate-600">Domain to authorize:</div>
+                  <div className="flex items-center justify-between gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 min-w-0">
+                    <code className="text-xs font-mono text-slate-900 truncate select-all">
+                      {unauthorizedDomainInfo.domain}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={handleCopyDomain}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 shadow-2xs shrink-0 cursor-pointer min-h-[32px] transition-colors"
+                      title="Copy domain to clipboard"
+                    >
+                      {copiedDomain ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                  <a
+                    href="https://console.firebase.google.com/project/geometric-centaur-c6pck/authentication/settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors shadow-2xs min-h-[44px]"
+                  >
+                    <span>Firebase Console Settings</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUnauthorizedDomainInfo(null);
+                      setIsGoogleModalOpen(true);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-amber-300 hover:bg-amber-50/60 text-amber-950 font-semibold text-xs transition-colors shadow-2xs min-h-[44px] cursor-pointer"
+                  >
+                    <span>Continue with Google</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-amber-800" />
+                  </button>
+                </div>
+
+                <div className="text-[11px] text-amber-900/80 leading-relaxed border-t border-amber-200/60 pt-2 space-y-1">
+                  <p className="font-semibold text-amber-950">How to whitelist in 1 minute:</p>
+                  <ol className="list-decimal pl-4 space-y-0.5">
+                    <li>Click <strong>Firebase Console Settings</strong> above.</li>
+                    <li>Scroll down to <strong>Authorized domains</strong>.</li>
+                    <li>Click <strong>Add domain</strong>, paste the domain, and save.</li>
+                  </ol>
+                </div>
               </div>
             )}
 

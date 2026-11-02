@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ShieldCheck, UserPlus, ArrowLeft, Lock, ExternalLink } from 'lucide-react';
+import { X, Check, ShieldCheck, UserPlus, ArrowLeft, Lock, ExternalLink, Copy, ShieldAlert } from 'lucide-react';
 import { EASE_PREMIUM } from '../lib/motion';
 import { signInWithFirebaseGoogle } from '../lib/firebase';
 
@@ -20,6 +20,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [customEmail, setCustomEmail] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authStatusMessage, setAuthStatusMessage] = useState('Connecting to Google...');
+  const [showDomainNotice, setShowDomainNotice] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
 
   const activeAccount = {
     name: 'Ezan Walmani',
@@ -27,8 +29,19 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EzanWalmani',
   };
 
+  const handleCopyHost = () => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (host && navigator.clipboard) {
+      navigator.clipboard.writeText(host).then(() => {
+        setCopiedDomain(true);
+        setTimeout(() => setCopiedDomain(false), 2000);
+      });
+    }
+  };
+
   const handleTriggerFirebasePopup = async () => {
     setIsAuthenticating(true);
+    setShowDomainNotice(false);
     setAuthStatusMessage('Opening Google popup...');
     try {
       const fbData = await signInWithFirebaseGoogle();
@@ -42,12 +55,15 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       setViewMode('choose');
     } catch (err: any) {
       setIsAuthenticating(false);
-      if (err?.code === 'auth/popup-blocked') {
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setShowDomainNotice(true);
+        setAuthStatusMessage('Firebase domain authorization needed. Select your Google account below.');
+      } else if (err?.code === 'auth/popup-blocked') {
         setAuthStatusMessage('Popup was blocked by browser. Please select account below.');
       } else {
         setAuthStatusMessage('Sign-in cancelled or closed. Select account below.');
       }
-      setTimeout(() => setAuthStatusMessage(''), 3000);
+      setTimeout(() => setAuthStatusMessage(''), 6000);
     }
   };
 
@@ -192,6 +208,33 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     </div>
                     <ExternalLink className="w-4 h-4 text-blue-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </button>
+
+                  {showDomainNotice && (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2">
+                      <div className="flex items-center gap-2 font-bold text-amber-900">
+                        <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+                        <span>Domain Authorization Notice</span>
+                      </div>
+                      <p className="text-[11px] text-amber-800 leading-relaxed">
+                        To use the external Google popup window, add this host domain to Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains:
+                      </p>
+                      <div className="flex items-center justify-between gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-amber-200 min-w-0">
+                        <code className="text-[11px] font-mono text-slate-800 truncate select-all">
+                          {typeof window !== 'undefined' ? window.location.hostname : ''}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={handleCopyHost}
+                          className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 hover:bg-amber-200 text-amber-900 shrink-0 cursor-pointer min-h-[28px]"
+                        >
+                          {copiedDomain ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-emerald-800 font-semibold pt-0.5">
+                        ✨ Or click your profile below to sign in right now!
+                      </p>
+                    </div>
+                  )}
 
                   <div className="relative flex items-center justify-center my-1">
                     <div className="border-t border-slate-200 w-full"></div>

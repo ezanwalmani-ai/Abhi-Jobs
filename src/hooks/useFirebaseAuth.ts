@@ -24,8 +24,18 @@ export interface UseFirebaseAuthReturn {
   isLoading: boolean;
   /** Any authentication error encountered */
   error: string | null;
+  /** Whether the error was due to Firebase auth/unauthorized-domain */
+  isUnauthorizedDomain: boolean;
+  /** The current host domain that needs authorization in Firebase Console */
+  unauthorizedDomain: string;
   /** Triggers the Firebase Google popup login flow and syncs user to Firestore */
-  loginWithGoogle: () => Promise<{ success: boolean; user?: User; error?: string }>;
+  loginWithGoogle: () => Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+    isUnauthorizedDomain?: boolean;
+    hostname?: string;
+  }>;
   /** Signs out from Firebase and clears local session persistence */
   logout: () => Promise<void>;
   /** Explicitly fetches or creates the Firestore user document for a Firebase user */
@@ -56,6 +66,9 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUnauthorizedDomain, setIsUnauthorizedDomain] = useState<boolean>(false);
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const [unauthorizedDomain, setUnauthorizedDomain] = useState<string>(currentHostname);
 
   /**
    * Synchronizes or creates the user record in Firestore
@@ -183,20 +196,40 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
     success: boolean;
     user?: User;
     error?: string;
+    isUnauthorizedDomain?: boolean;
+    hostname?: string;
   }> => {
     setIsLoading(true);
     setError(null);
+    setIsUnauthorizedDomain(false);
+
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    setUnauthorizedDomain(currentHost);
 
     try {
       const fbData = await signInWithFirebaseGoogle();
       const appUser = await syncUserProfile(fbData.user);
       setFirebaseUser(fbData.user);
+      setIsUnauthorizedDomain(false);
       return { success: true, user: appUser };
     } catch (err: any) {
       console.error('Firebase Google Auth error:', err);
       const isBlocked = err?.code === 'auth/popup-blocked';
       const isCancelled =
         err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request';
+      const isUnauthDomain = err?.code === 'auth/unauthorized-domain';
+
+      if (isUnauthDomain) {
+        setIsUnauthorizedDomain(true);
+        const errMsg = `Firebase domain authorization required: The domain "${currentHost}" must be added in Firebase Console > Authentication > Settings > Authorized domains.`;
+        setError(errMsg);
+        return {
+          success: false,
+          error: errMsg,
+          isUnauthorizedDomain: true,
+          hostname: currentHost,
+        };
+      }
 
       const errMsg = isBlocked
         ? 'Popup was blocked by your browser. Please allow popups or use account selector.'
@@ -249,6 +282,8 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
     isAuthenticated,
     isLoading,
     error,
+    isUnauthorizedDomain,
+    unauthorizedDomain,
     loginWithGoogle,
     logout,
     syncUserProfile,

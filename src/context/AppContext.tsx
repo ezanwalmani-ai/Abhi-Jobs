@@ -76,7 +76,13 @@ interface AppContextType {
     email: string;
     avatar?: string;
   }) => Promise<{ success: boolean; error?: string; user?: User }>;
-  loginWithFirebaseGooglePopup: () => Promise<{ success: boolean; error?: string; user?: User }>;
+  loginWithFirebaseGooglePopup: () => Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    isUnauthorizedDomain?: boolean;
+    hostname?: string;
+  }>;
   registerJobSeeker: (data: {
     name: string;
     email: string;
@@ -750,6 +756,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     success: boolean;
     error?: string;
     user?: User;
+    isUnauthorizedDomain?: boolean;
+    hostname?: string;
   }> => {
     startGlobalLoading('Connecting to Google with Firebase...');
     try {
@@ -765,6 +773,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isBlocked = err?.code === 'auth/popup-blocked';
       const isCancelled =
         err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request';
+      const isUnauthDomain = err?.code === 'auth/unauthorized-domain';
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+
+      if (isUnauthDomain) {
+        return {
+          success: false,
+          error: `Firebase domain authorization required: The domain "${currentHost}" is not added in Firebase Console > Authentication > Settings > Authorized domains.`,
+          isUnauthorizedDomain: true,
+          hostname: currentHost,
+        };
+      }
+
       return {
         success: false,
         error: isBlocked

@@ -169,7 +169,12 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
         navigate('/dashboard');
         return;
       }
-      if (result.error?.toLowerCase().includes('popup') || result.error?.toLowerCase().includes('cancel')) {
+      if (
+        result.isUnauthorizedDomain ||
+        result.error?.includes('unauthorized-domain') ||
+        result.error?.toLowerCase().includes('popup') ||
+        result.error?.toLowerCase().includes('cancel')
+      ) {
         setIsGoogleModalOpen(true);
       } else {
         setErrors((prev) => ({ ...prev, general: result.error || 'Google registration failed' }));
