@@ -47,6 +47,21 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
     currentCompany: (currentCandidate as any)?.experience?.[0]?.company || '',
   });
 
+  // Sync form data whenever currentUser or currentCandidate is hydrated from Firebase/DB
+  React.useEffect(() => {
+    if (currentUser || currentCandidate) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || currentCandidate?.name || currentUser?.name || '',
+        email: prev.email || currentCandidate?.email || currentUser?.email || '',
+        phone: prev.phone || currentCandidate?.phone || '',
+        location: prev.location || currentCandidate?.location || '',
+        headline: prev.headline || currentCandidate?.headline || '',
+        about: prev.about || currentCandidate?.about || '',
+      }));
+    }
+  }, [currentUser, currentCandidate]);
+
   const [newSkill, setNewSkill] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 

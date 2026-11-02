@@ -64,6 +64,11 @@ interface AppContextType {
   // Auth & Role
   loginAs: (role: UserRole) => void;
   loginWithEmail: (email: string, password?: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  loginWithGoogle: (googleUser: {
+    name: string;
+    email: string;
+    avatar?: string;
+  }) => Promise<{ success: boolean; error?: string; user?: User }>;
   registerJobSeeker: (data: {
     name: string;
     email: string;
@@ -594,6 +599,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('success', `Welcome back, ${user.name}!`, `Signed in as ${user.email}`);
       trackEvent('user_login', { method: 'email', role: normalizedRole });
       return { success: true, user: updatedUser };
+    } finally {
+      stopGlobalLoading();
+    }
+  };
+
+  const loginWithGoogle = async (googleUser: {
+    name: string;
+    email: string;
+    avatar?: string;
+  }): Promise<{ success: boolean; error?: string; user?: User }> => {
+    startGlobalLoading('Signing in with Google...');
+    try {
+      const trimmedEmail = googleUser.email.trim().toLowerCase();
+      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+      if (existingUser) {
+        const normalizedRole = existingUser.role === 'candidate' ? 'job_seeker' : existingUser.role;
+        const updatedUser = { ...existingUser, role: normalizedRole, lastActive: 'Just now' };
+        setCurrentUser(updatedUser);
+        setCurrentRole(normalizedRole);
+        showToast('success', `Welcome back, ${existingUser.name}!`, `Signed in with Google (${existingUser.email})`);
+        trackEvent('user_login', { method: 'google', role: normalizedRole });
+        return { success: true, user: updatedUser };
+      }
+
+      // New Google User - automatically create candidate account
+      const res = await registerJobSeeker({
+        name: googleUser.name.trim(),
+        email: trimmedEmail,
+        avatar:
+          googleUser.avatar ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googleUser.name)}`,
+        isGoogle: true,
+        experienceType: 'experienced',
+        experienceLevel: 'Experienced',
+        workStatus: 'Looking for a job',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        marketingConsent: true,
+      });
+
+      if (res.success && res.user) {
+        showToast('success', `Welcome to ABHI JOBS, ${googleUser.name}!`, `Authenticated with Google`);
+        return { success: true, user: res.user };
+      }
+
+      return { success: false, error: res.error || 'Failed to authenticate with Google' };
     } finally {
       stopGlobalLoading();
     }
@@ -1593,6 +1644,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         stopGlobalLoading,
         loginAs,
         loginWithEmail,
+        loginWithGoogle,
         registerJobSeeker,
         registerEmployer,
         logout,

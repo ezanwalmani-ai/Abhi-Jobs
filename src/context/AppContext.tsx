@@ -28,6 +28,13 @@ import {
 } from '../data/mockData';
 import confetti from 'canvas-confetti';
 import { supabase, testSupabaseConnection, SupabaseHealthStatus } from '../lib/supabase';
+import {
+  auth as firebaseAuth,
+  testConnection as testFirebaseConnection,
+  signInWithFirebaseGoogle,
+  firebaseSignOut,
+  onAuthStateChanged as onFirebaseAuthStateChanged,
+} from '../lib/firebase';
 
 interface ToastInfo {
   id: string;
@@ -64,6 +71,12 @@ interface AppContextType {
   // Auth & Role
   loginAs: (role: UserRole) => void;
   loginWithEmail: (email: string, password?: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  loginWithGoogle: (googleUser: {
+    name: string;
+    email: string;
+    avatar?: string;
+  }) => Promise<{ success: boolean; error?: string; user?: User }>;
+  loginWithFirebaseGooglePopup: () => Promise<{ success: boolean; error?: string; user?: User }>;
   registerJobSeeker: (data: {
     name: string;
     email: string;
@@ -345,8 +358,95 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    // Proactively verify connection to Supabase
+    // Proactively verify connection to Supabase and Firebase
     refreshSupabaseStatus();
+    testFirebaseConnection();
+
+    // Subscribe to Firebase Auth state changes
+    const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, (fbUser) => {
+      if (fbUser && fbUser.email) {
+        const userEmail = fbUser.email.toLowerCase();
+        const displayName = fbUser.displayName || userEmail.split('@')[0] || 'Google User';
+        const avatarUrl =
+          fbUser.photoURL ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`;
+
+        setUsers((prevUsers) => {
+          const found = prevUsers.find((u) => u.email.toLowerCase() === userEmail);
+          if (found) {
+            const normalizedRole = found.role === 'candidate' ? 'job_seeker' : found.role;
+            const updated = { ...found, role: normalizedRole, lastActive: 'Just now' };
+            setCurrentUser(updated);
+            setCurrentRole(normalizedRole);
+            return prevUsers.map((u) => (u.id === found.id ? updated : u));
+          } else {
+            const newOAuthUser: User = {
+              id: fbUser.uid,
+              name: displayName,
+              email: userEmail,
+              role: 'job_seeker',
+              avatar: avatarUrl,
+              createdAt: new Date().toISOString(),
+              lastActive: 'Just now',
+              status: 'active',
+            };
+            setCurrentUser(newOAuthUser);
+            setCurrentRole('job_seeker');
+            return [...prevUsers, newOAuthUser];
+          }
+        });
+
+        // Ensure candidate profile exists in candidate directory for Google authenticated user
+        setCandidates((prevCandidates) => {
+          const candFound = prevCandidates.find(
+            (c) => c.userId === fbUser.uid || c.email.toLowerCase() === userEmail
+          );
+          if (candFound) return prevCandidates;
+
+          const newCand: CandidateProfile = {
+            id: 'cand-' + fbUser.uid.slice(0, 10),
+            userId: fbUser.uid,
+            name: displayName,
+            email: userEmail,
+            phone: '',
+            location: 'Bangalore, India',
+            city: 'Bangalore',
+            state: 'Karnataka',
+            headline: 'Software Professional | Job Seeker',
+            about: 'Career-focused candidate exploring verified employment opportunities on ABHI JOBS.',
+            currentRole: 'Software Engineer',
+            desiredRole: 'Software Engineer',
+            experienceLevel: 'Mid',
+            experienceType: 'experienced',
+            workStatus: 'Looking for a job',
+            yearsOfExperience: 2,
+            preferredLocation: 'Flexible / Hybrid',
+            workPreference: 'Hybrid',
+            skills: ['Problem Solving', 'Communication', 'Teamwork'],
+            education: [
+              {
+                id: 'edu-' + Date.now(),
+                qualification: 'Bachelor of Technology / Computer Science',
+                institution: 'VTU Karnataka',
+                fieldOfStudy: 'Computer Science & Engineering',
+                startYear: '2020',
+                endYear: '2024',
+              },
+            ],
+            experiences: [],
+            certifications: [],
+            completionPercentage: 55,
+            recommendations: [],
+            availability: 'Immediate',
+            profileVisibility: 'employers_only',
+            availableForOpportunities: true,
+            avatar: avatarUrl,
+            marketingConsent: true,
+          };
+          return [...prevCandidates, newCand];
+        });
+      }
+    });
 
     // Subscribe to Supabase Auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -385,6 +485,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     return () => {
+      unsubscribeFirebase();
       authListener?.subscription?.unsubscribe();
     };
   }, []);
@@ -594,6 +695,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('success', `Welcome back, ${user.name}!`, `Signed in as ${user.email}`);
       trackEvent('user_login', { method: 'email', role: normalizedRole });
       return { success: true, user: updatedUser };
+    } finally {
+      stopGlobalLoading();
+    }
+  };
+
+  const loginWithGoogle = async (googleUser: {
+    name: string;
+    email: string;
+    avatar?: string;
+  }): Promise<{ success: boolean; error?: string; user?: User }> => {
+    startGlobalLoading('Signing in with Google...');
+    try {
+      const trimmedEmail = googleUser.email.trim().toLowerCase();
+      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+      if (existingUser) {
+        const normalizedRole = existingUser.role === 'candidate' ? 'job_seeker' : existingUser.role;
+        const updatedUser = { ...existingUser, role: normalizedRole, lastActive: 'Just now' };
+        setCurrentUser(updatedUser);
+        setCurrentRole(normalizedRole);
+        showToast('success', `Welcome back, ${existingUser.name}!`, `Signed in with Google (${existingUser.email})`);
+        trackEvent('user_login', { method: 'google', role: normalizedRole });
+        return { success: true, user: updatedUser };
+      }
+
+      // New Google User - automatically create candidate account
+      const res = await registerJobSeeker({
+        name: googleUser.name.trim(),
+        email: trimmedEmail,
+        avatar:
+          googleUser.avatar ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googleUser.name)}`,
+        isGoogle: true,
+        experienceType: 'experienced',
+        experienceLevel: 'Experienced',
+        workStatus: 'Looking for a job',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        marketingConsent: true,
+      });
+
+      if (res.success && res.user) {
+        showToast('success', `Welcome to ABHI JOBS, ${googleUser.name}!`, `Authenticated with Google`);
+        return { success: true, user: res.user };
+      }
+
+      return { success: false, error: res.error || 'Failed to authenticate with Google' };
+    } finally {
+      stopGlobalLoading();
+    }
+  };
+
+  const loginWithFirebaseGooglePopup = async (): Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+  }> => {
+    startGlobalLoading('Connecting to Google with Firebase...');
+    try {
+      const fbData = await signInWithFirebaseGoogle();
+      const res = await loginWithGoogle({
+        name: fbData.name,
+        email: fbData.email,
+        avatar: fbData.avatar,
+      });
+      return res;
+    } catch (err: any) {
+      console.error('Firebase Google Auth error:', err);
+      const isBlocked = err?.code === 'auth/popup-blocked';
+      const isCancelled =
+        err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request';
+      return {
+        success: false,
+        error: isBlocked
+          ? 'Popup was blocked by your browser. Please allow popups or use account selector.'
+          : isCancelled
+          ? 'Google sign-in popup was cancelled.'
+          : err?.message || 'Google authentication encountered an error.',
+      };
     } finally {
       stopGlobalLoading();
     }
@@ -850,6 +1029,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = () => {
     supabase.auth.signOut().catch(() => {});
+    firebaseSignOut(firebaseAuth).catch(() => {});
     try {
       localStorage.removeItem('abhijobs_currentUser');
       localStorage.removeItem('hunar_currentUser');
@@ -926,10 +1106,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Candidate Actions
   const updateCandidateProfile = (updates: Partial<CandidateProfile>) => {
-    if (!currentCandidate) return;
+    let targetCandidate = currentCandidate;
+    if (!targetCandidate && currentUser) {
+      const fallbackCand: CandidateProfile = {
+        id: 'cand-' + currentUser.id.slice(0, 10),
+        userId: currentUser.id,
+        name: currentUser.name,
+        email: currentUser.email,
+        phone: '',
+        location: 'Bangalore, India',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        headline: 'Professional | Job Seeker',
+        about: '',
+        currentRole: 'Software Engineer',
+        desiredRole: 'Software Engineer',
+        experienceLevel: 'Mid',
+        experienceType: 'experienced',
+        workStatus: 'Looking for a job',
+        yearsOfExperience: 2,
+        preferredLocation: 'Flexible',
+        workPreference: 'Hybrid',
+        skills: ['Problem Solving', 'Communication'],
+        education: [],
+        experiences: [],
+        certifications: [],
+        completionPercentage: 35,
+        recommendations: [],
+        availability: 'Immediate',
+        profileVisibility: 'employers_only',
+        availableForOpportunities: true,
+        avatar: currentUser.avatar,
+      };
+      setCandidates((prev) => [...prev, fallbackCand]);
+      targetCandidate = fallbackCand;
+    }
+    if (!targetCandidate) return;
+
+    const candId = targetCandidate.id;
     setCandidates((prev) =>
       prev.map((c) => {
-        if (c.id === currentCandidate.id) {
+        if (c.id === candId) {
           const updated = { ...c, ...updates };
           // Progressive score calculation
           let score = 20; // 20% baseline from basic registration
@@ -1593,6 +1810,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         stopGlobalLoading,
         loginAs,
         loginWithEmail,
+        loginWithGoogle,
+        loginWithFirebaseGooglePopup,
         registerJobSeeker,
         registerEmployer,
         logout,

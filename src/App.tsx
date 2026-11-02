@@ -8,6 +8,7 @@ import { RouteProtectionNotice } from './components/RouteProtectionNotice';
 import { GlobalLoadingFeedback } from './components/GlobalLoadingFeedback';
 import { EASE_PREMIUM } from './lib/motion';
 import { supabase } from './supabaseClient';
+import { auth as firebaseAuth, onAuthStateChanged as onFirebaseAuthStateChanged } from './lib/firebase';
 
 // Public & Shared Pages
 import { HomePage } from './pages/HomePage';
@@ -178,26 +179,53 @@ function AppContent() {
   };
 
   const isCurrentRoutePrivate = checkIsPrivateRoute(currentRoute);
-  const [hasValidSession, setHasValidSession] = useState<boolean | null>(null);
+  const [hasValidSession, setHasValidSession] = useState<boolean | null>(() => {
+    if (Boolean(currentUser)) return true;
+    if (Boolean(firebaseAuth.currentUser)) return true;
+    try {
+      const stored = localStorage.getItem('abhijobs_currentUser') || localStorage.getItem('hunar_currentUser');
+      if (stored && JSON.parse(stored)) return true;
+    } catch {}
+    return null;
+  });
+
+  // Helper to determine if an active session exists locally or via Firebase
+  const checkIsSessionActive = () => {
+    if (Boolean(currentUser)) return true;
+    if (Boolean(firebaseAuth.currentUser)) return true;
+    try {
+      const stored = localStorage.getItem('abhijobs_currentUser') || localStorage.getItem('hunar_currentUser');
+      if (stored && JSON.parse(stored)) return true;
+    } catch {}
+    return false;
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const checkSession = async () => {
+      // 1. Immediately validate if Firebase or local user is active
+      if (checkIsSessionActive()) {
+        if (isMounted) setHasValidSession(true);
+        return;
+      }
+
+      // 2. Validate with Supabase auth session
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted) return;
-        const active = Boolean(session);
+        const active = Boolean(session) || checkIsSessionActive();
         setHasValidSession(active);
 
-        // Protect private pages with supabase.auth.getSession() — if no session, redirect to /login
+        // Protect private pages — only redirect if neither Supabase, Firebase, nor local session is active
         if (checkIsPrivateRoute(currentRoute) && !active) {
           navigate('/login');
         }
       } catch {
         if (!isMounted) return;
-        setHasValidSession(false);
-        if (checkIsPrivateRoute(currentRoute)) {
+        const active = checkIsSessionActive();
+        setHasValidSession(active);
+        if (checkIsPrivateRoute(currentRoute) && !active) {
           navigate('/login');
         }
       }
@@ -205,10 +233,20 @@ function AppContent() {
 
     checkSession();
 
-    // Sync auth state in real time
+    // Sync Firebase Auth state in real time
+    const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, (fbUser) => {
+      if (!isMounted) return;
+      if (fbUser) {
+        setHasValidSession(true);
+      } else {
+        setHasValidSession(checkIsSessionActive());
+      }
+    });
+
+    // Sync Supabase auth state in real time
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
-      const active = Boolean(session);
+      const active = Boolean(session) || checkIsSessionActive();
       setHasValidSession(active);
       if (event === 'SIGNED_IN' && window.location.pathname.includes('/dashboard')) {
         setCurrentRoute('/dashboard');
@@ -220,17 +258,20 @@ function AppContent() {
 
     return () => {
       isMounted = false;
+      unsubscribeFirebase();
       subscription?.unsubscribe();
     };
-  }, [currentRoute]);
+  }, [currentRoute, currentUser]);
 
   const renderContent = () => {
-    // 0. Protect private pages with supabase.auth.getSession() — if no session, redirect to /login
+    // 0. Protect private pages — accurately check if any authentication layer has an active session
+    const isSessionActive = Boolean(currentUser) || Boolean(firebaseAuth.currentUser) || hasValidSession === true;
+
     if (isCurrentRoutePrivate) {
-      if (hasValidSession === false) {
+      if (!isSessionActive && hasValidSession === false) {
         return <LoginPage navigate={navigate} redirectMessage="Please sign in to access this page." />;
       }
-      if (hasValidSession === null) {
+      if (!isSessionActive && hasValidSession === null) {
         return (
           <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
             <div className="w-8 h-8 border-3 border-[#004D40] border-t-transparent rounded-full animate-spin" />

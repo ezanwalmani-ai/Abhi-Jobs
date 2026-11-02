@@ -28,7 +28,7 @@ interface JobSeekerRegisterPageProps {
 }
 
 export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ navigate }) => {
-  const { registerJobSeeker, showToast } = useApp();
+  const { registerJobSeeker, loginWithGoogle, showToast } = useApp();
 
   // Form State
   const [fullName, setFullName] = useState('');
@@ -160,51 +160,20 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      if (error) {
-        console.error('Error logging in with Google:', error.message);
-        setErrors((prev) => ({ ...prev, general: error.message }));
-      }
-    } catch (err: any) {
-      console.error('Error logging in with Google:', err);
-      setErrors((prev) => ({ ...prev, general: err?.message || 'Failed to initiate Google sign-in' }));
-    }
+  const handleGoogleLogin = () => {
+    setIsGoogleModalOpen(true);
   };
 
   const handleGoogleSuccess = async (googleUser: { name: string; email: string; avatar: string }) => {
     setIsSubmitting(true);
     try {
-      const result = await registerJobSeeker({
-        name: googleUser.name,
-        email: googleUser.email,
-        avatar: googleUser.avatar,
-        isGoogle: true,
-        experienceType: 'experienced',
-        experienceLevel: 'Experienced',
-        workStatus: 'Looking for a job',
-        city: 'Bangalore',
-        state: 'Karnataka',
-        marketingConsent: true,
-      });
-
-      if (!result.success) {
+      const result = await loginWithGoogle(googleUser);
+      if (result.success && result.user) {
+        navigate('/dashboard');
+      } else {
         setErrors((prev) => ({ ...prev, general: result.error || 'Google registration failed' }));
         showToast('error', 'Registration Notice', result.error);
-        setIsSubmitting(false);
-        return;
       }
-
-      setRegisteredUser({
-        name: googleUser.name,
-        email: googleUser.email,
-      });
     } catch (err) {
       showToast('error', 'Google Registration Error', 'Unable to complete sign in.');
     } finally {
@@ -315,7 +284,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full py-3.5 px-4 rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm sm:text-base transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.99] cursor-pointer"
+              className="w-full py-3.5 px-4 min-h-[44px] rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm sm:text-base transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.99] cursor-pointer"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                 <path

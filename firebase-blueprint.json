@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID (auth UID)" },
+        "name": { "type": "string", "description": "User display name", "maxLength": 100 },
+        "email": { "type": "string", "description": "User email address", "maxLength": 150 },
+        "role": { "type": "string", "description": "Role in platform", "enum": ["job_seeker", "employer", "admin"] },
+        "avatar": { "type": "string", "description": "Avatar URL", "maxLength": 500 },
+        "createdAt": { "type": "string", "description": "ISO timestamp of creation" },
+        "lastActive": { "type": "string", "description": "Last active timestamp or label", "maxLength": 50 },
+        "status": { "type": "string", "description": "Account status", "enum": ["active", "suspended"] }
+      },
+      "required": ["id", "name", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile collection indexed by auth UID"
+    }
+  }
+}

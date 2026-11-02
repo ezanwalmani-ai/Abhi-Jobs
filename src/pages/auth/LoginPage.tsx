@@ -20,7 +20,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   initialEmail = '',
   isSignupSuccess = false,
 }) => {
-  const { loginWithEmail, registerJobSeeker } = useApp();
+  const { loginWithEmail, registerJobSeeker, loginWithGoogle, loginWithFirebaseGooglePopup } = useApp();
 
   const [email, setEmail] = useState(() => {
     if (initialEmail) return initialEmail;
@@ -136,41 +136,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   const handleGoogleLogin = async () => {
+    setIsSubmitting(true);
+    setError('');
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      if (error) {
-        console.error('Error logging in with Google:', error.message);
-        setError(error.message);
+      const res = await loginWithFirebaseGooglePopup();
+      if (res.success && res.user) {
+        routeUserByRole(res.user.role);
+        return;
       }
-    } catch (err: any) {
-      console.error('Error logging in with Google:', err);
-      setError(err?.message || 'Failed to initiate Google sign-in');
+      if (res.error?.toLowerCase().includes('popup') || res.error?.toLowerCase().includes('cancel')) {
+        setIsGoogleModalOpen(true);
+      } else {
+        setError(res.error || 'Failed to complete Google authentication');
+      }
+    } catch {
+      setIsGoogleModalOpen(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleGoogleSuccess = async (googleUser: { name: string; email: string; avatar: string }) => {
-    const loginRes = await loginWithEmail(googleUser.email);
-    if (loginRes.success && loginRes.user) {
-      routeUserByRole(loginRes.user.role);
-    } else {
-      // Register with google as a job seeker by default
-      const regRes = await registerJobSeeker({
-        name: googleUser.name,
-        email: googleUser.email,
-        avatar: googleUser.avatar,
-        isGoogle: true,
-        experienceType: 'experienced',
-        city: 'Bangalore',
-        state: 'Karnataka',
-      });
-      if (regRes.success) {
-        navigate('/dashboard');
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const res = await loginWithGoogle(googleUser);
+      if (res.success && res.user) {
+        routeUserByRole(res.user.role);
+      } else {
+        setError(res.error || 'Failed to sign in with Google');
       }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to complete Google authentication');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -222,7 +221,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               whileTap={{ scale: 0.99 }}
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full py-3.5 px-4 rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
+              className="w-full py-3.5 px-4 min-h-[44px] rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                 <path

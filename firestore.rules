@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.role is string && (data.role == 'job_seeker' || data.role == 'employer' || data.role == 'admin');
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isSignedIn() && resource.data.id == request.auth.uid;
+      allow create: if isOwner(userId) &&
+                       request.resource.data.id == request.auth.uid &&
+                       isValidUser(request.resource.data);
+      allow update: if isOwner(userId) &&
+                       request.resource.data.id == resource.data.id &&
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'status']);
+      allow delete: if false;
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
