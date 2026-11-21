@@ -112,7 +112,11 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
     {
       label: 'Learn with ABHI',
       path: '/learning',
-      isActive: currentRoute === '/learning' || currentRoute === '/job-seeker/upskill',
+      isActive:
+        currentRoute === '/learning' ||
+        currentRoute === '/learn' ||
+        currentRoute.startsWith('/learning/') ||
+        currentRoute === '/job-seeker/upskill',
     },
     {
       label: 'Hire Talent',

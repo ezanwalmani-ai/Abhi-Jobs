@@ -29,7 +29,7 @@ import { JobSeekerDashboard } from './pages/jobSeeker/JobSeekerDashboard';
 import { JobSeekerApplicationsPage } from './pages/jobSeeker/JobSeekerApplicationsPage';
 import { JobSeekerSavedJobsPage } from './pages/jobSeeker/JobSeekerSavedJobsPage';
 import { JobSeekerProfilePage } from './pages/jobSeeker/JobSeekerProfilePage';
-import { JobSeekerUpskillPage } from './pages/jobSeeker/JobSeekerUpskillPage';
+import { LearnWithAbhiPage } from './pages/LearnWithAbhiPage';
 import { JobSeekerResumePage } from './pages/jobSeeker/JobSeekerResumePage';
 import { JobSeekerRegisterPage } from './pages/jobSeeker/JobSeekerRegisterPage';
 import { JobSeekerOnboardingPage } from './pages/jobSeeker/JobSeekerOnboardingPage';
@@ -171,6 +171,8 @@ function AppContent() {
       route === '/employers' ||
       route === '/for-employers' ||
       route === '/learning' ||
+      route === '/learn' ||
+      route.startsWith('/learning/') ||
       route === '/job-seeker/upskill' ||
       route === '/jobs' ||
       route.startsWith('/jobs/') ||
@@ -472,8 +474,12 @@ function AppContent() {
         return <JobSeekerProfilePage navigate={navigate} />;
 
       case '/learning':
+      case '/learn':
       case '/job-seeker/upskill':
-        return <JobSeekerUpskillPage navigate={navigate} />;
+        return <LearnWithAbhiPage navigate={navigate} section="home" />;
+
+      case '/learning/assessment':
+        return <LearnWithAbhiPage navigate={navigate} section="assessment" />;
 
       case '/resume':
       case '/career-tools':

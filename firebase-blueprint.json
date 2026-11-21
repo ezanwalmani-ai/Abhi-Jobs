@@ -5,22 +5,65 @@
       "description": "User profile document",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "description": "Unique user ID (auth UID)" },
+        "id": { "type": "string", "description": "Unique user ID (auth UID)", "maxLength": 128 },
         "name": { "type": "string", "description": "User display name", "maxLength": 100 },
         "email": { "type": "string", "description": "User email address", "maxLength": 150 },
         "role": { "type": "string", "description": "Role in platform", "enum": ["job_seeker", "employer", "admin"] },
         "avatar": { "type": "string", "description": "Avatar URL", "maxLength": 500 },
-        "createdAt": { "type": "string", "description": "ISO timestamp of creation" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of creation", "maxLength": 64 },
         "lastActive": { "type": "string", "description": "Last active timestamp or label", "maxLength": 50 },
         "status": { "type": "string", "description": "Account status", "enum": ["active", "suspended"] }
       },
       "required": ["id", "name", "email", "role"]
+    },
+    "CareerAssessment": {
+      "title": "CareerAssessment",
+      "description": "Private job seeker profile evaluation test responses and calculated readiness report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Assessment document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "status": { "type": "string", "description": "Assessment lifecycle state", "enum": ["in_progress", "submitted"] },
+        "currentStep": { "type": "number", "description": "Last active step index (0-6)" },
+        "basicInfo": { "type": "object", "description": "Section A: Basic information" },
+        "education": { "type": "object", "description": "Section B: Education details" },
+        "experience": { "type": "object", "description": "Section C: Professional experience" },
+        "careerPreferences": { "type": "object", "description": "Section D: Career goals and preferences" },
+        "skillsEvaluation": { "type": "object", "description": "Section E: Self-evaluated 9 skills" },
+        "practicalAnswers": { "type": "object", "description": "Section F: Multiple-choice answers keyed by question ID" },
+        "learningRecommendationConsent": { "type": "boolean", "description": "Consent to use responses for course recommendations" },
+        "recruitmentConsent": { "type": "boolean", "description": "Explicit optional opt-in for recruitment review" },
+        "report": { "type": "object", "description": "Calculated Career Readiness Report upon submission" },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" },
+        "submittedAt": { "type": "string", "description": "ISO timestamp of submission", "maxLength": 64 }
+      },
+      "required": [
+        "id",
+        "userId",
+        "status",
+        "currentStep",
+        "basicInfo",
+        "education",
+        "experience",
+        "careerPreferences",
+        "skillsEvaluation",
+        "practicalAnswers",
+        "learningRecommendationConsent",
+        "recruitmentConsent",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "User profile collection indexed by auth UID"
+    },
+    "/users/{userId}/career_assessments/{assessmentId}": {
+      "schema": "CareerAssessment",
+      "description": "Private per-candidate Job Seeker Profile Evaluation Test drafts and submitted reports"
     }
   }
 }

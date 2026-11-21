@@ -1,17 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default Deny Catch-all
+    // Pillar 1: Global Default Deny Catch-all
     match /{document=**} {
       allow read, write: if false;
     }
 
+    // Hardened Global Primitives
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
     }
 
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
     }
 
     function isOwner(userId) {
@@ -19,23 +32,158 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.id is string && data.id.size() <= 128 &&
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
              data.name is string && data.name.size() <= 100 &&
              data.email is string && data.email.size() <= 150 &&
              data.role is string && (data.role == 'job_seeker' || data.role == 'employer' || data.role == 'admin');
     }
 
+    function isValidAssessment(data, userId, assessmentId) {
+      return data.keys().hasAll([
+               'id',
+               'userId',
+               'status',
+               'currentStep',
+               'basicInfo',
+               'education',
+               'experience',
+               'careerPreferences',
+               'skillsEvaluation',
+               'practicalAnswers',
+               'learningRecommendationConsent',
+               'recruitmentConsent',
+               'createdAt',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'userId',
+               'status',
+               'currentStep',
+               'basicInfo',
+               'education',
+               'experience',
+               'careerPreferences',
+               'skillsEvaluation',
+               'practicalAnswers',
+               'learningRecommendationConsent',
+               'recruitmentConsent',
+               'report',
+               'createdAt',
+               'updatedAt',
+               'submittedAt'
+             ]) &&
+             data.id == assessmentId &&
+             isValidId(data.id) &&
+             data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.status is string &&
+             (data.status == 'in_progress' || data.status == 'submitted') &&
+             data.currentStep is number &&
+             data.currentStep >= 0 &&
+             data.currentStep <= 7 &&
+             data.basicInfo is map &&
+             data.basicInfo.size() <= 10 &&
+             data.education is map &&
+             data.education.size() <= 10 &&
+             data.experience is map &&
+             data.experience.size() <= 10 &&
+             data.careerPreferences is map &&
+             data.careerPreferences.size() <= 10 &&
+             data.skillsEvaluation is map &&
+             data.skillsEvaluation.size() <= 15 &&
+             data.practicalAnswers is map &&
+             data.practicalAnswers.size() <= 20 &&
+             data.learningRecommendationConsent is bool &&
+             data.recruitmentConsent is bool &&
+             (!('report' in data) || (data.report is map && data.report.size() <= 20)) &&
+             (!('submittedAt' in data) || (data.submittedAt is string && data.submittedAt.size() <= 64));
+    }
+
+    // Users Collection (strictly private to owner)
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(userId);
       allow list: if isSignedIn() && resource.data.id == request.auth.uid;
       allow create: if isOwner(userId) &&
-                       request.resource.data.id == request.auth.uid &&
-                       isValidUser(request.resource.data);
+                       isValidId(userId) &&
+                       incoming().id == request.auth.uid &&
+                       isValidUser(incoming());
       allow update: if isOwner(userId) &&
-                       request.resource.data.id == resource.data.id &&
-                       isValidUser(request.resource.data) &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'status']);
+                       isValidId(userId) &&
+                       incoming().id == existing().id &&
+                       isValidUser(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'status']);
       allow delete: if false;
+
+      // Private per-candidate Career Profile Evaluation Assessments
+      match /career_assessments/{assessmentId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(assessmentId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(assessmentId) &&
+                         isValidAssessment(incoming(), userId, assessmentId) &&
+                         incoming().createdAt == request.time &&
+                         incoming().updatedAt == request.time;
+
+        // Action-based updates with Terminal State Locking:
+        // Submitted assessments are immutable and cannot be altered after submission.
+        allow update: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(assessmentId) &&
+                         isValidAssessment(incoming(), userId, assessmentId) &&
+                         existing().status == 'in_progress' &&
+                         incoming().userId == existing().userId &&
+                         incoming().id == existing().id &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt == request.time &&
+                         (
+                           // Action 1: Save draft progress
+                           (incoming().status == 'in_progress' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'currentStep',
+                               'basicInfo',
+                               'education',
+                               'experience',
+                               'careerPreferences',
+                               'skillsEvaluation',
+                               'practicalAnswers',
+                               'learningRecommendationConsent',
+                               'recruitmentConsent',
+                               'updatedAt'
+                             ])) ||
+                           // Action 2: Submit final assessment & readiness report
+                           (incoming().status == 'submitted' &&
+                             incoming().learningRecommendationConsent == true &&
+                             'report' in incoming() &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'status',
+                               'currentStep',
+                               'basicInfo',
+                               'education',
+                               'experience',
+                               'careerPreferences',
+                               'skillsEvaluation',
+                               'practicalAnswers',
+                               'learningRecommendationConsent',
+                               'recruitmentConsent',
+                               'report',
+                               'submittedAt',
+                               'updatedAt'
+                             ]))
+                         );
+
+        // Allow deleting only unsubmitted drafts; submitted evaluations are retained
+        allow delete: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(assessmentId) &&
+                         existing().status == 'in_progress';
+      }
     }
 
     match /test/connection {
