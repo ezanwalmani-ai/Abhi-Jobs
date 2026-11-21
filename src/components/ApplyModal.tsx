@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Job } from '../types';
 import { useApp } from '../context/AppContext';
-import { EASE_PREMIUM } from '../lib/motion';
+import { EASE_PREMIUM, InteractiveCheckbox, AnimatedFormFeedback, AnimatedTextSwap } from '../lib/motion';
 import {
   X,
   CheckCircle2,
@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Send,
   Check,
+  Loader2,
 } from 'lucide-react';
 
 interface ApplyModalProps {
@@ -34,6 +35,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
     currentCandidate?.resumeName || 'Resume_Portfolio.pdf'
   );
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -49,7 +51,12 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreedToTerms || alreadyApplied || !activeJob) return;
+    if (alreadyApplied || !activeJob) return;
+    if (!agreedToTerms) {
+      setFormError('Please agree to the Terms & Conditions and Privacy Policy to submit your application.');
+      return;
+    }
+    setFormError(null);
     setSubmitting(true);
     const success = await applyToJob(activeJob.id, coverNote, selectedResume);
     setSubmitting(false);
@@ -135,47 +142,59 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
 
         {/* Body */}
         {submitted ? (
-          <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 mx-auto flex items-center justify-center shadow-xs">
+          <motion.div
+            key="submitted-panel"
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.35, ease: EASE_PREMIUM }}
+            className="p-8 text-center space-y-4"
+          >
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+              className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 mx-auto flex items-center justify-center shadow-xs"
+            >
               <CheckCircle2 className="w-9 h-9" />
-            </div>
+            </motion.div>
             <div>
-              <h4 className="text-xl font-bold text-[#101828]">Application Submitted!</h4>
-              <p className="text-sm text-[#667085] max-w-md mx-auto mt-1 leading-relaxed">
-                Your verified ABHI JOBS profile and credentials have been forwarded to {job.companyName}’s talent acquisition team.
+              <h4 className="text-xl font-bold text-[#102B4E]">Application Submitted!</h4>
+              <p className="text-sm text-[#778397] max-w-md mx-auto mt-1 leading-relaxed">
+                Your verified ABHI JOBS profile and credentials have been forwarded to {activeJob.companyName}&rsquo;s recruitment consultants.
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#F7F8FA] border border-[#E4E7EC] text-left text-xs space-y-2 max-w-md mx-auto">
-              <div className="flex justify-between">
-                <span className="text-[#667085]">Position:</span>
-                <span className="font-semibold text-[#101828]">{job.title}</span>
+            <div className="p-4 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-left text-xs space-y-2 max-w-md mx-auto">
+              <div className="flex justify-between gap-3">
+                <span className="text-[#778397]">Position:</span>
+                <span className="font-semibold text-[#102B4E] text-right">{activeJob.title}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[#667085]">Resume Attached:</span>
-                <span className="font-semibold text-[#101828]">{selectedResume}</span>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#778397]">Resume Attached:</span>
+                <span className="font-semibold text-[#102B4E] text-right">{selectedResume}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[#667085]">Status:</span>
-                <span className="font-semibold text-[#004D40]">Applied &bull; Under Review</span>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#778397]">Status:</span>
+                <span className="font-semibold text-emerald-700">Applied &bull; Under Review</span>
               </div>
             </div>
 
             <div className="pt-3 flex items-center justify-center gap-2">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleNavigateTo('/applications')}
-                className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] text-white text-xs font-bold hover:bg-[#e02213] transition-colors cursor-pointer shadow-xs"
+                className="px-5 py-2.5 min-h-[42px] rounded-xl bg-[#F47A24] text-white text-xs font-bold hover:bg-[#DE6816] transition-colors cursor-pointer shadow-xs"
               >
                 View My Applications
-              </button>
+              </motion.button>
               <button
                 onClick={handleClose}
-                className="px-4 py-2.5 rounded-xl border border-[#E4E7EC] text-[#101828] text-xs font-semibold hover:bg-[#F7F8FA] transition-colors cursor-pointer"
+                className="px-4 py-2.5 min-h-[42px] rounded-xl border border-[#E5EAF0] text-[#102B4E] text-xs font-semibold hover:bg-[#F6F8FB] transition-colors cursor-pointer"
               >
                 Return to Jobs
               </button>
             </div>
-          </div>
+          </motion.div>
         ) : alreadyApplied ? (
           <div className="p-8 text-center space-y-4">
             <div className="w-14 h-14 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 mx-auto flex items-center justify-center">
@@ -323,61 +342,94 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                 </div>
 
                 {/* Step 4: Terms & Conditions and Privacy Policy Consent */}
-                <div className="pt-1 pb-1">
-                  <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#667085] select-none">
-                    <input
-                      type="checkbox"
-                      id="apply-consent-checkbox"
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      required
-                      className="mt-0.5 w-4 h-4 rounded border-[#D0D5DD] text-[#FF2B1A] focus:ring-[#FF2B1A] cursor-pointer accent-[#FF2B1A] shrink-0"
-                    />
-                    <span className="leading-snug">
-                      I agree to ABHI JOBS&apos;s{' '}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenLegal('/terms-and-conditions')}
-                        className="text-[#FF2B1A] font-semibold underline hover:text-[#e02213] cursor-pointer inline"
-                      >
-                        Terms &amp; Conditions
-                      </button>{' '}
-                      and{' '}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenLegal('/privacy')}
-                        className="text-[#FF2B1A] font-semibold underline hover:text-[#e02213] cursor-pointer inline"
-                      >
-                        Privacy Policy
-                      </button>
-                      .
-                    </span>
-                  </label>
+                <div className="pt-1 pb-1 space-y-2.5">
+                  <InteractiveCheckbox
+                    id="apply-consent-checkbox"
+                    checked={agreedToTerms}
+                    onChange={(val) => {
+                      setAgreedToTerms(val);
+                      if (val) setFormError(null);
+                    }}
+                    label={
+                      <>
+                        I agree to ABHI JOBS&apos;s{' '}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenLegal('/terms-and-conditions')}
+                          className="text-[#F47A24] font-semibold underline hover:text-[#DE6816] cursor-pointer inline"
+                        >
+                          Terms &amp; Conditions
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenLegal('/privacy')}
+                          className="text-[#F47A24] font-semibold underline hover:text-[#DE6816] cursor-pointer inline"
+                        >
+                          Privacy Policy
+                        </button>
+                        .
+                      </>
+                    }
+                  />
+                  <AnimatedFormFeedback type="error" message={formError} />
                 </div>
+
+                {/* Live submission progress rail */}
+                <AnimatePresence>
+                  {submitting && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="w-full h-1.5 rounded-full bg-[#E5EAF0] overflow-hidden">
+                        <motion.div
+                          initial={{ x: '-100%' }}
+                          animate={{ x: '100%' }}
+                          transition={{ duration: 1.05, repeat: Infinity, ease: 'easeInOut' }}
+                          className="h-full w-1/2 rounded-full bg-gradient-to-r from-[#102B4E] via-[#F47A24] to-[#FFB400]"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Submit button */}
                 <div className="pt-2 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-4 py-2 rounded-xl text-[#667085] hover:bg-[#F7F8FA] text-xs font-semibold cursor-pointer"
+                    disabled={submitting}
+                    className="px-4 py-2.5 min-h-[42px] rounded-xl text-[#778397] hover:bg-[#F6F8FB] text-xs font-semibold cursor-pointer disabled:opacity-50"
                   >
                     Cancel
                   </button>
-                  <button
+                  <motion.button
                     type="submit"
-                    disabled={submitting || !agreedToTerms}
-                    className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileTap={submitting ? undefined : { scale: 0.98 }}
+                    disabled={submitting}
+                    className={`px-5 py-2.5 min-h-[42px] rounded-xl text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-70 ${
+                      agreedToTerms
+                        ? 'bg-[#F47A24] hover:bg-[#DE6816]'
+                        : 'bg-[#102B4E]/80 hover:bg-[#102B4E]'
+                    }`}
                   >
-                    {submitting ? (
-                      <span>Submitting...</span>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Submit 1-Click Application</span>
-                      </>
-                    )}
-                  </button>
+                    <AnimatedTextSwap stateKey={submitting ? 'submitting' : 'idle'}>
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Submitting Application...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Submit Application</span>
+                        </>
+                      )}
+                    </AnimatedTextSwap>
+                  </motion.button>
                 </div>
               </>
             )}

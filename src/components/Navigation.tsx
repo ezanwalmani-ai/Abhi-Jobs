@@ -152,25 +152,28 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
           {/* CENTER: Primary Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2 min-w-0" aria-label="Main navigation">
             {navLinks.map((link) => (
-              <button
+              <motion.button
                 key={link.label}
                 type="button"
+                whileTap={{ scale: 0.97 }}
                 onClick={() => navigate(link.path)}
-                className={`relative px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                className={`group relative px-3.5 py-2 text-sm font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap ${
                   link.isActive
                     ? 'text-[#102B4E] font-semibold'
                     : 'text-[#778397] hover:text-[#102B4E]'
                 }`}
               >
                 <span>{link.label}</span>
-                {link.isActive && (
+                {link.isActive ? (
                   <motion.span
                     layoutId="nav-active-underline"
                     transition={{ duration: 0.25, ease: EASE_PREMIUM }}
                     className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#F47A24] rounded-full"
                   />
+                ) : (
+                  <span className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#102B4E]/35 rounded-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out" />
                 )}
-              </button>
+              </motion.button>
             ))}
           </nav>
 
@@ -205,12 +208,21 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
                     className="relative w-10 h-10 rounded-lg border border-[#E5EAF0] bg-white hover:bg-[#F6F8FB] flex items-center justify-center text-[#253449] transition-colors cursor-pointer"
                     aria-label="Notifications"
                   >
-                    <Bell className="w-4 h-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F47A24] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
+                    <Bell className="w-4 h-4 transition-transform duration-200 group-hover:rotate-6" />
+                    <AnimatePresence>
+                      {unreadCount > 0 && (
+                        <motion.span
+                          key={unreadCount}
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.5, opacity: 0 }}
+                          transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+                          className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F47A24] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white tabular-nums"
+                        >
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </button>
 
                   <AnimatePresence>
@@ -304,7 +316,11 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
                     <span className="hidden sm:inline-block text-xs font-semibold text-[#253449] max-w-[110px] truncate">
                       {displayName.split(' ')[0]}
                     </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#778397]" />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-[#778397] transition-transform duration-200 ${
+                        userMenuOpen ? 'rotate-180 text-[#102B4E]' : ''
+                      }`}
+                    />
                   </button>
 
                   <AnimatePresence>

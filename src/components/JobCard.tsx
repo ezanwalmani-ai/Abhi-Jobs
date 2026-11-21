@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Job } from '../types';
 import { useApp } from '../context/AppContext';
 import { Button } from './ui/Button';
-import { EASE_PREMIUM } from '../lib/motion';
+import { EASE_PREMIUM, AnimatedTextSwap } from '../lib/motion';
 import {
   MapPin,
   Briefcase,
@@ -130,37 +130,59 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             </div>
           </div>
 
-          {/* Save Job button */}
-          <button
+          {/* Save Job button with immediate tactile confirmation */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
             onClick={() => (isSaved ? unsaveJob(job.id) : saveJob(job.id))}
-            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold ${
+            className={`relative p-2 rounded-lg transition-all duration-200 cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold overflow-visible ${
               isSaved
-                ? 'bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/30'
+                ? 'bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/35 shadow-2xs'
                 : 'text-[#778397] hover:text-[#102B4E] hover:bg-[#F6F8FB] border border-transparent'
             }`}
             title={isSaved ? 'Job Saved — Click to remove' : 'Save Job for later'}
             aria-label={isSaved ? 'Saved Job' : 'Save Job'}
+            aria-pressed={isSaved}
           >
+            {/* Brief radial pulse ring on save confirmation */}
+            <AnimatePresence>
+              {isSaved && (
+                <motion.span
+                  key="save-ring"
+                  aria-hidden="true"
+                  initial={{ scale: 0.7, opacity: 0.6 }}
+                  animate={{ scale: 1.45, opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.45, ease: EASE_PREMIUM }}
+                  className="pointer-events-none absolute inset-0 rounded-lg border border-[#F47A24]"
+                />
+              )}
+            </AnimatePresence>
+
             <motion.span
-              key={isSaved ? 'saved' : 'unsaved'}
-              initial={{ scale: 0.92 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.2, ease: EASE_PREMIUM }}
-              className="inline-flex items-center gap-1"
+              key={isSaved ? 'saved-icon' : 'unsaved-icon'}
+              initial={{ scale: 0.75, rotate: isSaved ? -12 : 0 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 22 }}
+              className="inline-flex items-center"
             >
               {isSaved ? (
-                <>
-                  <BookmarkCheck className="w-4 h-4 text-[#F47A24]" />
-                  <span className="hidden sm:inline text-[11px] font-semibold text-[#F47A24]">Saved</span>
-                </>
+                <BookmarkCheck className="w-4 h-4 text-[#F47A24]" />
               ) : (
-                <>
-                  <Bookmark className="w-4 h-4" />
-                  <span className="hidden sm:inline text-[11px]">Save</span>
-                </>
+                <Bookmark className="w-4 h-4" />
               )}
             </motion.span>
-          </button>
+            <AnimatedTextSwap
+              stateKey={isSaved ? 'saved' : 'save'}
+              className="hidden sm:inline-flex text-[11px]"
+            >
+              {isSaved ? (
+                <span className="font-semibold text-[#F47A24]">Saved</span>
+              ) : (
+                <span>Save</span>
+              )}
+            </AnimatedTextSwap>
+          </motion.button>
         </div>
 
         {/* Clean Metadata items */}
@@ -240,23 +262,40 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             View Details
           </Button>
 
-          {hasApplied ? (
-            <span className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-h-[38px]">
-              <Check className="w-3.5 h-3.5" />
-              <span>Applied</span>
-            </span>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onApply(job)}
-              iconRight={<ArrowRight className="w-3.5 h-3.5" />}
-              className="flex-1 sm:flex-none min-h-[38px]"
-              title="Apply for this opportunity"
-            >
-              Apply Now
-            </Button>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {hasApplied ? (
+              <motion.span
+                key="applied-state"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.22, ease: EASE_PREMIUM }}
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-h-[38px]"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Applied</span>
+              </motion.span>
+            ) : (
+              <motion.div
+                key="apply-cta"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 sm:flex-none"
+              >
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onApply(job)}
+                  iconRight={<ArrowRight className="w-3.5 h-3.5" />}
+                  className="w-full min-h-[38px]"
+                  title="Apply for this opportunity"
+                >
+                  Apply Now
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

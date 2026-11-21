@@ -25,6 +25,13 @@ html {
   --color-border: #E5EAF0;
   --color-text-primary: #253449;
   --color-text-secondary: #778397;
+
+  /* Unified Motion Timing Tokens */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-micro: 180ms;
+  --duration-ui: 260ms;
+  --duration-reveal: 520ms;
 }
 
 .font-sora,
@@ -41,6 +48,80 @@ body {
   background-color: var(--color-bg-page);
   color: var(--color-text-primary);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================================
+   ABHI JOBS — Consistent Tactile Micro-Interaction Primitives
+   Lightweight CSS transitions for form inputs, search fields, checkboxes, links
+   ============================================================================ */
+
+/* Form inputs, textareas, and selects: crisp focus glow & smooth border shift */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  transition:
+    border-color var(--duration-micro) var(--ease-out),
+    box-shadow var(--duration-micro) var(--ease-out),
+    background-color var(--duration-micro) var(--ease-out);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 3px rgba(16, 43, 78, 0.1);
+}
+
+/* Tactile checkbox & radio micro-interactions */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-orange);
+  transition:
+    transform var(--duration-micro) var(--ease-premium),
+    box-shadow var(--duration-micro) var(--ease-out);
+}
+
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  transform: scale(0.9);
+}
+
+/* Smooth hover underline glide for inline links & nav items */
+.abhi-link-underline {
+  position: relative;
+}
+
+.abhi-link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 9999px;
+  background-color: var(--color-orange);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--duration-ui) var(--ease-premium);
+}
+
+.abhi-link-underline:hover::after,
+.abhi-link-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Interactive search bar focus elevation */
+.abhi-search-shell {
+  transition:
+    border-color var(--duration-micro) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-premium),
+    transform var(--duration-micro) var(--ease-out);
+}
+
+.abhi-search-shell:focus-within {
+  border-color: var(--color-navy);
+  box-shadow: 0 8px 24px -10px rgba(16, 43, 78, 0.16), 0 0 0 3px rgba(244, 122, 36, 0.12);
 }
 
 /* Custom scrollbar */
@@ -57,4 +138,21 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* ============================================================================
+   Accessibility: Respect User Reduced-Motion Preferences Globally
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

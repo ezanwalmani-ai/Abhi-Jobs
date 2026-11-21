@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { JobCard } from '../components/JobCard';
 import { ApplyModal } from '../components/ApplyModal';
 import { Job } from '../types';
-import { ScrollReveal, StaggerGroup, StaggerItem, EASE_PREMIUM, TextMaskReveal, ScrollProgress } from '../lib/motion';
+import { ScrollReveal, StaggerGroup, StaggerItem, EASE_PREMIUM, TextMaskReveal, ScrollProgress, HeroTextReveal } from '../lib/motion';
 import {
   Search,
   MapPin,
@@ -744,20 +744,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({
         <ScrollReveal direction="up" distance={16}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-6">
             <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-[#004D40] text-xs font-bold border border-teal-200">
-                <Briefcase className="w-3.5 h-3.5 text-[#004D40]" />
-                <span>Verified Career Marketplace</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#102B4E]/5 text-[#102B4E] text-xs font-bold border border-[#102B4E]/15">
+                <Briefcase className="w-3.5 h-3.5 text-[#F47A24]" />
+                <span>Curated Consultancy Openings</span>
               </div>
-              <TextMaskReveal
+              <HeroTextReveal
                 as="h1"
-                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#101828] tracking-tight"
-                delay={0.1}
-                duration={0.65}
-              >
-                Find Your Next Opportunity
-              </TextMaskReveal>
+                text="Find Your Next Opportunity"
+                highlightWords={['Opportunity']}
+                highlightClassName="text-[#F47A24]"
+                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#102B4E] tracking-tight"
+                delay={0.05}
+              />
               <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
-                Discover opportunities based on skills, experience, and career interests. Every opening is published and verified by trusted employers.
+                Discover opportunities based on skills, experience, and career interests. Every opening is published and verified by ABHI JOBS recruitment specialists.
               </p>
             </div>
 
@@ -802,7 +802,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
             {/* 1. Search & 2. Location Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               {/* 1. Search */}
-              <div className="md:col-span-7 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="abhi-search-shell md:col-span-7 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
                 <Search className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -834,7 +834,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 <button
                   type="button"
                   onClick={() => addRecentSearch(search)}
-                  className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#061226] text-white text-xs font-semibold hover:bg-[#004D40] transition-colors cursor-pointer shrink-0"
+                  className="hidden sm:inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-[#102B4E] text-white text-xs font-semibold hover:bg-[#081D36] active:scale-[0.98] transition-all cursor-pointer shrink-0"
                   title="Search jobs"
                 >
                   <span>Search</span>
@@ -842,7 +842,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
               </div>
 
               {/* 2. Location */}
-              <div className="md:col-span-5 flex items-center gap-2.5 px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="abhi-search-shell md:col-span-5 flex items-center gap-2.5 px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
                 <MapPin className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
+import { AnimatedStatusBadge } from '../../lib/motion';
 import {
   Shield,
   Briefcase,
@@ -993,13 +994,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                             <h3 className="text-base font-bold text-[#102B4E]">
                               {app.candidateName}
                             </h3>
-                            <span
+                            <AnimatedStatusBadge
+                              status={app.status}
                               className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${statusBadgeClasses(
                                 app.status
                               )}`}
-                            >
-                              {app.status}
-                            </span>
+                            />
                           </div>
                           <p className="text-sm text-[#253449] font-medium mt-0.5">
                             {app.jobTitle} <span className="text-[#778397]">at {app.companyName}</span>
@@ -1315,13 +1315,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                           <h3 className="text-lg font-bold text-[#102B4E]">
                             {enq.companyName}
                           </h3>
-                          <span
+                          <AnimatedStatusBadge
+                            status={enq.status}
                             className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${statusBadgeClasses(
                               enq.status
                             )}`}
-                          >
-                            {enq.status}
-                          </span>
+                          />
                         </div>
                         <p className="text-sm font-semibold text-[#F47A24]">
                           {enq.jobTitle} &middot; {enq.vacancies}{' '}

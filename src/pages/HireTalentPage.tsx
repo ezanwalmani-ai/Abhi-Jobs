@@ -1,7 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
-import { EASE_PREMIUM } from '../lib/motion';
+import {
+  EASE_PREMIUM,
+  HeroTextReveal,
+  AnimatedSectionHeading,
+  StaggerGroup,
+  StaggerItem,
+  AnimatedFormFeedback,
+} from '../lib/motion';
 import {
   Search,
   UserCheck,
@@ -135,22 +142,41 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#F47A24]">
               ABHI JOBS Recruitment Consultancy
             </p>
-            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.12]">
-              Find the Right People for Your Business.
-            </h1>
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl">
+            <HeroTextReveal
+              text="Find the Right People for Your Business."
+              as="h1"
+              highlightWords={['People']}
+              highlightClassName="text-[#F47A24]"
+              staggerMs={70}
+              delay={0.08}
+              distance={24}
+              className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.12] text-white"
+            />
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.3, ease: EASE_PREMIUM }}
+              className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl"
+            >
               ABHI JOBS helps businesses identify, screen, and connect with qualified talent to meet their hiring requirements.
-            </p>
-            <div className="pt-2">
-              <button
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.42, delay: 0.38, ease: EASE_PREMIUM }}
+              className="pt-2"
+            >
+              <motion.button
                 type="button"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={scrollToForm}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+                className="group inline-flex items-center gap-2 px-6 py-3.5 min-h-[46px] rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
                 <span>Submit Your Hiring Requirement</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -158,70 +184,64 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
       {/* WHAT WE DO */}
       <section className="py-16 sm:py-20 bg-white border-b border-[#E5EAF0]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mb-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F47A24]">
-              Our Recruitment Process
-            </p>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#102B4E] mt-1">
-              What We Do
-            </h2>
-          </div>
+          <AnimatedSectionHeading
+            kicker="Our Recruitment Process"
+            title="What We Do"
+            className="mb-12"
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6" stagger={0.08}>
             {SERVICES.map((service) => {
               const Icon = service.icon;
               return (
-                <div
-                  key={service.title}
-                  className="bg-[#F6F8FB] rounded-2xl border border-[#E5EAF0] p-6 sm:p-7 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-xl bg-[#102B4E] text-white flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
+                <StaggerItem key={service.title}>
+                  <div className="h-full bg-[#F6F8FB] rounded-2xl border border-[#E5EAF0] hover:border-[#102B4E]/30 hover:-translate-y-1 transition-all duration-250 p-6 sm:p-7 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="w-11 h-11 rounded-xl bg-[#102B4E] text-white flex items-center justify-center">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-bold font-mono tabular-nums text-[#778397]">
+                        {service.step}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-[#778397]">{service.step}</span>
+                    <h3 className="font-display text-lg font-bold text-[#102B4E]">
+                      {service.title}
+                    </h3>
+                    <p className="text-sm text-[#778397] leading-relaxed">
+                      {service.description}
+                    </p>
                   </div>
-                  <h3 className="font-display text-lg font-bold text-[#102B4E]">
-                    {service.title}
-                  </h3>
-                  <p className="text-sm text-[#778397] leading-relaxed">
-                    {service.description}
-                  </p>
-                </div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* INDUSTRIES WE RECRUIT FOR */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mb-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F47A24]">
-              Domain Expertise
-            </p>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#102B4E] mt-1">
-              Industries We Recruit For
-            </h2>
-          </div>
+          <AnimatedSectionHeading
+            kicker="Domain Expertise"
+            title="Industries We Recruit For"
+            className="mb-10"
+          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" stagger={0.06}>
             {INDUSTRIES.map((ind) => {
               const Icon = ind.icon;
               return (
-                <div
-                  key={ind.name}
-                  className="bg-white rounded-xl border border-[#E5EAF0] p-5 flex items-center gap-4 shadow-2xs"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-[#FFF4EC] text-[#F47A24] flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5" />
+                <StaggerItem key={ind.name}>
+                  <div className="bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/30 hover:-translate-y-0.5 transition-all duration-200 p-5 flex items-center gap-4 shadow-2xs">
+                    <div className="w-10 h-10 rounded-lg bg-[#FFF4EC] text-[#F47A24] flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-semibold text-[#102B4E]">{ind.name}</span>
                   </div>
-                  <span className="text-sm font-semibold text-[#102B4E]">{ind.name}</span>
-                </div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
@@ -243,10 +263,20 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
             </div>
 
             {submittedRef ? (
-              <div className="p-8 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: EASE_PREMIUM }}
+                className="p-8 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-center space-y-4"
+              >
+                <motion.div
+                  initial={{ scale: 0.6 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+                  className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto"
+                >
                   <CheckCircle2 className="w-6 h-6" />
-                </div>
+                </motion.div>
                 <h3 className="font-display text-xl font-bold text-[#102B4E]">
                   Hiring Requirement Received
                 </h3>
@@ -258,27 +288,22 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
                   <button
                     type="button"
                     onClick={() => setSubmittedRef(null)}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-sm font-semibold transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-sm font-semibold transition-colors cursor-pointer"
                   >
                     Submit Another Requirement
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/')}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-[#E5EAF0] text-[#253449] hover:bg-white text-sm font-semibold transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-lg border border-[#E5EAF0] text-[#253449] hover:bg-white text-sm font-semibold transition-colors cursor-pointer"
                   >
                     Return Home
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                  </div>
-                )}
+                <AnimatedFormFeedback type="error" message={error} />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>

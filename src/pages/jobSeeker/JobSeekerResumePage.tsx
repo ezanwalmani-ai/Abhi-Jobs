@@ -1,580 +1,523 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import {
   ResumeData,
-  ResumeTemplateStyle,
-  calculateResumeCompletion,
+  DEFAULT_DESIGN_SETTINGS,
+  getResumeDesign,
 } from '../../types/resume';
 import {
-  loadUserResume,
+  listUserResumes,
   saveUserResume,
+  duplicateUserResume,
+  deleteUserResume,
+  saveResumeDraft,
+  loadResumeDraft,
+  clearResumeDraft,
   buildResumeFromProfile,
 } from '../../services/resumeService';
-import { generateResumePdf, validateResumeForPdf } from '../../services/resumePdfService';
-import { ResumeCompletionBar } from '../../components/resume/ResumeCompletionBar';
-import { ResumeHeaderActions, SaveStatus } from '../../components/resume/ResumeHeaderActions';
-import { ResumeEmptyState } from '../../components/resume/ResumeEmptyState';
-import { PersonalInfoForm } from '../../components/resume/PersonalInfoForm';
-import { SummaryForm } from '../../components/resume/SummaryForm';
-import { ExperienceForm } from '../../components/resume/ExperienceForm';
-import { EducationForm } from '../../components/resume/EducationForm';
-import { SkillsForm } from '../../components/resume/SkillsForm';
-import { ProjectsForm } from '../../components/resume/ProjectsForm';
-import { CertificationsForm } from '../../components/resume/CertificationsForm';
-import { LanguagesForm } from '../../components/resume/LanguagesForm';
-import { ResumePreview } from '../../components/resume/ResumePreview';
-import { ImportProfileModal } from '../../components/resume/ImportProfileModal';
-import { Edit3, Eye, AlertTriangle, ArrowLeft } from 'lucide-react';
+import {
+  ResumeTemplateSpec,
+  getTemplateSectionOrder,
+} from '../../components/resume/templates/templateCatalog';
+import { ResumeLandingView } from '../../components/resume/studio/ResumeLandingView';
+import { ResumeStartSelector } from '../../components/resume/studio/ResumeStartSelector';
+import { ChatGptResumeWorkflow } from '../../components/resume/studio/ChatGptResumeWorkflow';
+import { UploadResumeWorkflow } from '../../components/resume/studio/UploadResumeWorkflow';
+import { ResumeGuidedWizard } from '../../components/resume/studio/ResumeGuidedWizard';
+import {
+  ResumeStudioEditor,
+  StudioSaveStatus,
+} from '../../components/resume/studio/ResumeStudioEditor';
+import { TemplateGallery } from '../../components/resume/studio/TemplateGallery';
+import { ResumePdfPreviewModal } from '../../components/resume/studio/ResumePdfPreviewModal';
+import { EASE_PREMIUM } from '../../lib/motion';
+import { ArrowLeft, RotateCcw, X, Loader2 } from 'lucide-react';
 
 interface JobSeekerResumePageProps {
   navigate: (route: string) => void;
 }
 
-export const JobSeekerResumePage: React.FC<JobSeekerResumePageProps> = ({ navigate }) => {
-  const { currentUser, currentCandidate, showToast, updateCandidateProfile } = useApp();
+type StudioView =
+  | 'landing'
+  | 'templates-browse'
+  | 'start'
+  | 'chatgpt'
+  | 'upload'
+  | 'wizard'
+  | 'editor';
 
+export const JobSeekerResumePage: React.FC<JobSeekerResumePageProps> = ({ navigate: _navigate }) => {
+  const { currentUser, currentCandidate, showToast, updateCandidateProfile } = useApp();
   const userId = currentUser?.id || 'guest_user';
 
-  // State
-  const [resume, setResume] = useState<ResumeData | null>(null);
+  const [view, setView] = useState<StudioView>('landing');
+  const [resumes, setResumes] = useState<ResumeData[]>([]);
+  const [activeResume, setActiveResume] = useState<ResumeData | null>(null);
+  const [wizardInitialStep, setWizardInitialStep] = useState<number>(1);
+  const [pendingTemplate, setPendingTemplate] = useState<ResumeTemplateSpec | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+  const [saveStatus, setSaveStatus] = useState<StudioSaveStatus>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [showImportModal, setShowImportModal] = useState<boolean>(false);
-  const [activeMobileTab, setActiveMobileTab] = useState<'editor' | 'preview'>('editor');
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
-  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const initialLoadDoneRef = useRef<boolean>(false);
+  // Draft recovery banner
+  const [recoverableDraft, setRecoverableDraft] = useState<{
+    savedAt: string;
+    resume: ResumeData;
+  } | null>(null);
 
-  // 1. Initial Load from Supabase / localStorage
+  // PDF Preview modal
+  const [pdfModalResume, setPdfModalResume] = useState<ResumeData | null>(null);
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHydratedRef = useRef<boolean>(false);
+
+  // 1. Load all resumes strictly scoped to authenticated user
   useEffect(() => {
-    let isMounted = true;
-    async function init() {
+    let mounted = true;
+    async function load() {
       setIsLoading(true);
       try {
-        const loaded = await loadUserResume(userId);
-        if (isMounted) {
-          if (loaded) {
-            setResume(loaded);
-          } else {
-            setResume(null); // Shows empty state
+        const list = await listUserResumes(userId);
+        if (!mounted) return;
+        setResumes(list);
+
+        // Check if any saved resume has a newer local draft for recovery
+        for (const item of list) {
+          const draft = loadResumeDraft(userId, item.id);
+          if (draft && new Date(draft.savedAt).getTime() > new Date(item.updatedAt).getTime()) {
+            setRecoverableDraft(draft);
+            break;
           }
         }
       } catch (err) {
-        console.error('Failed to load resume:', err);
+        console.error('Failed to load resumes:', err);
       } finally {
-        if (isMounted) {
+        if (mounted) {
           setIsLoading(false);
-          initialLoadDoneRef.current = true;
+          isHydratedRef.current = true;
         }
       }
     }
-    init();
+    load();
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [userId]);
 
-  // 2. Unsaved changes browser warning (beforeunload)
+  // 2. Unsaved browser close warning
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue = 'You have unsaved resume changes.';
         return e.returnValue;
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // 3. Debounced Auto-save (1.5s after user stops typing)
+  // 3. Persist helper (updates state, localStorage/Supabase, and candidate profile metadata)
+  const persistResume = useCallback(
+    async (target: ResumeData, notifyToast = false) => {
+      setSaveStatus('saving');
+      const res = await saveUserResume(userId, target);
+      if (res.success && res.resume) {
+        const saved = res.resume;
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
+        setResumes((prev) => {
+          const exists = prev.some((r) => r.id === saved.id);
+          const next = exists
+            ? prev.map((r) => (r.id === saved.id ? saved : r))
+            : [saved, ...prev];
+          return next.sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        });
+
+        if (currentCandidate && saved.fullName.trim()) {
+          updateCandidateProfile({
+            resumeName: `${saved.fullName.trim().replace(/\s+/g, '_')}_Resume.pdf`,
+            resumeUpdated: new Date().toISOString().split('T')[0],
+          });
+        }
+
+        if (notifyToast) {
+          showToast('Resume saved successfully', 'success');
+        }
+      } else {
+        setSaveStatus('unsaved');
+        if (notifyToast) {
+          showToast(res.error || 'Could not save resume', 'error');
+        }
+      }
+    },
+    [userId, currentCandidate, updateCandidateProfile, showToast]
+  );
+
+  // 4. Debounced autosave + instant local draft snapshot while editing
   useEffect(() => {
-    if (!initialLoadDoneRef.current || !resume || !hasUnsavedChanges) return;
+    if (!isHydratedRef.current || !activeResume || !hasUnsavedChanges) return;
+
+    saveResumeDraft(userId, activeResume);
 
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
 
-    autoSaveTimerRef.current = setTimeout(async () => {
-      setSaveStatus('saving');
-      const result = await saveUserResume(userId, resume);
-      if (result.success) {
-        setSaveStatus('saved');
-        setHasUnsavedChanges(false);
-      } else {
-        setSaveStatus('unsaved');
-      }
-    }, 1500);
+    autoSaveTimerRef.current = setTimeout(() => {
+      persistResume(activeResume, false);
+    }, 1200);
 
     return () => {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [resume, hasUnsavedChanges, userId]);
+  }, [activeResume, hasUnsavedChanges, userId, persistResume]);
 
-  // Handle Updates
-  const handleUpdateResume = (updates: Partial<ResumeData>) => {
-    if (!resume) return;
-    setResume((prev) => (prev ? { ...prev, ...updates } : prev));
-    setHasUnsavedChanges(true);
-    setSaveStatus('unsaved');
-  };
-
-  // Manual Save Action
-  const handleManualSave = async () => {
-    if (!resume) return;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-
-    setSaveStatus('saving');
-    const result = await saveUserResume(userId, resume);
-    if (result.success) {
-      setSaveStatus('saved');
-      setHasUnsavedChanges(false);
-      showToast('success', 'Resume saved successfully', 'Your resume progress has been saved.');
-
-      // Also update candidate profile resume status
-      if (currentCandidate) {
-        const sanitizedName = resume.fullName.trim().replace(/\s+/g, '_');
-        updateCandidateProfile({
-          resumeName: `${sanitizedName || 'ABHI_JOBS'}_Resume.pdf`,
-          resumeUpdated: 'Just now',
-        });
-      }
-    } else {
-      setSaveStatus('unsaved');
-      showToast(
-        'error',
-        "Couldn't save your resume",
-        'Please check your connection and try again.'
-      );
-    }
-  };
-
-  // Download PDF Action
-  const handleDownloadPdf = async () => {
-    if (!resume) return;
-
-    // Validate
-    const validation = validateResumeForPdf(resume);
-    if (!validation.valid) {
-      const errorMap: Record<string, string> = {};
-      if (!resume.fullName.trim()) errorMap.fullName = 'Full Name is required';
-      if (!resume.email.trim() || !resume.email.includes('@'))
-        errorMap.email = 'Valid Email is required';
-      setFormErrors(errorMap);
-
-      showToast(
-        'warning',
-        'Incomplete Resume',
-        validation.errors[0] || 'Please complete required fields before downloading.'
-      );
-      return;
-    }
-
-    setFormErrors({});
-    setIsDownloading(true);
-
-    try {
-      // If user is on mobile and currently on editor tab, ensure preview DOM is mounted
-      if (activeMobileTab === 'editor' && typeof window !== 'undefined' && window.innerWidth < 1024) {
-        setActiveMobileTab('preview');
-        await new Promise((r) => setTimeout(r, 100));
-      }
-
-      // If there are unsaved changes, save first
-      if (hasUnsavedChanges) {
-        await saveUserResume(userId, resume);
-        setSaveStatus('saved');
-        setHasUnsavedChanges(false);
-      }
-
-      await generateResumePdf(resume);
-      showToast('success', 'Your resume is ready.', 'Downloaded professional A4 PDF.');
-    } catch (err: any) {
-      console.error('PDF generation error:', err);
-      showToast(
-        'error',
-        'PDF Generation Failed',
-        err.message || 'Please check your information and try again.'
-      );
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  // Start Building Handlers for Empty State
-  const handleStartBlank = () => {
-    const blank = buildResumeFromProfile(userId, null);
-    setResume(blank);
-    setHasUnsavedChanges(true);
-    setSaveStatus('unsaved');
-  };
-
-  const handleStartWithProfile = () => {
-    const fromProfile = buildResumeFromProfile(userId, currentCandidate);
-    setResume(fromProfile);
-    setHasUnsavedChanges(true);
-    setSaveStatus('unsaved');
-    showToast('info', 'Profile data imported', 'Review and customize your information below.');
-  };
-
-  // Selective Import from Profile Modal Handler
-  const handleSelectiveImport = (selected: {
-    personalInfo: boolean;
-    title: boolean;
-    summary: boolean;
-    skills: boolean;
-    experience: boolean;
-    education: boolean;
-  }) => {
-    if (!currentCandidate || !resume) return;
-
-    const updates: Partial<ResumeData> = {};
-
-    if (selected.personalInfo) {
-      if (currentCandidate.name) updates.fullName = currentCandidate.name;
-      if (currentCandidate.email) updates.email = currentCandidate.email;
-      if (currentCandidate.phone) updates.phone = currentCandidate.phone;
-      if (currentCandidate.city) updates.city = currentCandidate.city;
-      if (currentCandidate.state) updates.state = currentCandidate.state;
-    }
-
-    if (selected.title && (currentCandidate.headline || currentCandidate.currentRole)) {
-      updates.professionalTitle = currentCandidate.headline || currentCandidate.currentRole;
-    }
-
-    if (selected.summary && currentCandidate.about) {
-      updates.summary = currentCandidate.about;
-    }
-
-    if (selected.skills && currentCandidate.skills?.length > 0) {
-      // Merge unique skills
-      const combined = Array.from(new Set([...resume.skills, ...currentCandidate.skills]));
-      updates.skills = combined;
-    }
-
-    if (selected.experience && currentCandidate.experiences?.length > 0) {
-      const newExps = currentCandidate.experiences.map((exp, idx) => ({
-        id: exp.id || `exp_${Date.now()}_${idx}`,
-        jobTitle: exp.jobTitle || '',
-        companyName: exp.company || '',
-        employmentType: 'Full-time' as const,
-        location: '',
-        startMonth: '',
-        startYear: exp.startDate || '',
-        endMonth: '',
-        endYear: exp.endDate || '',
-        currentlyWorking: !!exp.current,
-        responsibilities: exp.description ? [exp.description] : [],
-      }));
-      updates.experiences = [...resume.experiences, ...newExps];
-    }
-
-    if (selected.education && currentCandidate.education?.length > 0) {
-      const newEdus = currentCandidate.education.map((edu, idx) => ({
-        id: edu.id || `edu_${Date.now()}_${idx}`,
-        degree: edu.qualification || edu.fieldOfStudy || '',
-        institution: edu.institution || '',
-        location: '',
-        startDate: edu.startYear || '',
-        endDate: edu.endYear || '',
-        description: edu.fieldOfStudy ? `Field: ${edu.fieldOfStudy}` : '',
-      }));
-      updates.education = [...resume.education, ...newEdus];
-    }
-
-    handleUpdateResume(updates);
-    showToast('success', 'Information imported', 'Selected profile details have been merged.');
-  };
-
-  // Safe internal navigation helper
-  const handleSafeNavigate = (route: string) => {
-    if (hasUnsavedChanges) {
-      setPendingRoute(route);
-      setShowExitWarning(true);
-      return;
-    }
-    navigate(route);
-  };
-
-  // Completion stats
-  const completion = useMemo(() => {
-    if (!resume) {
+  // Content & design change handler
+  const handleResumeChange = (updates: Partial<ResumeData>) => {
+    setActiveResume((prev) => {
+      if (!prev) return prev;
       return {
-        personalInfo: 0,
-        summary: 0,
-        experience: 0,
-        education: 0,
-        skills: 0,
-        additional: 0,
-        total: 0,
-        missingTips: [],
-        sections: {
-          personalInfo: false,
-          summary: false,
-          experience: false,
-          education: false,
-          skills: false,
-          additional: false,
-        },
-        encouragementMessage: 'Start building your resume to see your real-time progress.',
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString(),
       };
-    }
-    return calculateResumeCompletion(resume);
-  }, [resume]);
-
-  const handleSectionJump = (sectionKey: string) => {
-    // If on mobile and in preview tab, switch to editor
-    if (activeMobileTab === 'preview') {
-      setActiveMobileTab('editor');
-    }
-    setTimeout(() => {
-      const el = document.getElementById(`section-${sectionKey}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 50);
+    });
+    setHasUnsavedChanges(true);
+    setSaveStatus('unsaved');
   };
+
+  // Apply an optional pre-selected template spec onto a freshly created resume
+  const applyPendingTemplate = (base: ResumeData, spec?: ResumeTemplateSpec | null): ResumeData => {
+    const targetSpec = spec || pendingTemplate;
+    if (!targetSpec) return base;
+    const baseDesign = getResumeDesign(base);
+    return {
+      ...base,
+      template: targetSpec.id,
+      design: {
+        ...DEFAULT_DESIGN_SETTINGS,
+        ...baseDesign,
+        templateId: targetSpec.id,
+        accentColor: targetSpec.defaultAccent,
+        fontFamily: targetSpec.defaultFont,
+        sectionOrder: getTemplateSectionOrder(targetSpec.id),
+      },
+    };
+  };
+
+  // --- Workflow Transitions ---
+  const handleStartStepByStep = (prefillFromProfile: boolean) => {
+    const fresh = applyPendingTemplate(
+      buildResumeFromProfile(userId, prefillFromProfile ? currentCandidate : null)
+    );
+    setPendingTemplate(null);
+    setActiveResume(fresh);
+    setHasUnsavedChanges(true);
+    setSaveStatus('unsaved');
+    setWizardInitialStep(1);
+    setView('wizard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleConfirmImportedContent = (
+    imported: Partial<ResumeData>,
+    goTo: 'wizard' | 'templates'
+  ) => {
+    const base = buildResumeFromProfile(userId, null);
+    const merged: ResumeData = applyPendingTemplate({
+      ...base,
+      ...imported,
+      id: base.id,
+      userId,
+      title:
+        imported.title ||
+        (imported.professionalTitle
+          ? `${imported.professionalTitle} Resume`
+          : imported.fullName
+          ? `${imported.fullName} Resume`
+          : 'Imported Resume'),
+      updatedAt: new Date().toISOString(),
+    });
+    setPendingTemplate(null);
+    setActiveResume(merged);
+    setHasUnsavedChanges(true);
+    setSaveStatus('unsaved');
+    persistResume(merged, false);
+
+    if (goTo === 'templates') {
+      setWizardInitialStep(8);
+      setView('wizard');
+    } else {
+      setWizardInitialStep(1);
+      setView('wizard');
+    }
+    showToast('Resume content organized into editable sections', 'success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFinishWizardToStudio = (selectedSpec?: ResumeTemplateSpec) => {
+    if (!activeResume) return;
+    let nextResume = activeResume;
+    if (selectedSpec) {
+      nextResume = applyPendingTemplate(activeResume, selectedSpec);
+      setActiveResume(nextResume);
+    }
+    persistResume(nextResume, false);
+    setView('editor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditSavedResume = (resume: ResumeData) => {
+    setActiveResume(resume);
+    setHasUnsavedChanges(false);
+    setSaveStatus('saved');
+    setView('editor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDuplicateSavedResume = async (resumeId: string) => {
+    const result = await duplicateUserResume(userId, resumeId);
+    if (result.success && result.resume) {
+      setResumes((prev) => [result.resume!, ...prev]);
+      showToast('Resume duplicated — ready to customize for a new role', 'success');
+    } else {
+      showToast(result.error || 'Could not duplicate resume', 'error');
+    }
+  };
+
+  const handleDeleteSavedResume = async (resumeId: string) => {
+    const result = await deleteUserResume(userId, resumeId);
+    if (result.success) {
+      setResumes((prev) => prev.filter((r) => r.id !== resumeId));
+      if (activeResume?.id === resumeId) {
+        setActiveResume(null);
+      }
+      showToast('Resume deleted', 'success');
+    }
+  };
+
+  const handleBrowseTemplateSelect = (spec: ResumeTemplateSpec) => {
+    if (activeResume) {
+      const updated = applyPendingTemplate(activeResume, spec);
+      setActiveResume(updated);
+      setHasUnsavedChanges(true);
+      setSaveStatus('unsaved');
+      setView('editor');
+      showToast(`Applied "${spec.name}" template`, 'success');
+    } else {
+      setPendingTemplate(spec);
+      setView('start');
+      showToast(`Selected "${spec.name}" — choose how to build your resume`, 'success');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleReturnToLanding = async () => {
+    if (activeResume && hasUnsavedChanges) {
+      await persistResume(activeResume, false);
+    }
+    setView('landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const hasProfileData = Boolean(
+    currentCandidate &&
+      (currentCandidate.name ||
+        currentCandidate.email ||
+        currentCandidate.about ||
+        (currentCandidate.experiences && currentCandidate.experiences.length > 0) ||
+        (currentCandidate.skills && currentCandidate.skills.length > 0))
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#F6F8FB] p-6">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#004D40] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-slate-700">Loading your resume...</p>
+          <Loader2 className="w-8 h-8 text-[#F47A24] animate-spin mx-auto" />
+          <p className="text-sm font-semibold text-[#102B4E]">
+            Loading ABHI JOBS Resume Studio...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/70 py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Navigation Breadcrumb / Exit Warning */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => handleSafeNavigate('/dashboard')}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-400" />
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#F6F8FB] py-5 sm:py-7 px-3 sm:px-6 lg:px-8 overflow-x-clip">
+      <div className="max-w-[1440px] mx-auto space-y-5">
+        {/* Draft Recovery Banner */}
+        <AnimatePresence>
+          {recoverableDraft && view === 'landing' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: EASE_PREMIUM }}
+              className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-amber-900">
+                <RotateCcw className="w-4 h-4 text-[#F47A24] shrink-0" />
+                <span>
+                  Unsaved draft found for{' '}
+                  <strong>{recoverableDraft.resume.title || 'your resume'}</strong>. Would you like
+                  to recover it?
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveResume(recoverableDraft.resume);
+                    setHasUnsavedChanges(true);
+                    setSaveStatus('unsaved');
+                    setRecoverableDraft(null);
+                    setView('editor');
+                    showToast('Draft restored', 'success');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-[#102B4E] text-white text-xs font-bold cursor-pointer"
+                >
+                  Restore Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearResumeDraft(userId, recoverableDraft.resume.id);
+                    setRecoverableDraft(null);
+                  }}
+                  className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-100 cursor-pointer"
+                  aria-label="Dismiss draft notice"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* If user has no resume yet: show Empty State */}
-        {!resume ? (
-          <ResumeEmptyState
-            onStartBlank={handleStartBlank}
-            onStartWithProfile={handleStartWithProfile}
-            hasProfileData={!!currentCandidate}
+        {/* VIEW 1: RESUME STUDIO LANDING PAGE */}
+        {view === 'landing' && (
+          <ResumeLandingView
+            resumes={resumes}
+            onCreateMyResume={() => {
+              setPendingTemplate(null);
+              setView('start');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onExploreTemplates={() => {
+              setView('templates-browse');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onEditResume={handleEditSavedResume}
+            onDuplicateResume={handleDuplicateSavedResume}
+            onDownloadResumePdf={(resume) => setPdfModalResume(resume)}
+            onDeleteResume={handleDeleteSavedResume}
           />
-        ) : (
+        )}
+
+        {/* VIEW 2: EXPLORE ALL 12 TEMPLATES GALLERY */}
+        {view === 'templates-browse' && (
           <div className="space-y-5">
-            {/* Top Page Header */}
-            <ResumeHeaderActions
-              saveStatus={saveStatus}
-              isDownloading={isDownloading}
-              onSave={handleManualSave}
-              onDownloadPdf={handleDownloadPdf}
-              onOpenImportModal={() => setShowImportModal(true)}
+            <button
+              type="button"
+              onClick={() => setView('landing')}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#778397] hover:text-[#102B4E] cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Resume Studio</span>
+            </button>
+
+            <TemplateGallery
+              resume={resumes[0] || null}
+              onSelectTemplate={handleBrowseTemplateSelect}
+              title="Explore 12 Professional Resume Templates"
+              subtitle="Every template features a distinct layout architecture. Pick a design to begin — you can switch anytime without losing content."
             />
-
-            {/* Resume Completion Indicator */}
-            <ResumeCompletionBar
-              completion={completion}
-              onSectionClick={handleSectionJump}
-            />
-
-            {/* Mobile View Toggle Bar (Hidden on desktop lg+) */}
-            <div className="lg:hidden flex items-center p-1 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setActiveMobileTab('editor')}
-                className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeMobileTab === 'editor'
-                    ? 'bg-[#004D40] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Resume Editor</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMobileTab('preview')}
-                className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeMobileTab === 'preview'
-                    ? 'bg-[#004D40] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Live Preview (A4)</span>
-              </button>
-            </div>
-
-            {/* Two-Panel Layout (Desktop: 46% Editor | 54% Preview) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* LEFT PANEL: Resume Editor */}
-              <div
-                className={`lg:col-span-6 xl:col-span-5 space-y-5 ${
-                  activeMobileTab === 'preview' ? 'hidden lg:block' : 'block'
-                }`}
-              >
-                <div id="section-personalInfo">
-                  <PersonalInfoForm
-                    resume={resume}
-                    onChange={handleUpdateResume}
-                    errors={formErrors}
-                  />
-                </div>
-
-                <div id="section-summary">
-                  <SummaryForm
-                    summary={resume.summary}
-                    onChange={(summary) => handleUpdateResume({ summary })}
-                  />
-                </div>
-
-                <div id="section-experience">
-                  <ExperienceForm
-                    experiences={resume.experiences}
-                    onChange={(experiences) => handleUpdateResume({ experiences })}
-                  />
-                </div>
-
-                <div id="section-education">
-                  <EducationForm
-                    education={resume.education}
-                    onChange={(education) => handleUpdateResume({ education })}
-                  />
-                </div>
-
-                <div id="section-skills">
-                  <SkillsForm
-                    skills={resume.skills}
-                    onChange={(skills) => handleUpdateResume({ skills })}
-                    profileSkills={currentCandidate?.skills || []}
-                  />
-                </div>
-
-                <div id="section-additional" className="space-y-5">
-                  <ProjectsForm
-                    projects={resume.projects}
-                    onChange={(projects) => handleUpdateResume({ projects })}
-                  />
-
-                  <CertificationsForm
-                    certifications={resume.certifications}
-                    onChange={(certifications) => handleUpdateResume({ certifications })}
-                  />
-
-                  <LanguagesForm
-                    languages={resume.languages}
-                    onChange={(languages) => handleUpdateResume({ languages })}
-                  />
-                </div>
-
-                {/* Bottom Actions for Mobile */}
-                <div className="lg:hidden p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setActiveMobileTab('preview')}
-                    className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Eye className="w-4 h-4 text-[#004D40]" />
-                    <span>View Live Resume Preview</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloading}
-                    className="w-full py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <span>Download PDF</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* RIGHT PANEL: Live Resume Preview (Sticky on desktop) */}
-              <div
-                className={`lg:col-span-6 xl:col-span-7 lg:sticky lg:top-6 ${
-                  activeMobileTab === 'editor' ? 'hidden lg:block' : 'block'
-                }`}
-              >
-                <ResumePreview
-                  resume={resume}
-                  onTemplateChange={(template: ResumeTemplateStyle) =>
-                    handleUpdateResume({ template })
-                  }
-                />
-              </div>
-            </div>
           </div>
+        )}
+
+        {/* VIEW 3: THREE WAYS TO START */}
+        {view === 'start' && (
+          <ResumeStartSelector
+            hasProfileData={hasProfileData}
+            onStartStepByStep={handleStartStepByStep}
+            onStartChatGpt={() => {
+              setView('chatgpt');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onStartUpload={() => {
+              setView('upload');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onBack={() => setView('landing')}
+          />
+        )}
+
+        {/* VIEW 4: CREATE WITH CHATGPT WORKFLOW */}
+        {view === 'chatgpt' && (
+          <ChatGptResumeWorkflow
+            candidate={currentCandidate}
+            onBack={() => setView('start')}
+            onConfirmImport={handleConfirmImportedContent}
+          />
+        )}
+
+        {/* VIEW 5: UPLOAD EXISTING RESUME (PDF / DOCX) */}
+        {view === 'upload' && (
+          <UploadResumeWorkflow
+            onBack={() => setView('start')}
+            onConfirmImport={handleConfirmImportedContent}
+          />
+        )}
+
+        {/* VIEW 6: GUIDED 8-STEP CREATION WIZARD */}
+        {view === 'wizard' && activeResume && (
+          <ResumeGuidedWizard
+            resume={activeResume}
+            initialStep={wizardInitialStep}
+            onChange={handleResumeChange}
+            onSaveAndContinueLater={async () => {
+              await persistResume(activeResume, true);
+              setView('landing');
+            }}
+            onFinishToStudio={handleFinishWizardToStudio}
+            onBackToStart={() => setView('start')}
+          />
+        )}
+
+        {/* VIEW 7: MODERN 3-PANE RESUME STUDIO EDITOR */}
+        {view === 'editor' && activeResume && (
+          <ResumeStudioEditor
+            resume={activeResume}
+            saveStatus={saveStatus}
+            onChange={handleResumeChange}
+            onManualSave={() => persistResume(activeResume, true)}
+            onOpenPdfPreview={() => setPdfModalResume(activeResume)}
+            onOpenWizard={(step = 1) => {
+              setWizardInitialStep(step);
+              setView('wizard');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onBackToLanding={handleReturnToLanding}
+          />
         )}
       </div>
 
-      {/* Import from Profile Modal */}
-      <ImportProfileModal
-        candidate={currentCandidate}
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleSelectiveImport}
+      {/* Final Pre-Download PDF Preview Modal */}
+      <ResumePdfPreviewModal
+        resume={pdfModalResume}
+        isOpen={Boolean(pdfModalResume)}
+        onClose={() => setPdfModalResume(null)}
+        onDownloaded={() => showToast('Resume PDF ready', 'success')}
       />
-
-      {/* Unsaved Changes Confirmation Dialog */}
-      {showExitWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h3 className="text-lg font-extrabold text-slate-900">
-                You have unsaved changes
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Are you sure you want to leave? Any changes you made that haven&apos;t finished saving may be lost.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowExitWarning(false);
-                  setPendingRoute(null);
-                }}
-                className="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-semibold cursor-pointer"
-              >
-                Stay on Page
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowExitWarning(false);
-                  if (pendingRoute) {
-                    navigate(pendingRoute);
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-xs cursor-pointer"
-              >
-                Discard &amp; Leave
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
+export default JobSeekerResumePage;

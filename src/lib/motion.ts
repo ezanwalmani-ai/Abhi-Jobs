@@ -53,15 +53,15 @@ export const transitionFast = (delay: number = 0): Transition => ({
   ease: EASE_OUT,
 });
 
-// Viewport trigger settings for scroll reveals
+// Viewport trigger settings for scroll reveals — amount: 'some' guarantees content is never stuck hidden
 export const VIEWPORT_ONCE = {
   once: true,
-  amount: 0.15,
+  amount: 'some',
 } as const;
 
 export const VIEWPORT_CARD_ONCE = {
   once: true,
-  amount: 0.08,
+  amount: 'some',
 } as const;
 
 // ============================================================================
@@ -405,3 +405,10 @@ export { StaggerGroup, StaggerItem } from '../components/motion/StaggerGroup';
 export { CountUpNumber } from '../components/motion/CountUpNumber';
 export { AnimatedProgressBar } from '../components/motion/AnimatedProgress';
 export { ImageReveal } from '../components/motion/ImageReveal';
+export {
+  AnimatedSectionHeading,
+  AnimatedTextSwap,
+  AnimatedStatusBadge,
+  AnimatedFormFeedback,
+  InteractiveCheckbox,
+} from '../components/motion/MotionSystem';

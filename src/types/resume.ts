@@ -13,7 +13,109 @@ export type ResumeLanguageProficiency =
   | 'Fluent'
   | 'Native';
 
-export type ResumeTemplateStyle = 'professional' | 'modern' | 'minimal';
+export type ResumeTemplateId =
+  | 'classic-professional'
+  | 'modern-corporate'
+  | 'minimal-elegant'
+  | 'executive'
+  | 'technology'
+  | 'creative'
+  | 'modern-two-column'
+  | 'finance-accounting'
+  | 'graduate-fresher'
+  | 'sales-marketing'
+  | 'academic-cv'
+  | 'contemporary';
+
+// Backward compatibility alias for legacy template values
+export type ResumeTemplateStyle = ResumeTemplateId | 'professional' | 'modern' | 'minimal';
+
+export type ResumeFontFamily = 'inter' | 'manrope' | 'georgia' | 'merriweather' | 'mono';
+export type ResumeFontSize = 'compact' | 'standard' | 'comfortable';
+export type ResumeLineSpacing = 'tight' | 'normal' | 'relaxed';
+export type ResumeMarginSize = 'narrow' | 'standard' | 'wide';
+
+export type ResumeSkillCategoryKey =
+  | 'technical'
+  | 'professional'
+  | 'industry'
+  | 'tools';
+
+export type ResumeSectionKey =
+  | 'summary'
+  | 'experiences'
+  | 'education'
+  | 'skills'
+  | 'projects'
+  | 'certifications'
+  | 'languages'
+  | 'achievements'
+  | 'awards'
+  | 'training'
+  | 'volunteer'
+  | 'publications'
+  | 'memberships'
+  | 'customSections';
+
+export const DEFAULT_SECTION_ORDER: ResumeSectionKey[] = [
+  'summary',
+  'experiences',
+  'education',
+  'skills',
+  'projects',
+  'certifications',
+  'achievements',
+  'awards',
+  'training',
+  'volunteer',
+  'publications',
+  'memberships',
+  'languages',
+  'customSections',
+];
+
+export const DEFAULT_SECTION_TITLES: Record<ResumeSectionKey, string> = {
+  summary: 'Professional Summary',
+  experiences: 'Work Experience',
+  education: 'Education',
+  skills: 'Skills',
+  projects: 'Projects',
+  certifications: 'Certifications',
+  languages: 'Languages',
+  achievements: 'Key Achievements',
+  awards: 'Awards & Honors',
+  training: 'Training & Workshops',
+  volunteer: 'Volunteer Experience',
+  publications: 'Publications',
+  memberships: 'Professional Memberships',
+  customSections: 'Additional Information',
+};
+
+export interface ResumeDesignSettings {
+  templateId: ResumeTemplateId;
+  fontFamily: ResumeFontFamily;
+  fontSize: ResumeFontSize;
+  lineSpacing: ResumeLineSpacing;
+  margins: ResumeMarginSize;
+  accentColor: string;
+  sectionOrder: ResumeSectionKey[];
+  sectionTitles: Partial<Record<ResumeSectionKey, string>>;
+  hiddenSections: ResumeSectionKey[];
+  pageBreakBefore: ResumeSectionKey[];
+}
+
+export const DEFAULT_DESIGN_SETTINGS: ResumeDesignSettings = {
+  templateId: 'classic-professional',
+  fontFamily: 'inter',
+  fontSize: 'standard',
+  lineSpacing: 'normal',
+  margins: 'standard',
+  accentColor: '#102B4E',
+  sectionOrder: [...DEFAULT_SECTION_ORDER],
+  sectionTitles: {},
+  hiddenSections: [],
+  pageBreakBefore: [],
+};
 
 export interface ResumeExperience {
   id: string;
@@ -27,15 +129,18 @@ export interface ResumeExperience {
   endYear: string;
   currentlyWorking: boolean;
   responsibilities: string[];
+  achievements?: string[];
 }
 
 export interface ResumeEducation {
   id: string;
   degree: string;
+  fieldOfStudy?: string;
   institution: string;
   location: string;
   startDate: string;
   endDate: string;
+  grade?: string;
   description: string;
 }
 
@@ -64,9 +169,33 @@ export interface ResumeLanguage {
   proficiency: ResumeLanguageProficiency;
 }
 
+export interface ResumeSimpleEntry {
+  id: string;
+  title: string;
+  organization: string;
+  date: string;
+  description: string;
+  url?: string;
+}
+
+export interface ResumeCustomSection {
+  id: string;
+  title: string;
+  items: string[];
+}
+
+export interface ResumeSkillCategories {
+  technical: string[];
+  professional: string[];
+  industry: string[];
+  tools: string[];
+}
+
 export interface ResumeData {
   id: string;
   userId: string;
+  title?: string;
+  targetRole?: string;
   // Personal Info
   fullName: string;
   professionalTitle: string;
@@ -80,16 +209,68 @@ export interface ResumeData {
   showPhoto: boolean;
   // Professional Summary
   summary: string;
-  // Sections
+  // Core Sections
   experiences: ResumeExperience[];
   education: ResumeEducation[];
   skills: string[];
+  skillCategories?: ResumeSkillCategories;
+  // Additional Sections
   projects: ResumeProject[];
   certifications: ResumeCertification[];
   languages: ResumeLanguage[];
-  // Styling
+  achievements?: string[];
+  awards?: ResumeSimpleEntry[];
+  training?: ResumeSimpleEntry[];
+  volunteer?: ResumeSimpleEntry[];
+  publications?: ResumeSimpleEntry[];
+  memberships?: string[];
+  customSections?: ResumeCustomSection[];
+  // Design Settings (separated from content so template switches never alter content)
   template: ResumeTemplateStyle;
+  design?: ResumeDesignSettings;
+  createdAt?: string;
   updatedAt: string;
+}
+
+export function normalizeTemplateId(template?: ResumeTemplateStyle): ResumeTemplateId {
+  if (!template) return 'classic-professional';
+  if (template === 'professional') return 'classic-professional';
+  if (template === 'modern') return 'modern-corporate';
+  if (template === 'minimal') return 'minimal-elegant';
+  return template;
+}
+
+export function getResumeDesign(resume: ResumeData): ResumeDesignSettings {
+  const baseTemplate = normalizeTemplateId(resume.design?.templateId || resume.template);
+  return {
+    ...DEFAULT_DESIGN_SETTINGS,
+    ...(resume.design || {}),
+    templateId: baseTemplate,
+    sectionOrder:
+      resume.design?.sectionOrder && resume.design.sectionOrder.length > 0
+        ? resume.design.sectionOrder
+        : [...DEFAULT_SECTION_ORDER],
+    sectionTitles: {
+      ...(resume.design?.sectionTitles || {}),
+    },
+    hiddenSections: resume.design?.hiddenSections || [],
+    pageBreakBefore: resume.design?.pageBreakBefore || [],
+  };
+}
+
+export function flattenSkillCategories(
+  categories?: ResumeSkillCategories,
+  fallbackSkills: string[] = []
+): string[] {
+  if (!categories) return fallbackSkills;
+  const combined = [
+    ...(categories.technical || []),
+    ...(categories.professional || []),
+    ...(categories.industry || []),
+    ...(categories.tools || []),
+  ];
+  if (combined.length === 0) return fallbackSkills;
+  return Array.from(new Set(combined.map((s) => s.trim()).filter(Boolean)));
 }
 
 export interface ResumeCompletionBreakdown {
@@ -117,9 +298,6 @@ export interface ResumeCompletionBreakdown {
   };
 }
 
-/**
- * Calculates genuine resume completion percentage based on actual content
- */
 export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionBreakdown {
   let personalInfo = 0;
   let summary = 0;
@@ -133,7 +311,13 @@ export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionB
   if (resume.fullName.trim().length > 1) personalInfo += 6;
   if (resume.email.trim().length > 3 && resume.email.includes('@')) personalInfo += 6;
   if (resume.phone.trim().length >= 6) personalInfo += 4;
-  if (resume.professionalTitle.trim().length > 1 || (resume.city.trim() && resume.state.trim())) personalInfo += 4;
+  if (
+    resume.professionalTitle.trim().length > 1 ||
+    resume.city.trim().length > 0 ||
+    resume.state.trim().length > 0
+  ) {
+    personalInfo += 4;
+  }
 
   const isPersonalInfoComplete = personalInfo >= 16;
   if (!isPersonalInfoComplete) {
@@ -156,17 +340,24 @@ export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionB
 
   // Experience (max 25)
   if (resume.experiences.length >= 2) {
-    const hasDetailedBullets = resume.experiences.some((e) => e.responsibilities.some((b) => b.trim().length > 10));
+    const hasDetailedBullets = resume.experiences.some(
+      (e) =>
+        e.responsibilities.some((b) => b.trim().length > 10) ||
+        (e.achievements || []).some((a) => a.trim().length > 10)
+    );
     experience = hasDetailedBullets ? 25 : 20;
   } else if (resume.experiences.length === 1) {
     const exp = resume.experiences[0];
     if (exp.jobTitle.trim() && exp.companyName.trim()) {
-      experience = exp.responsibilities.length > 0 ? 18 : 12;
+      const hasBullets =
+        exp.responsibilities.some((r) => r.trim()) ||
+        (exp.achievements || []).some((a) => a.trim());
+      experience = hasBullets ? 18 : 12;
     }
   }
   const isExperienceComplete = experience >= 18;
   if (!isExperienceComplete) {
-    missingTips.push('Add work experience with key responsibilities');
+    missingTips.push('Add work experience with responsibilities or achievements');
   }
 
   // Education (max 15)
@@ -184,11 +375,12 @@ export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionB
   }
 
   // Skills (max 15)
-  if (resume.skills.length >= 5) {
+  const allSkills = flattenSkillCategories(resume.skillCategories, resume.skills);
+  if (allSkills.length >= 5) {
     skills = 15;
-  } else if (resume.skills.length >= 3) {
+  } else if (allSkills.length >= 3) {
     skills = 10;
-  } else if (resume.skills.length >= 1) {
+  } else if (allSkills.length >= 1) {
     skills = 5;
   }
   const isSkillsComplete = skills >= 10;
@@ -201,43 +393,80 @@ export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionB
   if (resume.projects.length > 0) addCount += 4;
   if (resume.certifications.length > 0) addCount += 3;
   if (resume.languages.length > 0) addCount += 3;
+  if ((resume.achievements || []).length > 0) addCount += 3;
+  if ((resume.awards || []).length > 0) addCount += 3;
+  if ((resume.training || []).length > 0) addCount += 2;
+  if ((resume.volunteer || []).length > 0) addCount += 2;
+  if ((resume.publications || []).length > 0) addCount += 3;
+  if ((resume.memberships || []).length > 0) addCount += 2;
+  if ((resume.customSections || []).length > 0) addCount += 3;
   additional = Math.min(10, addCount);
 
-  const isAdditionalComplete = additional >= 6;
+  const isAdditionalComplete = additional >= 4;
   if (!isAdditionalComplete) {
-    missingTips.push('Add projects, certifications, or languages');
+    missingTips.push('Optionally add projects, certifications, languages, or achievements');
   }
 
-  const total = Math.min(100, Math.max(0, personalInfo + summary + experience + education + skills + additional));
+  const total = Math.min(
+    100,
+    Math.max(0, personalInfo + summary + experience + education + skills + additional)
+  );
 
-  // Determine encouragement message based on progress bracket
   let encouragementMessage = '';
-  if (total >= 100) {
-    encouragementMessage = 'Outstanding! Your resume is 100% complete, ATS-optimized, and ready to impress employers.';
-  } else if (total >= 80) {
-    encouragementMessage = 'Almost there! Add a few finishing touches to make your resume truly stand out to top recruiters.';
+  if (total >= 95) {
+    encouragementMessage =
+      'Excellent — your resume is thorough, well-structured, and ready to export.';
+  } else if (total >= 75) {
+    encouragementMessage =
+      'Looking strong. Consider reviewing your summary and bullet wording before exporting.';
   } else if (total >= 50) {
-    encouragementMessage = 'Good momentum! Complete your experience and education to significantly boost your callback rates.';
+    encouragementMessage =
+      'Good progress. Completing experience, education, and skills gives recruiters clear context.';
   } else if (total >= 25) {
-    encouragementMessage = 'Off to a great start! Add your work experience and key skills to make your profile visible to recruiters.';
+    encouragementMessage =
+      'Great start. Keep filling in your background at your own pace.';
   } else {
-    encouragementMessage = 'Fill in your basic information and skills to build a strong foundation for your job applications.';
+    encouragementMessage =
+      'Start with your contact details and career background to build your resume.';
   }
 
-  // Find next best recommendation
   let nextRecommendation: { section: string; points: number; tip: string } | undefined;
   if (!isPersonalInfoComplete) {
-    nextRecommendation = { section: 'Personal Details', points: 20 - personalInfo, tip: 'Add full name, email, phone & city' };
+    nextRecommendation = {
+      section: 'Personal Details',
+      points: 20 - personalInfo,
+      tip: 'Add full name, email, phone & location',
+    };
   } else if (!isExperienceComplete) {
-    nextRecommendation = { section: 'Work Experience', points: 25 - experience, tip: 'Add your current or past job roles' };
+    nextRecommendation = {
+      section: 'Work Experience',
+      points: 25 - experience,
+      tip: 'Add your roles and key achievements',
+    };
   } else if (!isSkillsComplete) {
-    nextRecommendation = { section: 'Skills', points: 15 - skills, tip: 'Add 3–5 core industry skills' };
+    nextRecommendation = {
+      section: 'Skills',
+      points: 15 - skills,
+      tip: 'Add 3–5 core skills relevant to your target role',
+    };
   } else if (!isEducationComplete) {
-    nextRecommendation = { section: 'Education', points: 15 - education, tip: 'Add your university or degree' };
+    nextRecommendation = {
+      section: 'Education',
+      points: 15 - education,
+      tip: 'Add your degree and institution',
+    };
   } else if (!isSummaryComplete) {
-    nextRecommendation = { section: 'Summary', points: 15 - summary, tip: 'Add a 2–4 sentence career overview' };
+    nextRecommendation = {
+      section: 'Summary',
+      points: 15 - summary,
+      tip: 'Write a concise 2–4 sentence career summary',
+    };
   } else if (!isAdditionalComplete) {
-    nextRecommendation = { section: 'Projects & Certifications', points: 10 - additional, tip: 'Highlight personal projects or licenses' };
+    nextRecommendation = {
+      section: 'Additional Sections',
+      points: 10 - additional,
+      tip: 'Add projects, certifications, or languages if relevant',
+    };
   }
 
   return {
@@ -262,7 +491,16 @@ export function calculateResumeCompletion(resume: ResumeData): ResumeCompletionB
   };
 }
 
+export const EMPTY_SKILL_CATEGORIES: ResumeSkillCategories = {
+  technical: [],
+  professional: [],
+  industry: [],
+  tools: [],
+};
+
 export const EMPTY_RESUME: Omit<ResumeData, 'id' | 'userId'> = {
+  title: 'Untitled Resume',
+  targetRole: '',
   fullName: '',
   professionalTitle: '',
   email: '',
@@ -277,9 +515,19 @@ export const EMPTY_RESUME: Omit<ResumeData, 'id' | 'userId'> = {
   experiences: [],
   education: [],
   skills: [],
+  skillCategories: { ...EMPTY_SKILL_CATEGORIES },
   projects: [],
   certifications: [],
   languages: [],
-  template: 'professional',
+  achievements: [],
+  awards: [],
+  training: [],
+  volunteer: [],
+  publications: [],
+  memberships: [],
+  customSections: [],
+  template: 'classic-professional',
+  design: { ...DEFAULT_DESIGN_SETTINGS },
+  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

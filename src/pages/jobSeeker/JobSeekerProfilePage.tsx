@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { useApp } from '../../context/AppContext';
+import { AnimatedProgressBar, AnimatedTextSwap, AnimatedStatusBadge } from '../../lib/motion';
 import {
   User,
   Briefcase,
@@ -120,70 +122,79 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-[#F6F8FB] py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-100 text-[#004D40] text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40]" />
-              <span>Job Seeker Journey</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F47A24] mb-1">
+              Candidate Profile
+            </p>
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] tracking-tight">
               My Profile
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Manage your personal information, verified skills, and resume visible to employers.
+            <p className="text-xs sm:text-sm text-[#778397] mt-1">
+              Manage your personal information, verified skills, and resume visible to our recruitment specialists.
             </p>
           </div>
 
           <button
             onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-xl bg-white border border-[#E5EAF0] hover:border-[#102B4E]/35 text-[#102B4E] text-xs sm:text-sm font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
           >
             <span>Back to Dashboard</span>
           </button>
         </div>
 
-        {/* Profile Strength Card */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+        {/* Profile Strength Card with Live Animated Progress */}
+        <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900">Profile Strength: {strength}%</h2>
-                {strength === 100 ? (
-                  <span className="px-2 py-0.5 rounded-md bg-teal-100 text-[#004D40] text-xs font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> All Fields Complete
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-xs font-bold">
-                    {100 - strength}% to reach maximum visibility
-                  </span>
-                )}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-lg font-bold text-[#102B4E] tabular-nums">
+                  Profile Strength: {strength}%
+                </h2>
+                <AnimatedStatusBadge
+                  status={
+                    strength === 100
+                      ? 'All Fields Complete'
+                      : `${100 - strength}% to reach maximum visibility`
+                  }
+                  icon={strength === 100 ? <ShieldCheck className="w-3.5 h-3.5" /> : undefined}
+                  className={
+                    strength === 100
+                      ? 'px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold'
+                      : 'px-2.5 py-0.5 rounded-md bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/25 text-xs font-semibold'
+                  }
+                />
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Completed profiles receive up to 4x more direct interview invitations from verified recruiters.
+              <p className="text-xs text-[#778397] mt-1">
+                Completed profiles receive faster shortlisting across ABHI JOBS hiring mandates.
               </p>
             </div>
 
-            <button
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={handleSave}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-sm transition-all cursor-pointer self-start sm:self-auto"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer self-start sm:self-auto disabled:opacity-70"
             >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving...' : 'Save Profile'}</span>
-            </button>
+              <AnimatedTextSwap stateKey={isSaving ? 'saving' : 'save'}>
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? 'Saving...' : 'Save Profile'}</span>
+              </AnimatedTextSwap>
+            </motion.button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-[#004D40] h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${strength}%` }}
-            />
-          </div>
+          {/* Live Animated Progress Bar */}
+          <AnimatedProgressBar
+            percentage={strength}
+            showLabel={false}
+            label="Profile completion"
+            size="md"
+          />
         </div>
 
         {/* Profile Form */}

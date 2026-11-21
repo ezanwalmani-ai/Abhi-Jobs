@@ -57,7 +57,7 @@ export const HeroTextReveal: React.FC<HeroTextRevealProps> = ({
   className = '',
   justify,
   highlightWords = [],
-  highlightClassName = 'text-[#FF2B1A]',
+  highlightClassName = 'text-[#F47A24]',
   stagger,
   staggerMs,
   wordDelay,
@@ -148,7 +148,7 @@ export const HeroTextReveal: React.FC<HeroTextRevealProps> = ({
     ? {
         initial: 'hidden',
         whileInView: 'visible',
-        viewport: { once: true, amount: 0.2 },
+        viewport: { once: true, amount: 'some' },
       }
     : {
         initial: 'hidden',

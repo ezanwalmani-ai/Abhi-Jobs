@@ -1,13 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { Application, ApplicationStatus } from '../../types';
+import {
+  AnimatedStatusBadge,
+  AnimatedTextSwap,
+  HeroTextReveal,
+  EASE_PREMIUM,
+} from '../../lib/motion';
+import {
+  ApplicationProgressTracker,
+  normalizeApplicationStatus,
+  NormalizedStage,
+} from '../../components/applications/ApplicationProgressTracker';
 import {
   Briefcase,
   Building2,
   Clock,
   CheckCircle2,
   ChevronRight,
-  Filter,
   Search,
   ArrowRight,
   RotateCcw,
@@ -20,19 +31,60 @@ import {
   Ban,
   Eye,
   Award,
-  ThumbsUp,
   XCircle,
   X,
   UserCheck,
-  Sparkles,
   ArrowUpRight,
-  Info,
   Calendar,
+  Globe,
+  Users,
+  Phone,
+  Check,
 } from 'lucide-react';
 
 interface JobSeekerApplicationsPageProps {
   navigate: (route: string) => void;
   initialSelectedAppId?: string;
+}
+
+type FilterKey =
+  | 'All'
+  | 'Applied'
+  | 'Under Review'
+  | 'Shortlisted'
+  | 'Interview Scheduled'
+  | 'Selected'
+  | 'Not Selected';
+
+const FILTER_OPTIONS: Array<{ key: FilterKey; label: string }> = [
+  { key: 'All', label: 'All' },
+  { key: 'Applied', label: 'Applied' },
+  { key: 'Under Review', label: 'Under Review' },
+  { key: 'Shortlisted', label: 'Shortlisted' },
+  { key: 'Interview Scheduled', label: 'Interview Scheduled' },
+  { key: 'Selected', label: 'Selected' },
+  { key: 'Not Selected', label: 'Not Selected' },
+];
+
+function matchesFilterKey(status: ApplicationStatus | string, filter: FilterKey): boolean {
+  if (filter === 'All') return true;
+  const stage = normalizeApplicationStatus(status);
+  switch (filter) {
+    case 'Applied':
+      return stage === 'applied';
+    case 'Under Review':
+      return stage === 'under_review';
+    case 'Shortlisted':
+      return stage === 'shortlisted';
+    case 'Interview Scheduled':
+      return stage === 'interview_scheduled';
+    case 'Selected':
+      return stage === 'selected';
+    case 'Not Selected':
+      return stage === 'not_selected' || stage === 'withdrawn';
+    default:
+      return true;
+  }
 }
 
 export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps> = ({
@@ -41,54 +93,69 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
 }) => {
   const {
     currentUser,
-    currentRole,
     currentCandidate,
     applications,
     jobs,
+    companies,
     interviews,
     withdrawApplication,
     showToast,
   } = useApp();
 
-  // Page Lifecycle State (Loading & Error states)
+  // Page lifecycle state
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Search, Filter & Sort State
+  // Filter, search & sort state
+  const [filterStatus, setFilterStatus] = useState<FilterKey>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'match' | 'company'>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'company'>('newest');
 
-  // Modal / Detail state
+  // Detail & withdrawal modal state
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [withdrawTargetApp, setWithdrawTargetApp] = useState<Application | null>(null);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  // Initial load simulation with error safety
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 250);
+    }, 220);
     return () => clearTimeout(timer);
   }, []);
 
-  // Authenticated candidate application scoping
-  // ONLY applications belonging to the currently authenticated Job Seeker
+  // Close active modal on Escape key
+  useEffect(() => {
+    if (!selectedApp && !withdrawTargetApp) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (withdrawTargetApp) {
+          setWithdrawTargetApp(null);
+          setWithdrawReason('');
+        } else if (selectedApp) {
+          setSelectedApp(null);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedApp, withdrawTargetApp]);
+
+  // Strict ownership scoping: ONLY applications belonging to the authenticated candidate
   const myApplications = useMemo(() => {
     if (!currentUser) return [];
     return applications.filter((app) => {
-      // Strict ownership check: match candidate profile id, user id, or user email
-      const matchesCandidateId = currentCandidate && app.candidateId === currentCandidate.id;
+      const matchesCandidateId = Boolean(currentCandidate && app.candidateId === currentCandidate.id);
       const matchesUserId = app.candidateId === currentUser.id;
-      const matchesUserEmail =
-        currentUser?.email && app.candidateEmail?.toLowerCase() === currentUser.email.toLowerCase();
+      const matchesUserEmail = Boolean(
+        currentUser.email && app.candidateEmail?.toLowerCase() === currentUser.email.toLowerCase()
+      );
       return matchesCandidateId || matchesUserId || matchesUserEmail;
     });
   }, [applications, currentCandidate, currentUser]);
 
-  // If route provided an initialSelectedAppId, select that application
+  // Open specific application if passed via route
   useEffect(() => {
     if (initialSelectedAppId && myApplications.length > 0) {
       const found = myApplications.find((a) => a.id === initialSelectedAppId);
@@ -98,177 +165,169 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
     }
   }, [initialSelectedAppId, myApplications]);
 
-  // Synchronize selectedApp with updated applications (e.g. after status change or withdrawal)
+  // Keep selectedApp synced with live updates from context
   useEffect(() => {
-    if (selectedApp) {
-      const updated = myApplications.find((a) => a.id === selectedApp.id);
-      if (updated) {
-        setSelectedApp(updated);
-      }
+    if (!selectedApp) return;
+    const updated = myApplications.find((a) => a.id === selectedApp.id);
+    if (updated && updated !== selectedApp) {
+      setSelectedApp(updated);
     }
   }, [myApplications, selectedApp]);
 
-  // Calculate real summary statistics from actual user records ONLY
-  const stats = useMemo(() => {
-    const total = myApplications.length;
+  // Real summary statistics computed strictly from candidate's actual applications
+  const summaryStats = useMemo(() => {
+    let underReview = 0;
+    let shortlisted = 0;
 
-    const inReview = myApplications.filter((a) => {
-      const s = a.status.toLowerCase().replace(/\s+/g, '_');
-      return s === 'under_review' || s === 'review';
-    }).length;
+    myApplications.forEach((app) => {
+      const stage = normalizeApplicationStatus(app.status);
+      if (stage === 'under_review') underReview += 1;
+      if (stage === 'shortlisted') shortlisted += 1;
+    });
 
-    const shortlisted = myApplications.filter((a) => {
-      const s = a.status.toLowerCase().replace(/\s+/g, '_');
-      return s === 'shortlisted';
-    }).length;
-
-    const interview = myApplications.filter((a) => {
-      const s = a.status.toLowerCase().replace(/\s+/g, '_');
-      return s === 'interview' || s === 'interview_scheduled';
-    }).length;
-
-    const selected = myApplications.filter((a) => {
-      const s = a.status.toLowerCase().replace(/\s+/g, '_');
-      return s === 'selected' || s === 'hired';
-    }).length;
-
-    return { total, inReview, shortlisted, interview, selected };
+    return {
+      total: myApplications.length,
+      underReview,
+      shortlisted,
+    };
   }, [myApplications]);
 
-  // Filter and sort the applications list
-  const filteredApplications = useMemo(() => {
-    let list = [...myApplications];
+  // Live per-filter counts
+  const filterCounts = useMemo(() => {
+    const counts: Record<FilterKey, number> = {
+      All: myApplications.length,
+      Applied: 0,
+      'Under Review': 0,
+      Shortlisted: 0,
+      'Interview Scheduled': 0,
+      Selected: 0,
+      'Not Selected': 0,
+    };
 
-    // Status filter
-    if (filterStatus !== 'All') {
-      list = list.filter((a) => {
-        const normStatus = a.status.toLowerCase().replace(/\s+/g, '_');
-        const normFilter = filterStatus.toLowerCase().replace(/\s+/g, '_');
-        return normStatus === normFilter;
+    myApplications.forEach((app) => {
+      const stage = normalizeApplicationStatus(app.status);
+      if (stage === 'applied') counts.Applied += 1;
+      else if (stage === 'under_review') counts['Under Review'] += 1;
+      else if (stage === 'shortlisted') counts.Shortlisted += 1;
+      else if (stage === 'interview_scheduled') counts['Interview Scheduled'] += 1;
+      else if (stage === 'selected') counts.Selected += 1;
+      else if (stage === 'not_selected' || stage === 'withdrawn') counts['Not Selected'] += 1;
+    });
+
+    return counts;
+  }, [myApplications]);
+
+  // Filtered and sorted applications
+  const filteredApplications = useMemo(() => {
+    let list = myApplications.filter((app) => matchesFilterKey(app.status, filterStatus));
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((app) => {
+        const matchedJob = jobs.find((j) => j.id === app.jobId);
+        return (
+          app.jobTitle.toLowerCase().includes(q) ||
+          app.companyName.toLowerCase().includes(q) ||
+          (matchedJob?.location && matchedJob.location.toLowerCase().includes(q)) ||
+          (app.candidateLocation && app.candidateLocation.toLowerCase().includes(q))
+        );
       });
     }
 
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (a) =>
-          a.jobTitle.toLowerCase().includes(q) ||
-          a.companyName.toLowerCase().includes(q) ||
-          (a.candidateLocation && a.candidateLocation.toLowerCase().includes(q))
-      );
-    }
-
-    // Sorting
-    list.sort((a, b) => {
+    list = [...list].sort((a, b) => {
       if (sortBy === 'newest') {
         return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime();
       }
       if (sortBy === 'oldest') {
         return new Date(a.appliedDate).getTime() - new Date(b.appliedDate).getTime();
       }
-      if (sortBy === 'match') {
-        return (b.matchScore || 0) - (a.matchScore || 0);
-      }
-      if (sortBy === 'company') {
-        return a.companyName.localeCompare(b.companyName);
-      }
-      return 0;
+      return a.companyName.localeCompare(b.companyName);
     });
 
     return list;
-  }, [myApplications, filterStatus, searchQuery, sortBy]);
+  }, [myApplications, filterStatus, searchQuery, sortBy, jobs]);
 
-  // Status visual mapping with high-contrast text and icons
-  const getStatusConfig = (status: ApplicationStatus | string) => {
-    const norm = (status || '').toLowerCase().replace(/\s+/g, '_');
-    switch (norm) {
+  // Clean ABHI JOBS status visual config
+  const getStatusVisual = (status: ApplicationStatus | string) => {
+    const stage: NormalizedStage = normalizeApplicationStatus(status);
+    switch (stage) {
       case 'applied':
         return {
           label: 'Applied',
-          badgeBg: 'bg-blue-50 border-blue-200 text-blue-800',
-          dotBg: 'bg-blue-500',
+          badgeClass: 'bg-[#102B4E]/[0.06] border-[#102B4E]/15 text-[#102B4E]',
+          dotClass: 'bg-[#102B4E]',
           icon: Clock,
-          summaryNote: 'Application submitted and received by employer',
+          description: 'Your application has been submitted and received by our recruitment team.',
         };
       case 'under_review':
         return {
           label: 'Under Review',
-          badgeBg: 'bg-amber-50 border-amber-200 text-amber-800',
-          dotBg: 'bg-amber-500',
+          badgeClass: 'bg-[#F47A24]/10 border-[#F47A24]/25 text-[#B45309]',
+          dotClass: 'bg-[#F47A24]',
           icon: Eye,
-          summaryNote: 'Employer is screening your application and qualifications',
+          description: 'Our recruiters are currently reviewing your profile and qualifications.',
         };
       case 'shortlisted':
         return {
           label: 'Shortlisted',
-          badgeBg: 'bg-teal-50 border-teal-200 text-[#004D40]',
-          dotBg: 'bg-[#FF2B1A]',
-          icon: ThumbsUp,
-          summaryNote: 'Your profile has been shortlisted for next hiring stages',
+          badgeClass: 'bg-[#102B4E] border-[#102B4E] text-white',
+          dotClass: 'bg-[#F47A24]',
+          icon: Award,
+          description: 'You have been shortlisted for the next stage of the hiring process.',
         };
-      case 'interview':
       case 'interview_scheduled':
         return {
-          label: 'Interview',
-          badgeBg: 'bg-purple-50 border-purple-200 text-purple-800',
-          dotBg: 'bg-purple-500',
+          label: 'Interview Scheduled',
+          badgeClass: 'bg-indigo-50 border-indigo-200 text-indigo-800',
+          dotClass: 'bg-indigo-600',
           icon: Video,
-          summaryNote: 'An interview has been scheduled with the hiring team',
+          description: 'An interview has been scheduled. Check your interview details below.',
         };
       case 'selected':
-      case 'hired':
         return {
           label: 'Selected',
-          badgeBg: 'bg-[#004D40] border-teal-800 text-white',
-          dotBg: 'bg-white',
+          badgeClass: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+          dotClass: 'bg-emerald-600',
           icon: CheckCircle2,
-          summaryNote: 'Congratulations! You have been selected for this position',
+          description: 'Congratulations — you have been selected for this opportunity.',
         };
-      case 'rejected':
+      case 'not_selected':
         return {
-          label: 'Archived / Not Selected',
-          badgeBg: 'bg-slate-100 border-slate-200 text-slate-700',
-          dotBg: 'bg-slate-400',
+          label: 'Not Selected',
+          badgeClass: 'bg-slate-100 border-slate-200 text-slate-600',
+          dotClass: 'bg-slate-400',
           icon: XCircle,
-          summaryNote: 'Application archived or position filled by employer',
+          description: 'This application was not moved forward. Keep exploring other matching roles.',
         };
       case 'withdrawn':
         return {
           label: 'Withdrawn',
-          badgeBg: 'bg-slate-100 border-slate-300 text-slate-600',
-          dotBg: 'bg-slate-400',
+          badgeClass: 'bg-slate-100 border-slate-200 text-slate-600',
+          dotClass: 'bg-slate-400',
           icon: Ban,
-          summaryNote: 'You withdrew this application',
-        };
-      default:
-        return {
-          label: status,
-          badgeBg: 'bg-slate-50 border-slate-200 text-slate-700',
-          dotBg: 'bg-slate-400',
-          icon: Clock,
-          summaryNote: 'Application status update',
+          description: 'You withdrew this application from consideration.',
         };
     }
   };
 
-  // Safe handler for withdrawal
   const handleConfirmWithdraw = () => {
     if (!withdrawTargetApp) return;
     setIsWithdrawing(true);
 
     try {
-      const success = withdrawApplication(withdrawTargetApp.id, withdrawReason.trim() || undefined);
+      const success = withdrawApplication(
+        withdrawTargetApp.id,
+        withdrawReason.trim() || undefined
+      );
       if (success) {
+        if (selectedApp && selectedApp.id === withdrawTargetApp.id) {
+          setSelectedApp({
+            ...selectedApp,
+            status: 'Withdrawn',
+          });
+        }
         setWithdrawTargetApp(null);
         setWithdrawReason('');
-        // Also update selectedApp modal if currently viewing it
-        if (selectedApp && selectedApp.id === withdrawTargetApp.id) {
-          const refreshed = myApplications.find((a) => a.id === withdrawTargetApp.id);
-          if (refreshed) {
-            setSelectedApp({ ...refreshed, status: 'Withdrawn' as ApplicationStatus });
-          }
-        }
       }
     } catch {
       showToast('error', 'Withdrawal Failed', 'Could not withdraw application. Please try again.');
@@ -277,14 +336,13 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
     }
   };
 
-  // Safe refresh simulation with synchronization
   const handleRefresh = () => {
     setIsRefreshing(true);
     setHasError(false);
     setTimeout(() => {
       setIsRefreshing(false);
-      showToast('info', 'Applications Refreshed', 'Your application records are up to date.');
-    }, 400);
+      showToast('info', 'Up to Date', 'Your application statuses are synchronized.');
+    }, 350);
   };
 
   const handleRetry = () => {
@@ -292,112 +350,158 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
     setHasError(false);
     setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 280);
   };
 
-  // 1. Render unauthenticated state if user is not signed in
+  // Helper to resolve job, company, and interview details for an application
+  const resolveApplicationContext = (app: Application) => {
+    const matchedJob = jobs.find((j) => j.id === app.jobId);
+    const matchedCompany = companies.find(
+      (c) =>
+        (matchedJob && c.id === matchedJob.employerId) ||
+        c.companyName.toLowerCase() === app.companyName.toLowerCase()
+    );
+    const matchedInterview = interviews.find(
+      (i) =>
+        i.applicationId === app.id ||
+        (i.candidateId === app.candidateId && i.jobId === app.jobId)
+    );
+    const isJobClosed =
+      !matchedJob || matchedJob.status === 'closed' || matchedJob.status === 'archived';
+
+    const locationDisplay = matchedJob?.location
+      ? `${matchedJob.location}${matchedJob.workMode ? ` · ${matchedJob.workMode}` : ''}`
+      : matchedCompany?.location || app.candidateLocation || '';
+
+    const employmentTypeDisplay = matchedJob?.employmentType || '';
+
+    const stage = normalizeApplicationStatus(app.status);
+    const canWithdraw =
+      stage !== 'withdrawn' && stage !== 'not_selected' && stage !== 'selected';
+
+    return {
+      matchedJob,
+      matchedCompany,
+      matchedInterview,
+      isJobClosed,
+      locationDisplay,
+      employmentTypeDisplay,
+      canWithdraw,
+    };
+  };
+
+  // 1. Unauthenticated State
   if (!currentUser) {
     return (
-      <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 text-[#004D40] flex items-center justify-center mx-auto">
-            <UserCheck className="w-8 h-8 text-[#004D40]" />
+      <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-[#F6F8FB]">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+          className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 border border-[#E5EAF0] shadow-sm text-center space-y-6"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-[#102B4E]/5 border border-[#102B4E]/10 text-[#102B4E] flex items-center justify-center mx-auto">
+            <UserCheck className="w-7 h-7 text-[#102B4E]" />
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-[#004D40] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" />
-              <span>Job Seeker Authentication Required</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F47A24]/10 text-[#102B4E] text-xs font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#F47A24]" />
+              <span>Candidate Portal</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900">Sign In to Access Your Applications</h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Please sign in with your ABHI JOBS Job Seeker account to view your live applications, recruiter reviews, and scheduled interviews.
+            <h1 className="text-2xl font-extrabold text-[#102B4E] tracking-tight">
+              Sign in to view your applications
+            </h1>
+            <p className="text-sm text-[#778397] leading-relaxed">
+              Access your personal application tracker, real-time recruiter updates, and scheduled interviews securely.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 text-left space-y-1.5">
-            <div className="font-semibold text-slate-800">Your Personal Career Area:</div>
-            <p>
-              Applications on ABHI JOBS are strictly confidential and only visible to you and the verified employer you applied to.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-1">
             <button
               onClick={() => navigate('/login')}
-              className="w-full min-h-[44px] py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full min-h-[44px] py-3 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-sm font-bold shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Sign In as Job Seeker</span>
+              <span>Sign In</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate('/register/job-seeker')}
-              className="w-full min-h-[44px] py-2.5 rounded-xl bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full min-h-[44px] py-2.5 rounded-xl bg-white border border-[#E5EAF0] hover:border-[#102B4E]/30 text-[#253449] text-sm font-semibold transition-all cursor-pointer"
             >
-              <span>Create a Free Job Seeker Account</span>
+              Create Candidate Account
             </button>
             <button
               onClick={() => navigate('/jobs')}
-              className="text-xs text-[#004D40] hover:text-[#FF2B1A] font-semibold pt-1 cursor-pointer"
+              className="text-xs text-[#102B4E] hover:text-[#F47A24] font-semibold pt-1 transition-colors cursor-pointer"
             >
-              Browse Open Jobs Without Signing In →
+              Explore open jobs without signing in →
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  // 2. Render Error State if error occurred
+  // 2. Error State
   if (hasError) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
-            <AlertCircle className="w-8 h-8" />
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-[#F6F8FB]">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: EASE_PREMIUM }}
+          className="max-w-md w-full bg-white rounded-3xl p-8 border border-[#E5EAF0] shadow-sm text-center space-y-5"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-7 h-7" />
           </div>
-
-          <div className="space-y-2">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-              We couldn't load your applications right now.
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-extrabold text-[#102B4E]">
+              Unable to load your applications
             </h2>
-            <p className="text-sm text-slate-600">Please try again.</p>
+            <p className="text-sm text-[#778397]">
+              Something interrupted the connection. Please try again.
+            </p>
           </div>
-
           <button
             onClick={handleRetry}
-            className="w-full min-h-[44px] px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all cursor-pointer"
+            className="w-full min-h-[44px] px-6 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-bold shadow-xs transition-all cursor-pointer"
           >
-            Retry
+            Try Again
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  // 3. Render Skeleton Loading State
+  // 3. Loading Skeleton State
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-pulse">
-          {/* Header Skeleton */}
-          <div className="space-y-3 pb-2 border-b border-slate-200">
-            <div className="w-32 h-6 bg-slate-200 rounded-full" />
-            <div className="w-64 h-8 bg-slate-200 rounded-xl" />
-            <div className="w-96 max-w-full h-4 bg-slate-200 rounded" />
+      <div className="min-h-screen bg-[#F6F8FB] py-8 sm:py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7 animate-pulse">
+          <div className="space-y-2.5 pb-6 border-b border-[#E5EAF0]">
+            <div className="w-48 h-8 bg-slate-200/80 rounded-xl" />
+            <div className="w-80 max-w-full h-4 bg-slate-200/70 rounded-lg" />
           </div>
 
-          {/* Cards Skeleton */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-28 bg-white rounded-2xl border border-slate-200 p-4 space-y-3" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-28 bg-white rounded-2xl border border-[#E5EAF0] p-5"
+              />
             ))}
           </div>
 
-          {/* List Skeleton */}
+          <div className="h-14 bg-white rounded-2xl border border-[#E5EAF0]" />
+
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 bg-white rounded-2xl border border-slate-200 p-6" />
+              <div
+                key={i}
+                className="h-44 bg-white rounded-2xl border border-[#E5EAF0] p-6"
+              />
             ))}
           </div>
         </div>
@@ -406,800 +510,1017 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-          <div className="space-y-1 min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-[#004D40] text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40] shrink-0" />
-              <span>ABHI JOBS Career Portal</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              My Applications
-            </h1>
-            <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Track the opportunities you've applied for and stay updated on your application progress.
-            </p>
+    <div className="min-h-screen bg-[#F6F8FB] py-8 sm:py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7">
+        {/* 1. Page Introduction */}
+        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-[#E5EAF0]">
+          <div className="space-y-1.5 min-w-0">
+            <HeroTextReveal
+              as="h1"
+              text="My Applications"
+              highlightWords={['Applications']}
+              highlightClassName="text-[#F47A24]"
+              className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#102B4E] tracking-tight"
+              delay={0.04}
+            />
+            <motion.p
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.14, ease: EASE_PREMIUM }}
+              className="text-sm sm:text-base text-[#778397] max-w-2xl leading-relaxed"
+            >
+              Keep track of your job applications and stay updated on your career journey.
+            </motion.p>
           </div>
 
-          <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
             <button
+              type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-              title="Refresh application records"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#E5EAF0] bg-white hover:border-[#102B4E]/25 text-[#253449] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              title="Refresh applications"
             >
-              <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RotateCcw
+                className={`w-3.5 h-3.5 text-[#778397] ${isRefreshing ? 'animate-spin' : ''}`}
+              />
               <span className="hidden sm:inline">Refresh</span>
             </button>
 
             <button
+              type="button"
               onClick={() => navigate('/jobs')}
-              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
             >
               <Briefcase className="w-4 h-4 shrink-0" />
-              <span>Find Jobs</span>
+              <span>Explore Jobs</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Application Summary Cards (Real Records Only) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          
-          {/* Total Applications */}
-          <button
+        {/* 2. Application Summary — Three Compact Cards (Real Database Values) */}
+        <section
+          aria-label="Application summary"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4"
+        >
+          {/* Card 1: Total Applications */}
+          <motion.button
+            type="button"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.99 }}
+            transition={{ duration: 0.2, ease: EASE_PREMIUM }}
             onClick={() => setFilterStatus('All')}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            className={`group p-5 rounded-2xl border text-left transition-all cursor-pointer bg-white ${
               filterStatus === 'All'
-                ? 'bg-white border-[#004D40] shadow-xs ring-2 ring-teal-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                ? 'border-[#102B4E] ring-2 ring-[#102B4E]/10 shadow-xs'
+                : 'border-[#E5EAF0] hover:border-[#102B4E]/30 shadow-2xs'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Total Applications</span>
-              <FileText className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-[#778397]">Total Applications</span>
+              <div className="w-8 h-8 rounded-xl bg-[#102B4E]/[0.06] text-[#102B4E] flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-              {stats.total}
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-[#102B4E] tabular-nums">
+                {summaryStats.total}
+              </span>
+              <span className="text-xs text-[#778397]">submitted</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">All submitted roles</div>
-          </button>
+          </motion.button>
 
-          {/* Under Review */}
-          <button
+          {/* Card 2: Under Review */}
+          <motion.button
+            type="button"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.99 }}
+            transition={{ duration: 0.2, ease: EASE_PREMIUM }}
             onClick={() => setFilterStatus('Under Review')}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            className={`group p-5 rounded-2xl border text-left transition-all cursor-pointer bg-white ${
               filterStatus === 'Under Review'
-                ? 'bg-white border-amber-500 shadow-xs ring-2 ring-amber-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                ? 'border-[#F47A24] ring-2 ring-[#F47A24]/15 shadow-xs'
+                : 'border-[#E5EAF0] hover:border-[#F47A24]/40 shadow-2xs'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-amber-700">In Review</span>
-              <Eye className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-[#778397]">Under Review</span>
+              <div className="w-8 h-8 rounded-xl bg-[#F47A24]/10 text-[#F47A24] flex items-center justify-center shrink-0">
+                <Eye className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-2">
-              {stats.inReview}
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-[#102B4E] tabular-nums">
+                {summaryStats.underReview}
+              </span>
+              <span className="text-xs text-[#778397]">in screening</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">Screening in progress</div>
-          </button>
+          </motion.button>
 
-          {/* Shortlisted */}
-          <button
+          {/* Card 3: Shortlisted */}
+          <motion.button
+            type="button"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.99 }}
+            transition={{ duration: 0.2, ease: EASE_PREMIUM }}
             onClick={() => setFilterStatus('Shortlisted')}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            className={`group p-5 rounded-2xl border text-left transition-all cursor-pointer bg-white ${
               filterStatus === 'Shortlisted'
-                ? 'bg-white border-[#004D40] shadow-xs ring-2 ring-teal-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                ? 'border-[#102B4E] ring-2 ring-[#102B4E]/10 shadow-xs'
+                : 'border-[#E5EAF0] hover:border-[#102B4E]/30 shadow-2xs'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#004D40]">Shortlisted</span>
-              <Award className="w-4 h-4 text-[#004D40]" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-[#778397]">Shortlisted</span>
+              <div className="w-8 h-8 rounded-xl bg-[#102B4E] text-white flex items-center justify-center shrink-0">
+                <Award className="w-4 h-4 text-[#F47A24]" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#004D40] mt-2">
-              {stats.shortlisted}
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-[#102B4E] tabular-nums">
+                {summaryStats.shortlisted}
+              </span>
+              <span className="text-xs text-[#778397]">next stage</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">Recommended for next step</div>
-          </button>
+          </motion.button>
+        </section>
 
-          {/* Interviews */}
-          <button
-            onClick={() => setFilterStatus('Interview')}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-              filterStatus === 'Interview'
-                ? 'bg-white border-purple-500 shadow-xs ring-2 ring-purple-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-            }`}
+        {/* 3. Application Filters & Search Bar (Shown when candidate has applications) */}
+        {myApplications.length > 0 && (
+          <section
+            aria-label="Filter applications"
+            className="bg-white rounded-2xl border border-[#E5EAF0] p-4 shadow-2xs space-y-3.5"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-purple-700">Interviews</span>
-              <Video className="w-4 h-4 text-purple-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-purple-600 mt-2">
-              {stats.interview}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-1">Scheduled or conducted</div>
-          </button>
+            {/* Status Filter Chips with Animated Selection */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {FILTER_OPTIONS.map((option) => {
+                const isActive = filterStatus === option.key;
+                const count = filterCounts[option.key];
 
-          {/* Selected / Hired */}
-          <button
-            onClick={() => setFilterStatus('Selected')}
-            className={`col-span-2 sm:col-span-1 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-              filterStatus === 'Selected'
-                ? 'bg-white border-[#004D40] shadow-xs ring-2 ring-teal-600/20'
-                : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#004D40]">Selected</span>
-              <CheckCircle2 className="w-4 h-4 text-[#004D40]" />
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setFilterStatus(option.key)}
+                    aria-pressed={isActive}
+                    className={`relative min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-[#253449] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="applications-active-filter"
+                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                        className="absolute inset-0 rounded-xl bg-[#102B4E] shadow-xs"
+                      />
+                    )}
+                    <span className="relative z-10">{option.label}</span>
+                    {count > 0 && (
+                      <span
+                        className={`relative z-10 text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums ${
+                          isActive
+                            ? 'bg-[#F47A24] text-white'
+                            : 'bg-[#F6F8FB] text-[#778397] border border-[#E5EAF0]'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#004D40] mt-2">
-              {stats.selected}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-1">Offers and selections</div>
-          </button>
-        </div>
 
-        {/* Search, Filter & Sort Controls */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-2xs space-y-3">
-          <div className="flex flex-col md:flex-row items-center gap-3">
-            
-            {/* Search input */}
-            <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search applications by job title, company, or location..."
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-hidden focus:border-[#061226] transition-all placeholder:text-slate-400 min-h-[44px]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+            {/* Subtle Search + Sort Row */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2.5 border-t border-[#F0F3F7]">
+              <div className="abhi-search-shell relative flex-1 rounded-xl">
+                <Search className="w-4 h-4 text-[#778397] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by job title, company, or location..."
+                  className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-[#F6F8FB] rounded-xl border border-[#E5EAF0] text-[#253449] focus:bg-white focus:outline-hidden focus:border-[#102B4E] transition-all placeholder:text-[#94A3B8] min-h-[44px]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-[#778397] hover:text-[#102B4E] cursor-pointer rounded-lg"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <label htmlFor="applications-sort" className="text-xs font-medium text-[#778397] hidden md:inline">
+                  Sort:
+                </label>
+                <select
+                  id="applications-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'company')}
+                  className="w-full sm:w-auto px-3.5 py-2.5 text-xs sm:text-sm bg-[#F6F8FB] rounded-xl border border-[#E5EAF0] text-[#253449] font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                 >
-                  <X className="w-4 h-4" />
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="company">Company (A–Z)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active filter feedback bar */}
+            {(filterStatus !== 'All' || searchQuery.trim() !== '') && (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#778397]">
+                <AnimatedTextSwap
+                  stateKey={`${filteredApplications.length}-${myApplications.length}-${filterStatus}-${searchQuery}`}
+                  className="inline-flex items-center font-medium text-[#253449]"
+                >
+                  Showing {filteredApplications.length} of {myApplications.length}{' '}
+                  {myApplications.length === 1 ? 'application' : 'applications'}
+                </AnimatedTextSwap>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterStatus('All');
+                    setSearchQuery('');
+                  }}
+                  className="text-[#F47A24] hover:text-[#DE6816] font-semibold hover:underline cursor-pointer transition-colors"
+                >
+                  Clear filters
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+          </section>
+        )}
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-              <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:inline" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full md:w-auto px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
-              >
-                <option value="All">All Statuses ({stats.total})</option>
-                <option value="Applied">Applied</option>
-                <option value="Under Review">Under Review</option>
-                <option value="Shortlisted">Shortlisted</option>
-                <option value="Interview">Interview</option>
-                <option value="Selected">Selected</option>
-                <option value="Rejected">Archived / Rejected</option>
-                <option value="Withdrawn">Withdrawn</option>
-              </select>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap hidden lg:inline">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full md:w-auto px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
-              >
-                <option value="newest">Newest Applied First</option>
-                <option value="oldest">Oldest Applied First</option>
-                <option value="match">Highest Skill Match</option>
-                <option value="company">Company Name (A-Z)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Active Filter Pill */}
-          {(filterStatus !== 'All' || searchQuery) && (
-            <div className="flex items-center gap-2 pt-1 text-xs text-slate-600">
-              <span>Showing {filteredApplications.length} of {myApplications.length} applications</span>
-              <span className="text-slate-300">•</span>
-              <button
-                onClick={() => {
-                  setFilterStatus('All');
-                  setSearchQuery('');
-                }}
-                className="text-[#004D40] font-semibold hover:underline cursor-pointer"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Application List Container */}
-        <div className="space-y-4">
-          
-          {/* Empty State: Zero applications submitted overall */}
+        {/* 4. Applications List or Empty States */}
+        <section aria-label="Applications list" className="space-y-4">
           {myApplications.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xs">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-teal-50 border border-teal-100 text-[#004D40] mx-auto flex items-center justify-center">
-                <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-[#004D40]" />
+            /* Empty State — Candidate has not applied to any jobs */
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+              className="bg-white rounded-3xl border border-[#E5EAF0] px-6 py-12 sm:py-16 text-center shadow-2xs"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-[#102B4E]/[0.05] border border-[#102B4E]/10 text-[#102B4E] mx-auto flex items-center justify-center mb-5">
+                <Briefcase className="w-8 h-8 text-[#F47A24]" />
               </div>
 
               <div className="max-w-md mx-auto space-y-2">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-                  You haven't applied to any jobs yet.
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#102B4E] tracking-tight">
+                  No applications yet.
                 </h2>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Explore available opportunities and submit your first application.
+                <p className="text-sm text-[#778397] leading-relaxed">
+                  Your next opportunity could be waiting. Explore available jobs and apply when you find the right match.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <div className="mt-7 flex justify-center">
                 <button
+                  type="button"
                   onClick={() => navigate('/jobs')}
-                  className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="min-h-[46px] px-7 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-sm font-bold shadow-xs transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Search className="w-4 h-4" />
-                  <span>Find Jobs</span>
-                </button>
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <UserCheck className="w-4 h-4 text-slate-500" />
-                  <span>Complete My Profile</span>
+                  <span>Explore Jobs</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-
-              <div className="max-w-lg mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-left">
-                <div className="font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Info className="w-4 h-4 text-[#004D40]" />
-                  <span>How ABHI JOBS 1-Click Apply Works:</span>
-                </div>
-                <p className="leading-relaxed">
-                  When you submit an application from any published job opening on ABHI JOBS, your verified credentials and skills are directly delivered to the recruiter. You can return to this page anytime to check real-time evaluation updates and interview schedules.
-                </p>
-              </div>
-            </div>
+            </motion.div>
           ) : filteredApplications.length === 0 ? (
-            /* Empty State: Filters returned 0 matches */
-            <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center space-y-4 shadow-2xs">
-              <Search className="w-10 h-10 text-slate-300 mx-auto" />
+            /* Filtered Empty State */
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: EASE_PREMIUM }}
+              className="bg-white rounded-2xl border border-[#E5EAF0] p-10 text-center space-y-4 shadow-2xs"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] text-[#778397] mx-auto flex items-center justify-center">
+                <Search className="w-5 h-5" />
+              </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-900">No matching applications found</h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  We couldn't find any applications matching "{searchQuery}" with status "{filterStatus}".
+                <h3 className="text-base sm:text-lg font-bold text-[#102B4E]">
+                  No applications match this filter
+                </h3>
+                <p className="text-xs sm:text-sm text-[#778397] max-w-sm mx-auto">
+                  Try selecting another status filter or clearing your search query.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => {
-                  setSearchQuery('');
                   setFilterStatus('All');
+                  setSearchQuery('');
                 }}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               >
-                Reset Search &amp; Filters
+                Reset Filters
               </button>
-            </div>
+            </motion.div>
           ) : (
-            /* Populated Application Cards */
-            filteredApplications.map((app) => {
-              const statusCfg = getStatusConfig(app.status) || getStatusConfig('applied');
-              const StatusIcon = statusCfg?.icon || Clock;
+            /* Populated Responsive Application Cards */
+            <div className="space-y-4">
+              {filteredApplications.map((app, index) => {
+                const statusVisual = getStatusVisual(app.status);
+                const StatusIcon = statusVisual.icon;
+                const {
+                  matchedJob,
+                  matchedInterview,
+                  isJobClosed,
+                  locationDisplay,
+                  employmentTypeDisplay,
+                } = resolveApplicationContext(app);
 
-              // Check if matching job still exists in public registry
-              const matchedJob = jobs.find((j) => j.id === app.jobId);
-              const isJobClosedOrMissing =
-                !matchedJob || matchedJob.status === 'closed' || matchedJob.status === 'archived';
+                const latestTimeline =
+                  app.timeline && app.timeline.length > 0
+                    ? app.timeline[app.timeline.length - 1]
+                    : null;
+                const shortStatusNote = latestTimeline?.note || statusVisual.description;
 
-              // Check for scheduled interview on this application
-              const matchedInterview = interviews.find(
-                (i) => i.applicationId === app.id || (i.candidateId === app.candidateId && i.jobId === app.jobId)
-              );
+                return (
+                  <motion.article
+                    key={app.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: Math.min(index * 0.045, 0.25),
+                      ease: EASE_PREMIUM,
+                    }}
+                    className="group bg-white rounded-2xl border border-[#E5EAF0] hover:border-[#102B4E]/25 hover:shadow-md transition-all duration-200 p-5 sm:p-6 shadow-2xs space-y-5"
+                  >
+                    {/* Top Row: Role & Company Info + Current Status */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex items-start gap-3.5 min-w-0">
+                        <img
+                          src={
+                            app.companyLogo ||
+                            matchedJob?.companyLogo ||
+                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                              app.companyName
+                            )}&backgroundColor=102B4E&textColor=ffffff`
+                          }
+                          alt={app.companyName}
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover bg-[#F6F8FB] border border-[#E5EAF0] shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
 
-              // Latest timeline entry
-              const latestTimeline =
-                app.timeline && app.timeline.length > 0 ? app.timeline[app.timeline.length - 1] : null;
+                        <div className="min-w-0 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-base sm:text-lg font-bold text-[#102B4E] group-hover:text-[#081D36] transition-colors truncate">
+                              {app.jobTitle}
+                            </h2>
+                            {isJobClosed && (
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-[#E5EAF0] text-[#778397] text-[10px] font-semibold">
+                                Closed
+                              </span>
+                            )}
+                          </div>
 
-              // Can this application be withdrawn?
-              const canWithdraw =
-                app.status !== 'Withdrawn' &&
-                app.status !== 'Rejected' &&
-                app.status !== 'Selected' &&
-                app.status !== ('hired' as any);
-
-              // Location and employment type fallbacks
-              const locationDisplay =
-                matchedJob?.location
-                  ? `${matchedJob.location}${matchedJob.workMode ? ` (${matchedJob.workMode})` : ''}`
-                  : app.candidateLocation
-                  ? app.candidateLocation
-                  : 'Not available';
-
-              const employmentTypeDisplay = matchedJob?.employmentType || 'Not available';
-
-              return (
-                <div
-                  key={app.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs hover:shadow-sm transition-all space-y-4"
-                >
-                  {/* Top Row: Company & Job Overview + Status Badge */}
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      {/* Company Avatar / Logo */}
-                      <img
-                        src={
-                          app.companyLogo ||
-                          matchedJob?.companyLogo ||
-                          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                            app.companyName
-                          )}&backgroundColor=062e22`
-                        }
-                        alt={app.companyName}
-                        className="w-12 h-12 rounded-xl object-cover bg-slate-100 border border-slate-200 shrink-0"
-                        referrerPolicy="no-referrer"
-                      />
-
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
-                            {app.jobTitle}
-                          </h2>
-                          {isJobClosedOrMissing && (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold">
-                              Posting Closed
+                          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-[#778397]">
+                            <span className="font-semibold text-[#253449] inline-flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-[#778397] shrink-0" />
+                              <span className="truncate">{app.companyName}</span>
                             </span>
+
+                            {locationDisplay && (
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
+                                <span>{locationDisplay}</span>
+                              </span>
+                            )}
+
+                            {employmentTypeDisplay && (
+                              <span className="px-2 py-0.5 rounded-md bg-[#F6F8FB] border border-[#E5EAF0] text-[#253449] text-[11px] font-medium">
+                                {employmentTypeDisplay}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Badge + Applied Date */}
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0">
+                        <AnimatedStatusBadge
+                          statusKey={app.status}
+                          label={statusVisual.label}
+                          className={statusVisual.badgeClass}
+                          dotClassName={statusVisual.dotClass}
+                          icon={<StatusIcon className="w-3.5 h-3.5" />}
+                        />
+                        <span className="inline-flex items-center gap-1 text-[11px] text-[#778397]">
+                          <Calendar className="w-3 h-3 text-[#94A3B8] shrink-0" />
+                          <span>Applied {app.appliedDate}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Short Status Description & Optional Interview Callout */}
+                    <div className="space-y-2.5">
+                      <p className="text-xs sm:text-sm text-[#253449]/85 leading-relaxed">
+                        {shortStatusNote}
+                      </p>
+
+                      {matchedInterview && (
+                        <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                              <Video className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-[#102B4E]">
+                                {matchedInterview.type} Interview · {matchedInterview.status}
+                              </div>
+                              <div className="text-indigo-800">
+                                {matchedInterview.date} at {matchedInterview.time}
+                              </div>
+                            </div>
+                          </div>
+
+                          {matchedInterview.meetingLink && (
+                            <a
+                              href={matchedInterview.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="min-h-[36px] px-3 py-1.5 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white font-semibold inline-flex items-center gap-1.5 self-start sm:self-auto transition-colors shrink-0"
+                            >
+                              <span>Join Meeting</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
                           )}
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600">
-                          <span className="font-semibold text-slate-800 flex items-center gap-1">
-                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">{app.companyName}</span>
-                          </span>
-
-                          <span className="flex items-center gap-1 text-slate-500">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{locationDisplay}</span>
-                          </span>
-
-                          <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
-                            {employmentTypeDisplay}
-                          </span>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Status Badge + Score */}
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
-                      {app.matchScore && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-[#004D40] border border-teal-200">
-                          <Sparkles className="w-3 h-3 text-[#004D40]" />
-                          <span>{app.matchScore}% Match</span>
-                        </span>
-                      )}
+                    {/* 5. Compact Visual Progress Tracker */}
+                    <div className="pt-4 border-t border-[#F0F3F7]">
+                      <ApplicationProgressTracker
+                        status={app.status}
+                        timeline={app.timeline}
+                        compact
+                      />
+                    </div>
 
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusCfg.badgeBg}`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotBg}`} />
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        <span>{statusCfg.label}</span>
+                    {/* Card Footer Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#F0F3F7]">
+                      <span className="text-[11px] font-medium text-[#94A3B8]">
+                        Ref #{app.id}
                       </span>
-                    </div>
-                  </div>
-
-                  {/* Metadata Row: Application Date + Resume + Timeline note */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
-                    {/* Left details */}
-                    <div className="space-y-1.5 text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>
-                          Applied on <strong className="text-slate-700">{app.appliedDate}</strong>
-                        </span>
-                      </div>
 
                       <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">
-                          Resume:{' '}
-                          <span className="text-slate-700 font-medium">
-                            {app.resumeName || 'Verified Profile Resume'}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
+                        {!isJobClosed && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/jobs/${app.jobId}`)}
+                            className="min-h-[40px] px-3.5 py-2 rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/30 hover:bg-[#F6F8FB] text-[#253449] text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>View Job</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-[#778397]" />
+                          </button>
+                        )}
 
-                    {/* Right details: Latest timeline status note */}
-                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-slate-600 flex items-start gap-2">
-                      <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                      <div className="text-xs">
-                        <span className="font-semibold text-slate-800">
-                          {latestTimeline ? latestTimeline.status : app.status}:
-                        </span>{' '}
-                        <span>{latestTimeline?.note || statusCfg.summaryNote}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Scheduled Interview Banner (if present) */}
-                  {matchedInterview && (
-                    <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-purple-900">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                          <Video className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="font-bold">
-                            {matchedInterview.type} Interview Scheduled
-                          </div>
-                          <div className="text-purple-700">
-                            {matchedInterview.date} at {matchedInterview.time}
-                          </div>
-                        </div>
-                      </div>
-
-                      {matchedInterview.meetingLink && (
-                        <a
-                          href={matchedInterview.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="min-h-[36px] px-3 py-1.5 rounded-lg bg-purple-700 text-white font-semibold flex items-center gap-1.5 self-start sm:self-auto hover:bg-purple-800 transition-colors"
-                        >
-                          <span>Join Meeting</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Action Buttons Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                    <div className="text-xs text-slate-400 font-mono">
-                      Ref ID: #{app.id}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* View Application Details Modal */}
-                      <button
-                        onClick={() => setSelectedApp(app)}
-                        className="min-h-[40px] px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-slate-600" />
-                        <span>View Details</span>
-                      </button>
-
-                      {/* View Job Link */}
-                      {!isJobClosedOrMissing ? (
                         <button
-                          onClick={() => navigate(`/jobs/${app.jobId}`)}
-                          className="min-h-[40px] px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                          type="button"
+                          onClick={() => setSelectedApp(app)}
+                          className="min-h-[40px] px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] active:scale-[0.98] text-white text-xs font-semibold transition-all inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
                         >
-                          <span>View Job</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                          <span>View Details</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#F47A24]" />
                         </button>
-                      ) : (
-                        <span className="min-h-[40px] px-3.5 py-2 rounded-xl border border-slate-100 bg-slate-50 text-slate-400 text-xs font-medium inline-flex items-center">
-                          Job Closed
-                        </span>
-                      )}
-
-                      {/* Withdraw Application (if applicable) */}
-                      {canWithdraw && (
-                        <button
-                          onClick={() => setWithdrawTargetApp(app)}
-                          className="min-h-[40px] px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        >
-                          Withdraw
-                        </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })
+                  </motion.article>
+                );
+              })}
+            </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* ======================================================= */}
-      {/* 1. APPLICATION DETAILS MODAL                            */}
+      {/* 6. APPLICATION DETAILS MODAL                            */}
       {/* ======================================================= */}
-      {selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-8 max-h-[90vh] flex flex-col">
-            
-            {/* Modal Header */}
-            <div className="px-5 sm:px-6 py-4 sm:py-5 bg-[#061226] text-white flex items-start justify-between gap-4 shrink-0">
-              <div className="space-y-1 min-w-0">
-                <div className="inline-flex items-center gap-1.5 text-xs text-teal-200 font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                  <span>Confidential Job Seeker Record</span>
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold truncate">{selectedApp.jobTitle}</h2>
-                <p className="text-xs text-slate-300">
-                  {selectedApp.companyName} • Applied on {selectedApp.appliedDate}
-                </p>
-              </div>
+      <AnimatePresence>
+        {selectedApp && (() => {
+          const statusVisual = getStatusVisual(selectedApp.status);
+          const StatusIcon = statusVisual.icon;
+          const {
+            matchedJob,
+            matchedCompany,
+            matchedInterview,
+            isJobClosed,
+            locationDisplay,
+            employmentTypeDisplay,
+            canWithdraw,
+          } = resolveApplicationContext(selectedApp);
 
-              <button
-                onClick={() => setSelectedApp(null)}
-                className="p-2 rounded-full hover:bg-white/10 text-teal-200 hover:text-white transition-colors cursor-pointer shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
-                aria-label="Close modal"
+          return (
+            <motion.div
+              key="details-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSelectedApp(null)}
+              className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#081D36]/60 backdrop-blur-xs overflow-y-auto"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="application-details-title"
+            >
+              <motion.div
+                key="details-modal"
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.28, ease: EASE_PREMIUM }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#E5EAF0] overflow-hidden max-h-[90vh] flex flex-col"
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+                {/* Modal Header */}
+                <div className="px-5 sm:px-6 py-5 bg-[#102B4E] text-white flex items-start justify-between gap-4 shrink-0 border-b-2 border-[#F47A24]">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-white/75">
+                      <span>Application #{selectedApp.id}</span>
+                      <span>•</span>
+                      <span>Applied {selectedApp.appliedDate}</span>
+                    </div>
+                    <h2
+                      id="application-details-title"
+                      className="text-lg sm:text-xl font-extrabold tracking-tight truncate"
+                    >
+                      {selectedApp.jobTitle}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-white/80 font-medium truncate">
+                      {selectedApp.companyName}
+                      {locationDisplay ? ` · ${locationDisplay}` : ''}
+                    </p>
+                  </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-slate-700 text-xs sm:text-sm">
-              
-              {/* Current Status Banner */}
-              {(() => {
-                const cfg = getStatusConfig(selectedApp.status) || getStatusConfig('applied');
-                const Icon = cfg?.icon || Clock;
-                return (
-                  <div className={`p-4 rounded-2xl border flex items-start gap-3 ${cfg.badgeBg}`}>
-                    <Icon className="w-5 h-5 shrink-0 mt-0.5" />
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="font-bold text-sm">Status: {cfg.label}</div>
-                      <p className="text-xs opacity-90 leading-relaxed">{cfg.summaryNote}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedApp(null)}
+                    className="p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                    aria-label="Close application details"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Scrollable Body */}
+                <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-xs sm:text-sm text-[#253449]">
+                  {/* Current Status + Progress Tracker */}
+                  <div className="space-y-4">
+                    <div
+                      className={`p-4 rounded-2xl border flex items-start gap-3 ${statusVisual.badgeClass}`}
+                    >
+                      <StatusIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-bold text-sm">
+                          Current Status: {statusVisual.label}
+                        </div>
+                        <p className="text-xs opacity-90 leading-relaxed">
+                          {statusVisual.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0]">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-[#778397] mb-3">
+                        Application Progress
+                      </div>
+                      <ApplicationProgressTracker
+                        status={selectedApp.status}
+                        timeline={selectedApp.timeline}
+                      />
                     </div>
                   </div>
-                );
-              })()}
 
-              {/* Progress Timeline (ONLY real recorded events) */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Application Timeline
-                </h3>
+                  {/* Interview Information (Only if applicable) */}
+                  {matchedInterview && (
+                    <div className="space-y-2.5">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
+                        Interview Information
+                      </h3>
+                      <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 font-bold text-[#102B4E]">
+                            {matchedInterview.type === 'Phone' ? (
+                              <Phone className="w-4 h-4 text-indigo-600" />
+                            ) : matchedInterview.type === 'In-person' ? (
+                              <MapPin className="w-4 h-4 text-indigo-600" />
+                            ) : (
+                              <Video className="w-4 h-4 text-indigo-600" />
+                            )}
+                            <span>{matchedInterview.type} Interview</span>
+                          </div>
+                          <span className="px-2.5 py-0.5 rounded-full bg-white border border-indigo-200 text-indigo-700 text-[11px] font-semibold">
+                            {matchedInterview.status}
+                          </span>
+                        </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                  {selectedApp.timeline && selectedApp.timeline.length > 0 ? (
-                    selectedApp.timeline.map((event, idx) => (
-                      <div key={idx} className="flex items-start gap-3 relative">
-                        {idx < selectedApp.timeline.length - 1 && (
-                          <div className="absolute left-2.5 top-6 bottom-0 w-0.5 bg-slate-200" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                          <div>
+                            <span className="text-[#778397]">Date &amp; Time</span>
+                            <div className="font-semibold text-[#102B4E] mt-0.5">
+                              {matchedInterview.date} at {matchedInterview.time}
+                            </div>
+                          </div>
+                          {matchedInterview.location && (
+                            <div>
+                              <span className="text-[#778397]">Location</span>
+                              <div className="font-semibold text-[#102B4E] mt-0.5">
+                                {matchedInterview.location}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {matchedInterview.notes && (
+                          <p className="text-xs text-[#253449] bg-white/80 rounded-xl p-3 border border-indigo-100 leading-relaxed">
+                            {matchedInterview.notes}
+                          </p>
                         )}
-                        <div className="w-5 h-5 rounded-full bg-[#004D40] text-white flex items-center justify-center shrink-0 text-[10px] font-bold z-10">
-                          ✓
-                        </div>
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="font-bold text-slate-800 text-xs sm:text-sm">
-                            {event.status}
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            {event.date} {event.note ? `— ${event.note}` : ''}
-                          </div>
-                        </div>
+
+                        {matchedInterview.meetingLink && (
+                          <a
+                            href={matchedInterview.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-h-[40px] px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>Open Interview Link</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-xs text-slate-500">
-                      Application submitted on {selectedApp.appliedDate}. Awaiting employer review.
                     </div>
                   )}
-                </div>
-              </div>
 
-              {/* Job Information Section (if job exists in registry) */}
-              {(() => {
-                const matchedJob = jobs.find((j) => j.id === selectedApp.jobId);
-                const isClosed = !matchedJob || matchedJob.status === 'closed' || matchedJob.status === 'archived';
-
-                return (
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      Job Details
+                  {/* Status History (Actual recorded timeline events) */}
+                  <div className="space-y-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
+                      Status History
                     </h3>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="p-4 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-4">
+                      {selectedApp.timeline && selectedApp.timeline.length > 0 ? (
+                        selectedApp.timeline.map((event, idx) => {
+                          const isLatest = idx === selectedApp.timeline.length - 1;
+                          return (
+                            <div key={`${event.status}-${event.date}-${idx}`} className="flex items-start gap-3 relative">
+                              {idx < selectedApp.timeline.length - 1 && (
+                                <div className="absolute left-[9px] top-5 bottom-[-18px] w-0.5 bg-[#DCE3EC]" />
+                              )}
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 z-10 mt-0.5 ${
+                                  isLatest
+                                    ? 'bg-[#F47A24] text-white'
+                                    : 'bg-[#102B4E] text-white'
+                                }`}
+                              >
+                                <Check className="w-3 h-3 stroke-[2.5]" />
+                              </div>
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-bold text-[#102B4E] text-xs sm:text-sm">
+                                    {event.status}
+                                  </span>
+                                  <span className="text-[11px] text-[#778397]">
+                                    {event.date}
+                                  </span>
+                                </div>
+                                {event.note && (
+                                  <p className="text-xs text-[#253449]/80 leading-relaxed">
+                                    {event.note}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-[#102B4E] text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <div className="font-bold text-[#102B4E] text-xs sm:text-sm">
+                              Application Submitted
+                            </div>
+                            <p className="text-xs text-[#778397]">
+                              Submitted on {selectedApp.appliedDate}. Awaiting recruiter review.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Job Information */}
+                  <div className="space-y-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
+                      Job Information
+                    </h3>
+
+                    <div className="p-4 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div>
-                          <span className="text-slate-400 font-medium">Location:</span>
-                          <div className="font-semibold text-slate-800 mt-0.5">
-                            {matchedJob?.location
-                              ? `${matchedJob.location} (${matchedJob.workMode || 'Standard'})`
-                              : 'Not available'}
+                          <span className="text-[#778397]">Role Title</span>
+                          <div className="font-semibold text-[#102B4E] mt-0.5">
+                            {selectedApp.jobTitle}
                           </div>
                         </div>
+
                         <div>
-                          <span className="text-slate-400 font-medium">Employment Type:</span>
-                          <div className="font-semibold text-slate-800 mt-0.5">
-                            {matchedJob?.employmentType || 'Not available'}
+                          <span className="text-[#778397]">Location</span>
+                          <div className="font-semibold text-[#102B4E] mt-0.5">
+                            {locationDisplay || 'Not specified'}
                           </div>
                         </div>
+
+                        {employmentTypeDisplay && (
+                          <div>
+                            <span className="text-[#778397]">Employment Type</span>
+                            <div className="font-semibold text-[#102B4E] mt-0.5">
+                              {employmentTypeDisplay}
+                            </div>
+                          </div>
+                        )}
+
+                        {matchedJob?.experienceLevel && (
+                          <div>
+                            <span className="text-[#778397]">Experience Level</span>
+                            <div className="font-semibold text-[#102B4E] mt-0.5">
+                              {matchedJob.experienceLevel}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {matchedJob?.description && (
-                        <div className="pt-2 border-t border-slate-200/80 text-xs space-y-1">
-                          <span className="text-slate-400 font-medium">Role Overview:</span>
-                          <p className="text-slate-700 leading-relaxed line-clamp-4">
-                            {matchedJob.description}
+                      {matchedJob?.overview && (
+                        <div className="pt-2.5 border-t border-[#E5EAF0] space-y-1 text-xs">
+                          <span className="text-[#778397] font-medium">Role Overview</span>
+                          <p className="text-[#253449] leading-relaxed line-clamp-4">
+                            {matchedJob.overview}
                           </p>
                         </div>
                       )}
 
-                      {isClosed && (
-                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                          <strong>Note:</strong> This job posting is no longer active or has closed. Your application history and submitted materials are preserved here.
+                      {isJobClosed && (
+                        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                          This job opening is no longer accepting new applications. Your application record remains preserved here.
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })()}
 
-              {/* Candidate Submission Information */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Submitted Information
-                </h3>
+                  {/* Company Information */}
+                  <div className="space-y-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
+                      Company Information
+                    </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-[11px] text-slate-500 font-semibold">Applicant Name</span>
-                    <div className="font-bold text-slate-800">{selectedApp.candidateName}</div>
-                    <div className="text-xs text-slate-500">{selectedApp.candidateEmail}</div>
-                  </div>
+                    <div className="p-4 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            selectedApp.companyLogo ||
+                            matchedCompany?.logo ||
+                            matchedJob?.companyLogo ||
+                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                              selectedApp.companyName
+                            )}&backgroundColor=102B4E&textColor=ffffff`
+                          }
+                          alt={selectedApp.companyName}
+                          className="w-10 h-10 rounded-xl object-cover bg-white border border-[#E5EAF0] shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-bold text-[#102B4E] text-sm truncate">
+                            {selectedApp.companyName}
+                          </div>
+                          {matchedCompany?.industry && (
+                            <div className="text-xs text-[#778397] truncate">
+                              {matchedCompany.industry}
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-[11px] text-slate-500 font-semibold">Resume Document</span>
-                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-[#004D40] shrink-0" />
-                      <span className="truncate">{selectedApp.resumeName || 'Verified ABHI JOBS Profile'}</span>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#778397]">
+                        {matchedCompany?.location && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-[#94A3B8]" />
+                            <span>{matchedCompany.location}</span>
+                          </span>
+                        )}
+                        {matchedCompany?.companySize && (
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-[#94A3B8]" />
+                            <span>{matchedCompany.companySize}</span>
+                          </span>
+                        )}
+                        {matchedCompany?.website && (
+                          <a
+                            href={
+                              matchedCompany.website.startsWith('http')
+                                ? matchedCompany.website
+                                : `https://${matchedCompany.website}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[#102B4E] hover:text-[#F47A24] font-medium transition-colors"
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                            <span>Website</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {matchedCompany?.about && (
+                        <p className="text-xs text-[#253449]/85 leading-relaxed line-clamp-3 pt-1 border-t border-[#E5EAF0]">
+                          {matchedCompany.about}
+                        </p>
+                      )}
                     </div>
-                    <div className="text-[11px] text-slate-400">Attached to application</div>
+                  </div>
+
+                  {/* Application Submission Summary */}
+                  <div className="space-y-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
+                      Your Submission
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3.5 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-1">
+                        <span className="text-[11px] font-semibold text-[#778397]">
+                          Application Date
+                        </span>
+                        <div className="font-bold text-[#102B4E]">{selectedApp.appliedDate}</div>
+                        <div className="text-[#778397] truncate">{selectedApp.candidateEmail}</div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-1">
+                        <span className="text-[11px] font-semibold text-[#778397]">
+                          Attached Resume
+                        </span>
+                        <div className="font-bold text-[#102B4E] flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-[#F47A24] shrink-0" />
+                          <span className="truncate">
+                            {selectedApp.resumeName || 'Verified ABHI JOBS Profile'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedApp.coverNote && (
+                      <div className="p-3.5 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-1 text-xs">
+                        <span className="text-[11px] font-semibold text-[#778397]">
+                          Cover Note
+                        </span>
+                        <p className="text-[#253449] whitespace-pre-wrap leading-relaxed">
+                          {selectedApp.coverNote}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {selectedApp.coverNote && (
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-[11px] text-slate-500 font-semibold">Cover Note / Message</span>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                      {selectedApp.coverNote}
-                    </p>
-                  </div>
-                )}
-              </div>
+                {/* Modal Footer */}
+                <div className="px-5 sm:px-6 py-4 bg-[#F6F8FB] border-t border-[#E5EAF0] flex flex-wrap items-center justify-between gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedApp(null)}
+                    className="min-h-[44px] px-4 py-2.5 rounded-xl border border-[#E5EAF0] bg-white hover:border-[#102B4E]/30 text-[#253449] text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
 
-              {/* Matched Skills */}
-              {selectedApp.candidateSkills && selectedApp.candidateSkills.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Highlighted Candidate Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedApp.candidateSkills.map((skill, i) => (
-                      <span
-                        key={i}
-                        className="px-2.5 py-1 rounded-lg bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-medium"
+                  <div className="flex flex-wrap items-center gap-2">
+                    {canWithdraw && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = selectedApp;
+                          setSelectedApp(null);
+                          setWithdrawTargetApp(target);
+                        }}
+                        className="min-h-[44px] px-4 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
                       >
-                        {skill}
-                      </span>
-                    ))}
+                        Withdraw
+                      </button>
+                    )}
+
+                    {!isJobClosed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate(`/jobs/${selectedApp.jobId}`);
+                          setSelectedApp(null);
+                        }}
+                        className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>View Job Opening</span>
+                        <ArrowUpRight className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
 
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
-              <button
-                onClick={() => setSelectedApp(null)}
-                className="min-h-[44px] px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-white transition-colors cursor-pointer"
-              >
-                Close Details
-              </button>
-
-              <div className="flex items-center gap-2">
-                {selectedApp.status !== 'Withdrawn' &&
-                  selectedApp.status !== 'Rejected' &&
-                  selectedApp.status !== 'Selected' && (
-                    <button
-                      onClick={() => {
-                        const target = selectedApp;
-                        setSelectedApp(null);
-                        setWithdrawTargetApp(target);
-                      }}
-                      className="min-h-[44px] px-4 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
-                    >
-                      Withdraw Application
-                    </button>
-                  )}
-
-                {(() => {
-                  const matchedJob = jobs.find((j) => j.id === selectedApp.jobId);
-                  const isClosed = !matchedJob || matchedJob.status === 'closed' || matchedJob.status === 'archived';
-
-                  if (isClosed) return null;
-
-                  return (
-                    <button
-                      onClick={() => {
-                        navigate(`/jobs/${selectedApp.jobId}`);
-                        setSelectedApp(null);
-                      }}
-                      className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
-                    >
-                      <span>View Full Job Opening</span>
-                      <ArrowUpRight className="w-4 h-4" />
-                    </button>
-                  );
-                })()}
+      {/* ======================================================= */}
+      {/* WITHDRAW CONFIRMATION MODAL                             */}
+      {/* ======================================================= */}
+      <AnimatePresence>
+        {withdrawTargetApp && (
+          <motion.div
+            key="withdraw-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => {
+              setWithdrawTargetApp(null);
+              setWithdrawReason('');
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#081D36]/60 backdrop-blur-xs"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdraw-dialog-title"
+          >
+            <motion.div
+              key="withdraw-modal"
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={{ duration: 0.24, ease: EASE_PREMIUM }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-[calc(100vw-2rem)] sm:max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#E5EAF0] space-y-5"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-6 h-6" />
               </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ======================================================= */}
-      {/* 2. WITHDRAW CONFIRMATION MODAL                          */}
-      {/* ======================================================= */}
-      {withdrawTargetApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
-              <AlertCircle className="w-6 h-6" />
-            </div>
+              <div className="text-center space-y-1.5">
+                <h2
+                  id="withdraw-dialog-title"
+                  className="text-lg font-bold text-[#102B4E]"
+                >
+                  Withdraw Application?
+                </h2>
+                <p className="text-xs sm:text-sm text-[#778397] leading-relaxed">
+                  Are you sure you want to withdraw your application for{' '}
+                  <strong className="text-[#102B4E]">{withdrawTargetApp.jobTitle}</strong> at{' '}
+                  <strong className="text-[#102B4E]">{withdrawTargetApp.companyName}</strong>?
+                </p>
+              </div>
 
-            <div className="text-center space-y-1.5">
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Withdraw Application?</h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Are you sure you want to withdraw your application for{' '}
-                <strong className="text-slate-900">"{withdrawTargetApp.jobTitle}"</strong> at{' '}
-                <strong className="text-slate-900">{withdrawTargetApp.companyName}</strong>?
-              </p>
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#253449]">
+                  Reason for withdrawing (optional)
+                </label>
+                <textarea
+                  value={withdrawReason}
+                  onChange={(e) => setWithdrawReason(e.target.value)}
+                  placeholder="E.g., Accepted another offer or no longer available."
+                  rows={3}
+                  className="w-full p-3 text-xs sm:text-sm bg-[#F6F8FB] rounded-xl border border-[#E5EAF0] text-[#253449] focus:bg-white focus:outline-hidden focus:border-[#102B4E]"
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Reason for withdrawing (optional):
-              </label>
-              <textarea
-                value={withdrawReason}
-                onChange={(e) => setWithdrawReason(e.target.value)}
-                placeholder="E.g., Accepted another offer, relocation, or no longer available."
-                rows={3}
-                className="w-full p-3 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-hidden focus:border-rose-500"
-              />
-            </div>
-
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed">
-              <strong>Please Note:</strong> Withdrawing will notify the employer and remove your candidacy from this role's active hiring pipeline.
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setWithdrawTargetApp(null);
-                  setWithdrawReason('');
-                }}
-                className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmWithdraw}
-                disabled={isWithdrawing}
-                className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {isWithdrawing ? 'Withdrawing...' : 'Confirm Withdrawal'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWithdrawTargetApp(null);
+                    setWithdrawReason('');
+                  }}
+                  className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-[#E5EAF0] text-[#253449] text-xs sm:text-sm font-semibold hover:bg-[#F6F8FB] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmWithdraw}
+                  disabled={isWithdrawing}
+                  className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isWithdrawing ? 'Withdrawing...' : 'Confirm Withdrawal'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
