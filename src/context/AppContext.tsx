@@ -13,6 +13,8 @@ import {
   NotificationItem,
   SupportTicket,
   AnalyticsEvent,
+  HiringEnquiry,
+  CourseEnquiry,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -20,6 +22,7 @@ import {
   INITIAL_COMPANIES,
   INITIAL_JOBS,
   INITIAL_COURSES,
+  INITIAL_HIRING_ENQUIRIES,
   INITIAL_APPLICATIONS,
   INITIAL_INTERVIEWS,
   INITIAL_NOTIFICATIONS,
@@ -58,6 +61,8 @@ interface AppContextType {
   notifications: NotificationItem[];
   supportTickets: SupportTicket[];
   analyticsEvents: AnalyticsEvent[];
+  hiringEnquiries: HiringEnquiry[];
+  courseEnquiries: CourseEnquiry[];
   savedJobIds: string[];
   recentlyViewedJobIds: string[];
   toasts: ToastInfo[];
@@ -146,6 +151,12 @@ interface AppContextType {
   submitSupportTicket: (ticket: Omit<SupportTicket, 'id' | 'createdAt'>) => void;
   updateSupportTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
   exportCsvReport: (type: 'candidates' | 'employers' | 'jobs' | 'applications') => void;
+
+  // Recruitment Consultancy Actions (Hiring & Course Enquiries + Recruiter Notes)
+  submitHiringEnquiry: (data: Omit<HiringEnquiry, 'id' | 'status' | 'createdAt'>) => HiringEnquiry;
+  updateHiringEnquiry: (enquiryId: string, updates: Partial<HiringEnquiry>) => void;
+  submitCourseEnquiry: (data: Omit<CourseEnquiry, 'id' | 'createdAt'>) => CourseEnquiry;
+  addApplicationNote: (applicationId: string, noteText: string) => void;
 
   // General Actions
   trackEvent: (eventName: string, metadata?: Record<string, any>, targetId?: string) => void;
@@ -307,6 +318,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return stored ? JSON.parse(stored) : INITIAL_ANALYTICS;
     } catch {
       return INITIAL_ANALYTICS;
+    }
+  });
+
+  const [hiringEnquiries, setHiringEnquiries] = useState<HiringEnquiry[]>(() => {
+    try {
+      const stored = localStorage.getItem('abhijobs_hiringEnquiries');
+      return stored ? JSON.parse(stored) : INITIAL_HIRING_ENQUIRIES;
+    } catch {
+      return INITIAL_HIRING_ENQUIRIES;
+    }
+  });
+
+  const [courseEnquiries, setCourseEnquiries] = useState<CourseEnquiry[]>(() => {
+    try {
+      const stored = localStorage.getItem('abhijobs_courseEnquiries');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
     }
   });
 
@@ -578,6 +607,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('abhijobs_notifications', JSON.stringify(notifications));
   }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem('abhijobs_hiringEnquiries', JSON.stringify(hiringEnquiries));
+  }, [hiringEnquiries]);
+
+  useEffect(() => {
+    localStorage.setItem('abhijobs_courseEnquiries', JSON.stringify(courseEnquiries));
+  }, [courseEnquiries]);
 
   useEffect(() => {
     localStorage.setItem('abhijobs_users', JSON.stringify(users));
@@ -1687,6 +1724,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('info', 'Support Ticket Updated', `Ticket status set to ${status}.`);
   };
 
+  // Recruitment Consultancy: Hiring Enquiry Submission
+  const submitHiringEnquiry = (
+    data: Omit<HiringEnquiry, 'id' | 'status' | 'createdAt'>
+  ): HiringEnquiry => {
+    const newEnquiry: HiringEnquiry = {
+      ...data,
+      id: 'enq-' + Date.now(),
+      status: 'New',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setHiringEnquiries((prev) => [newEnquiry, ...prev]);
+
+    const adminNotif: NotificationItem = {
+      id: 'notif-' + Date.now(),
+      userId: 'user-admin-demo',
+      targetRole: 'admin',
+      title: 'New Hiring Enquiry Received',
+      message: `${data.companyName} submitted a requirement for ${data.jobTitle} (${data.vacancies} ${data.vacancies === 1 ? 'vacancy' : 'vacancies'}).`,
+      type: 'job',
+      timestamp: 'Just now',
+      read: false,
+      link: '/admin',
+    };
+    setNotifications((prev) => [adminNotif, ...prev]);
+    showToast('success', 'Requirement Submitted', 'Our recruitment consultancy team will contact you shortly.');
+    trackEvent('hiring_enquiry_submitted', { companyName: data.companyName, jobTitle: data.jobTitle });
+    return newEnquiry;
+  };
+
+  const updateHiringEnquiry = (enquiryId: string, updates: Partial<HiringEnquiry>) => {
+    setHiringEnquiries((prev) =>
+      prev.map((e) => (e.id === enquiryId ? { ...e, ...updates } : e))
+    );
+    showToast('success', 'Enquiry Updated', 'Hiring requirement details have been saved.');
+  };
+
+  const submitCourseEnquiry = (
+    data: Omit<CourseEnquiry, 'id' | 'createdAt'>
+  ): CourseEnquiry => {
+    const newEnquiry: CourseEnquiry = {
+      ...data,
+      id: 'cenq-' + Date.now(),
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setCourseEnquiries((prev) => [newEnquiry, ...prev]);
+
+    const adminNotif: NotificationItem = {
+      id: 'notif-' + Date.now(),
+      userId: 'user-admin-demo',
+      targetRole: 'admin',
+      title: 'New Course Enquiry',
+      message: `${data.name} enquired about "${data.courseTitle}".`,
+      type: 'system',
+      timestamp: 'Just now',
+      read: false,
+      link: '/admin',
+    };
+    setNotifications((prev) => [adminNotif, ...prev]);
+    showToast('success', 'Course Enquiry Submitted', 'Training advisor will follow up with syllabus and batch dates.');
+    trackEvent('course_enquiry_submitted', { courseId: data.courseId });
+    return newEnquiry;
+  };
+
+  const addApplicationNote = (applicationId: string, noteText: string) => {
+    const trimmed = noteText.trim();
+    if (!trimmed) return;
+    const note = {
+      id: 'note-' + Date.now(),
+      author: currentUser?.name || 'Recruitment Team',
+      text: trimmed,
+      createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    };
+    setApplications((prev) =>
+      prev.map((app) =>
+        app.id === applicationId
+          ? { ...app, internalNotes: [note, ...(app.internalNotes || [])] }
+          : app
+      )
+    );
+    showToast('success', 'Internal Note Added', 'Recruiter note saved to application record.');
+  };
+
   const exportCsvReport = (type: 'candidates' | 'employers' | 'jobs' | 'applications') => {
     let headers: string[] = [];
     let rows: string[][] = [];
@@ -1821,6 +1940,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notifications,
         supportTickets,
         analyticsEvents,
+        hiringEnquiries,
+        courseEnquiries,
         savedJobIds,
         recentlyViewedJobIds,
         toasts,
@@ -1864,6 +1985,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitSupportTicket,
         updateSupportTicketStatus,
         exportCsvReport,
+        submitHiringEnquiry,
+        updateHiringEnquiry,
+        submitCourseEnquiry,
+        addApplicationNote,
         trackEvent,
         markNotificationAsRead,
         markAllNotificationsAsRead,

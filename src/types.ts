@@ -151,6 +151,11 @@ export interface Course {
   level: 'Foundational' | 'Intermediate' | 'Advanced';
   modules: number;
   duration: string;
+  learningMode?: 'Online' | 'Live Online' | 'Hybrid' | 'Classroom' | 'Self-Paced';
+  fees?: string;
+  imageUrl?: string;
+  outcomes?: string[];
+  curriculum?: string[];
   badge?: string;
   description: string;
   instructor?: string;
@@ -165,14 +170,23 @@ export type ApplicationStatus =
   | 'Under Review'
   | 'Shortlisted'
   | 'Interview'
+  | 'Interview Scheduled'
   | 'Selected'
   | 'Rejected'
+  | 'Not Selected'
   | 'Withdrawn';
 
 export interface ApplicationTimelineEvent {
   status: ApplicationStatus;
   date: string;
   note?: string;
+}
+
+export interface InternalNote {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
 }
 
 export interface Application {
@@ -193,9 +207,38 @@ export interface Application {
   coverNote?: string;
   status: ApplicationStatus;
   appliedDate: string;
+  appliedAt?: string;
   timeline: ApplicationTimelineEvent[];
+  internalNotes?: InternalNote[];
   interviewId?: string;
   matchScore?: number;
+}
+
+export interface HiringEnquiry {
+  id: string;
+  companyName: string;
+  contactPerson: string;
+  businessEmail: string;
+  phoneNumber: string;
+  jobTitle: string;
+  vacancies: number;
+  jobLocation: string;
+  additionalRequirements: string;
+  status: 'New' | 'Contacted' | 'In Progress' | 'Fulfilled' | 'Closed';
+  assignedRecruiter?: string;
+  internalNotes?: string;
+  createdAt: string;
+}
+
+export interface CourseEnquiry {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  name: string;
+  email: string;
+  phone: string;
+  message?: string;
+  createdAt: string;
 }
 
 export interface Interview {

@@ -14,6 +14,7 @@ import {
   Clock,
   User,
 } from 'lucide-react';
+import { VerifiedSkillIcon } from './brand/BrandIcons';
 
 interface CandidateCardProps {
   candidate: CandidateProfile;
@@ -48,8 +49,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                 loading="lazy"
               />
             ) : (
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 text-[#061226] border border-[#E4E7EC] flex items-center justify-center font-bold text-lg group-hover:scale-[1.02] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
-                {candidate.name.charAt(0)}
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#061226] to-[#0B192C] text-white border border-[#061226] flex flex-col items-center justify-center font-bold text-base relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
+                <span className="relative z-10 font-sora">{candidate.name.charAt(0)}</span>
+                <div className="absolute -bottom-1 -right-1 opacity-20">
+                  <VerifiedSkillIcon size={28} colorMode="white" />
+                </div>
               </div>
             )}
             <span

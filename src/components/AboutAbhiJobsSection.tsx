@@ -9,23 +9,29 @@ import {
   ArrowRight,
   Search,
   Calendar,
+  Palette,
 } from 'lucide-react';
 import { AbhiJobsLogo } from './AbhiJobsLogo';
+import { BrandPattern } from './brand/BrandPattern';
+import { BrandIdentityShowcase } from './brand/BrandIdentityShowcase';
 
 interface AboutAbhiJobsSectionProps {
   navigate: (route: string) => void;
 }
 
 export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navigate }) => {
-  const [activeTab, setActiveTab] = useState<'talent' | 'employers'>('talent');
+  const [activeTab, setActiveTab] = useState<'talent' | 'employers' | 'brand'>('talent');
 
   return (
     <section
       id="about"
       aria-label="About ABHI JOBS"
-      className="py-16 sm:py-24 bg-white border-b border-slate-200"
+      className="relative overflow-hidden py-16 sm:py-24 bg-white border-b border-slate-200"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Brand Identity Background Texture */}
+      <BrandPattern pattern="faceted-grid" theme="light-slate" opacity={0.5} />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -129,8 +135,28 @@ export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navi
                 <Building2 className="w-4 h-4 text-red-600 shrink-0" />
                 <span>For Employers</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('brand')}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'brand'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Palette className="w-4 h-4 text-red-600 shrink-0" />
+                <span>Brand Identity</span>
+              </button>
             </div>
           </div>
+
+          {/* Tab Content: Brand Identity & Design System */}
+          {activeTab === 'brand' && (
+            <div className="bg-white/95 backdrop-blur-sm p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-sm animate-fadeIn">
+              <BrandIdentityShowcase />
+            </div>
+          )}
 
           {/* Tab Content: Job Seekers */}
           {activeTab === 'talent' && (

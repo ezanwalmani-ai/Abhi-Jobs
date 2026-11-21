@@ -212,7 +212,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+    <div className="min-h-screen bg-[#F6F8FB] py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
       <div className="max-w-md w-full mx-auto space-y-8">
         <ScrollReveal direction="up" distance={16}>
           <div className="text-center space-y-3">
@@ -222,23 +222,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               className="inline-block cursor-pointer focus:outline-hidden hover:opacity-90 transition-opacity"
               aria-label="ABHI JOBS Home"
             >
-              <AbhiJobsLogo variant="horizontal" theme="color" size="lg" className="mx-auto" />
+              <AbhiJobsLogo variant="vertical" theme="color" size="lg" showTagline={true} className="mx-auto" />
             </button>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40]" />
-              <span>Unified Career Authentication</span>
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] tracking-tight pt-2">
               Sign in to ABHI JOBS
             </h1>
-            <p className="text-sm text-slate-600">
-              Access your applications, company postings, and dashboard.
+            <p className="text-sm text-[#778397]">
+              Access your candidate profile, applications, resume builder, and dashboard.
             </p>
           </div>
         </ScrollReveal>
 
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl space-y-6">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5EAF0] shadow-sm space-y-6">
             {successMessage && (
               <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-[#004D40] font-semibold flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
@@ -411,7 +407,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   whileTap={{ scale: 0.99 }}
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-6 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -435,52 +431,52 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               )}
             </form>
 
-            {/* Quick Demo Test Accounts */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
-                Quick 1-Click Demo Sign-In
+            {/* Quick Access for Testing Candidate & Internal Recruiter Portals */}
+            <div className="p-3.5 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-2">
+              <div className="text-[11px] font-semibold text-[#778397] uppercase tracking-wider text-center">
+                Quick Demo Access
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickLogin('jobseeker@abhijobs.careers')}
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-red-600 hover:bg-red-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  className="px-3 py-2 rounded-lg bg-white border border-[#E5EAF0] hover:border-[#F47A24] text-[#102B4E] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <User className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span>Job Seeker Demo</span>
+                  <User className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
+                  <span>Candidate Account</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin('employer@abhijobs.careers')}
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-blue-600 hover:bg-blue-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  onClick={() => handleQuickLogin('admin@abhijobs.careers')}
+                  className="px-3 py-2 rounded-lg bg-white border border-[#E5EAF0] hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <Building2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-                  <span>Employer Demo</span>
+                  <Building2 className="w-3.5 h-3.5 text-[#102B4E] shrink-0" />
+                  <span>Recruiter / Admin</span>
                 </button>
               </div>
             </div>
 
-            {/* New Account Links */}
-            <div className="pt-4 border-t border-slate-100 space-y-2 text-center text-xs text-slate-600">
+            {/* New Account & Hiring Links */}
+            <div className="pt-4 border-t border-[#E5EAF0] space-y-2 text-center text-xs text-[#778397]">
               <div>
-                <span>Looking for career opportunities? </span>
+                <span>New to ABHI JOBS? </span>
                 <button
                   type="button"
                   onClick={() => navigate('/register/job-seeker')}
-                  className="font-bold text-[#FF2B1A] hover:underline cursor-pointer"
+                  className="font-semibold text-[#F47A24] hover:underline cursor-pointer"
                 >
-                  Register as Job Seeker
+                  Create Candidate Account
                 </button>
               </div>
               <div>
-                <span>Hiring talent for your organization? </span>
+                <span>Looking to hire for your company? </span>
                 <button
                   type="button"
-                  onClick={() => navigate('/register/employer')}
-                  className="font-bold text-blue-800 hover:underline cursor-pointer"
+                  onClick={() => navigate('/hire-talent')}
+                  className="font-semibold text-[#102B4E] hover:underline cursor-pointer"
                 >
-                  Register as Employer
+                  Submit a Hiring Requirement
                 </button>
               </div>
             </div>

@@ -6,6 +6,7 @@ import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import { RouteProtectionNotice } from './components/RouteProtectionNotice';
 import { GlobalLoadingFeedback } from './components/GlobalLoadingFeedback';
+import { CinematicBrandIntro, INTRO_SESSION_KEY } from './components/CinematicBrandIntro';
 import { EASE_PREMIUM } from './lib/motion';
 import { supabase } from './supabaseClient';
 import { auth as firebaseAuth, onAuthStateChanged as onFirebaseAuthStateChanged } from './lib/firebase';
@@ -21,6 +22,7 @@ import { HowItWorksPage } from './pages/HowItWorksPage';
 import { ContactPage } from './pages/ContactPage';
 import { TermsPage } from './pages/TermsPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { HireTalentPage } from './pages/HireTalentPage';
 
 // Job Seeker Portal Pages
 import { JobSeekerDashboard } from './pages/jobSeeker/JobSeekerDashboard';
@@ -66,6 +68,27 @@ function AppContent() {
   const [routeParams, setRouteParams] = useState<{ id?: string; query?: string; location?: string; email?: string; registered?: string }>({});
   const { currentRole, currentUser, logout, isGlobalLoading, globalLoadingMessage } = useApp();
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
+
+  // Show full-screen cinematic brand intro on initial homepage entry during this session
+  // Respects prefers-reduced-motion and does not block deep links
+  const [showBrandIntro, setShowBrandIntro] = useState<boolean>(() => {
+    try {
+      const path = window.location.pathname || '/';
+      if (path !== '/' && path !== '') return false;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return false;
+      }
+      return sessionStorage.getItem(INTRO_SESSION_KEY) !== 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleReplayIntro = () => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    setCurrentRoute('/');
+    setShowBrandIntro(true);
+  };
 
   // Route navigation helper with visual feedback transition
   const navigate = (path: string) => {
@@ -144,6 +167,11 @@ function AppContent() {
       route === '/register/job-seeker' ||
       route === '/register/employer' ||
       route === '/employer/register' ||
+      route === '/hire-talent' ||
+      route === '/employers' ||
+      route === '/for-employers' ||
+      route === '/learning' ||
+      route === '/job-seeker/upskill' ||
       route === '/jobs' ||
       route.startsWith('/jobs/') ||
       route.startsWith('/job/') ||
@@ -152,9 +180,12 @@ function AppContent() {
       route === '/about' ||
       route === '/contact' ||
       route === '/privacy' ||
+      route === '/privacy-policy' ||
       route === '/terms' ||
+      route === '/terms-and-conditions' ||
       route === '/how-it-works' ||
-      route === '/password-checker-demo'
+      route === '/password-checker-demo' ||
+      route.startsWith('/admin')
     ) {
       return false;
     }
@@ -168,13 +199,11 @@ function AppContent() {
       route.startsWith('/profile') ||
       route === '/resume' ||
       route.startsWith('/settings') ||
-      route.startsWith('/learning') ||
       route === '/career-tools' ||
       route.startsWith('/employer') ||
       route === '/employer-dashboard' ||
       route === '/company' ||
-      route === '/my-jobs' ||
-      route.startsWith('/admin')
+      route === '/my-jobs'
     );
   };
 
@@ -273,8 +302,8 @@ function AppContent() {
       }
       if (!isSessionActive && hasValidSession === null) {
         return (
-          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-            <div className="w-8 h-8 border-3 border-[#004D40] border-t-transparent rounded-full animate-spin" />
+          <div className="min-h-screen bg-[#F6F8FB] flex items-center justify-center p-6">
+            <div className="w-8 h-8 border-3 border-[#102B4E] border-t-transparent rounded-full animate-spin" />
           </div>
         );
       }
@@ -364,13 +393,12 @@ function AppContent() {
       case '/how-abhi-jobs-works':
         return <HowItWorksPage navigate={navigate} />;
 
+      case '/hire-talent':
       case '/employers':
       case '/for-employers':
-        return isEmployer ? (
-          <EmployerDashboard navigate={navigate} />
-        ) : (
-          <EmployerRegisterPage navigate={navigate} />
-        );
+      case '/register/employer':
+      case '/employer/register':
+        return <HireTalentPage navigate={navigate} />;
 
       case '/contact':
         return <ContactPage navigate={navigate} />;
@@ -395,9 +423,6 @@ function AppContent() {
       case '/register':
         return <JobSeekerRegisterPage navigate={navigate} />;
 
-      case '/register/employer':
-        return <EmployerRegisterPage navigate={navigate} />;
-
       case '/password-checker':
       case '/security/password-checker':
         return <PasswordCheckerDemoPage navigate={navigate} />;
@@ -417,7 +442,9 @@ function AppContent() {
 
       // Job Seeker Portal Dedicated Routes
       case '/dashboard':
-        return isEmployer ? (
+        return isAdmin ? (
+          <AdminDashboard navigate={navigate} />
+        ) : isEmployer ? (
           <EmployerDashboard navigate={navigate} />
         ) : (
           <JobSeekerDashboard navigate={navigate} defaultTab="overview" />
@@ -509,7 +536,13 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F8FA] text-[#101828] font-sans selection:bg-[#FF2B1A] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F6F8FB] text-[#253449] font-sans selection:bg-[#102B4E] selection:text-white">
+      {/* Full-Screen Cinematic Brand Introduction (Initial Session Entry) */}
+      <CinematicBrandIntro
+        isOpen={showBrandIntro}
+        onComplete={() => setShowBrandIntro(false)}
+      />
+
       {/* Global Progress Bar & Asynchronous Operation Overlay */}
       <GlobalLoadingFeedback
         isNavigating={isNavigating}
@@ -537,7 +570,7 @@ function AppContent() {
       </main>
 
       {/* Bottom Footer */}
-      <Footer navigate={navigate} />
+      <Footer navigate={navigate} onReplayIntro={handleReplayIntro} />
 
       {/* Global Toast Notifications */}
       <ToastContainer />

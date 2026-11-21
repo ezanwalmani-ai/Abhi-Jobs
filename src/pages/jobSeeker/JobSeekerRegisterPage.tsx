@@ -241,7 +241,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
           <div className="space-y-3 pt-2">
             <button
               onClick={() => navigate('/job-seeker/onboarding')}
-              className="w-full py-3.5 px-6 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              className="w-full py-3.5 px-6 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
               <span>Complete My Profile</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -249,7 +249,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
 
             <button
               onClick={() => navigate('/jobs')}
-              className="w-full py-3 px-6 rounded-xl bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold text-sm transition-all cursor-pointer"
+              className="w-full py-3 px-6 rounded-xl bg-white border border-[#E5EAF0] hover:border-[#102B4E]/40 text-[#253449] font-semibold text-sm transition-all cursor-pointer"
             >
               Explore Jobs First
             </button>
@@ -260,7 +260,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 sm:py-14 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+    <div className="min-h-screen bg-[#F6F8FB] py-8 sm:py-14 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
       <ScrollProgress />
       <div className="max-w-xl w-full mx-auto space-y-8">
         {/* Header Title Section */}
@@ -274,26 +274,26 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
             >
               <AbhiJobsLogo variant="horizontal" theme="color" size="lg" className="mx-auto" />
             </button>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-[#061226] text-xs font-semibold">
-              <span>Job Seeker Sign Up</span>
+            <div className="text-xs font-semibold uppercase tracking-widest text-[#F47A24]">
+              Candidate Registration
             </div>
             <TextMaskReveal
               as="h1"
-              className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight"
+              className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#102B4E] tracking-tight"
               delay={0.1}
               duration={0.65}
             >
               Create your ABHI JOBS account
             </TextMaskReveal>
-            <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto leading-relaxed">
-              Create your account in minutes and discover opportunities matched to your skills and career goals.
+            <p className="text-sm sm:text-base text-[#778397] max-w-md mx-auto leading-relaxed">
+              Create your account in minutes and discover curated career opportunities with ABHI JOBS.
             </p>
           </div>
         </ScrollReveal>
 
         {/* Card Container */}
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl space-y-6">
+          <div className="bg-white rounded-2xl p-6 sm:p-10 border border-[#E5EAF0] shadow-sm space-y-6">
           {/* General Error Banner */}
           {errors.general && (
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2.5">
@@ -488,22 +488,22 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                   onClick={() => setExperienceLevel('experienced')}
                   className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3.5 cursor-pointer ${
                     experienceLevel === 'experienced'
-                      ? 'border-[#FF2B1A] bg-red-50/30 ring-2 ring-[#FF2B1A]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                      ? 'border-[#F47A24] bg-[#F47A24]/5 ring-2 ring-[#F47A24]'
+                      : 'border-[#E5EAF0] hover:border-[#102B4E]/40 bg-white'
                   }`}
                 >
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       experienceLevel === 'experienced'
-                        ? 'bg-[#061226] text-white'
-                        : 'bg-slate-100 text-slate-600'
+                        ? 'bg-[#102B4E] text-white'
+                        : 'bg-[#F6F8FB] text-[#778397]'
                     }`}
                   >
                     <Briefcase className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900">I'm Experienced</div>
-                    <div className="text-xs text-slate-500 mt-0.5">I have worked in a corporate or professional role</div>
+                    <div className="text-sm font-bold text-[#102B4E]">I'm Experienced</div>
+                    <div className="text-xs text-[#778397] mt-0.5">I have worked in a corporate or professional role</div>
                   </div>
                 </button>
 
@@ -512,22 +512,22 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                   onClick={() => setExperienceLevel('fresher')}
                   className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3.5 cursor-pointer ${
                     experienceLevel === 'fresher'
-                      ? 'border-[#FF2B1A] bg-red-50/30 ring-2 ring-[#FF2B1A]'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                      ? 'border-[#F47A24] bg-[#F47A24]/5 ring-2 ring-[#F47A24]'
+                      : 'border-[#E5EAF0] hover:border-[#102B4E]/40 bg-white'
                   }`}
                 >
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       experienceLevel === 'fresher'
-                        ? 'bg-[#061226] text-white'
-                        : 'bg-slate-100 text-slate-600'
+                        ? 'bg-[#102B4E] text-white'
+                        : 'bg-[#F6F8FB] text-[#778397]'
                     }`}
                   >
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900">I'm a Fresher</div>
-                    <div className="text-xs text-slate-500 mt-0.5">I am a student or recent graduate seeking first job</div>
+                    <div className="text-sm font-bold text-[#102B4E]">I'm a Fresher</div>
+                    <div className="text-xs text-[#778397] mt-0.5">I am a student or recent graduate seeking first job</div>
                   </div>
                 </button>
               </div>
@@ -678,9 +678,9 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
               <button
                 type="submit"
                 disabled={!termsAccepted || isSubmitting}
-                className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 ${
+                className={`w-full min-h-[46px] py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 ${
                   termsAccepted && !isSubmitting
-                    ? 'bg-[#FF2B1A] hover:bg-[#e02213] text-white hover:shadow-lg active:scale-[0.99] cursor-pointer'
+                    ? 'bg-[#F47A24] hover:bg-[#DE6816] text-white hover:shadow-md active:scale-[0.99] cursor-pointer'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200'
                 }`}
               >
@@ -691,7 +691,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                   </>
                 ) : (
                   <>
-                    <span>Register</span>
+                    <span>Create Account</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -700,8 +700,8 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
 
             {/* Status & Error messages under the form */}
             {confirmationMessage && (
-              <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] text-sm font-semibold text-center mt-3 flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#004D40] shrink-0" />
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold text-center mt-3 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
                 <span>{confirmationMessage}</span>
               </div>
             )}
@@ -713,16 +713,28 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
             )}
           </form>
 
-          {/* 6. Existing Account */}
-          <div className="pt-4 border-t border-slate-100 text-center text-xs sm:text-sm text-slate-600">
-            <span>Already have an account? </span>
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="font-bold text-[#061226] hover:underline cursor-pointer"
-            >
-              Sign In
-            </button>
+          {/* 6. Existing Account & Hiring Enquiry */}
+          <div className="pt-4 border-t border-[#E5EAF0] text-center space-y-2 text-xs sm:text-sm text-[#778397]">
+            <div>
+              <span>Already have an account? </span>
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="font-bold text-[#102B4E] hover:underline cursor-pointer"
+              >
+                Sign In
+              </button>
+            </div>
+            <div>
+              <span>Looking to hire talent for your company? </span>
+              <button
+                type="button"
+                onClick={() => navigate('/hire-talent')}
+                className="font-semibold text-[#F47A24] hover:underline cursor-pointer"
+              >
+                Submit a Hiring Requirement
+              </button>
+            </div>
           </div>
         </div>
       </ScrollReveal>

@@ -18,6 +18,7 @@ import {
   Eye,
   Check,
 } from 'lucide-react';
+import { EnterpriseMonolithIcon } from './brand/BrandIcons';
 
 interface JobCardProps {
   job: Job;
@@ -100,30 +101,28 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
                 loading="lazy"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 border border-[#E4E7EC] flex items-center justify-center shrink-0">
-                <Building2 className="w-6 h-6 text-slate-400" />
+              <div className="w-12 h-12 rounded-xl bg-[#061226]/5 border border-[#E4E7EC] flex items-center justify-center shrink-0">
+                <EnterpriseMonolithIcon size={24} colorMode="palette" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-slate-700 truncate max-w-[160px] sm:max-w-[200px]">
+              <div className="flex items-center gap-2 flex-wrap text-xs text-[#778397]">
+                <span className="font-semibold text-[#253449] truncate max-w-[180px] sm:max-w-[220px]">
                   {job.companyName || 'Company'}
                 </span>
                 {job.isVerifiedCompany && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-50 text-[#004D40] text-[10px] font-bold border border-teal-200/60">
-                    <CheckCircle2 className="w-3 h-3 text-[#004D40]" />
-                    Verified
-                  </span>
-                )}
-                {job.featured && (
-                  <span className="px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
-                    Featured
-                  </span>
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="inline-flex items-center gap-1 text-[#102B4E] font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#F47A24]" />
+                      Verified Mandate
+                    </span>
+                  </>
                 )}
               </div>
               <h3
                 onClick={() => onViewDetails(job.id)}
-                className="text-base sm:text-lg font-bold text-[#101828] group-hover:text-[#FF2B1A] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
+                className="font-display text-base sm:text-lg font-bold text-[#102B4E] group-hover:text-[#F47A24] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
                 title={job.title}
               >
                 {job.title}
@@ -131,117 +130,101 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             </div>
           </div>
 
-          {/* Save Job button with subtle scale interaction */}
+          {/* Save Job button */}
           <button
             onClick={() => (isSaved ? unsaveJob(job.id) : saveJob(job.id))}
-            className={`p-2 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold ${
+            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold ${
               isSaved
-                ? 'bg-red-50 text-[#FF2B1A] border border-red-200'
-                : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-transparent'
+                ? 'bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/30'
+                : 'text-[#778397] hover:text-[#102B4E] hover:bg-[#F6F8FB] border border-transparent'
             }`}
             title={isSaved ? 'Job Saved — Click to remove' : 'Save Job for later'}
             aria-label={isSaved ? 'Saved Job' : 'Save Job'}
           >
             <motion.span
               key={isSaved ? 'saved' : 'unsaved'}
-              initial={{ scale: 0.9 }}
-              animate={{ scale: [0.9, 1.05, 1] }}
-              transition={{ duration: 0.3, ease: EASE_PREMIUM }}
+              initial={{ scale: 0.92 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, ease: EASE_PREMIUM }}
               className="inline-flex items-center gap-1"
             >
               {isSaved ? (
                 <>
-                  <BookmarkCheck className="w-4 h-4 text-[#FF2B1A]" />
-                  <span className="hidden sm:inline text-[11px] font-bold text-[#FF2B1A]">Saved</span>
+                  <BookmarkCheck className="w-4 h-4 text-[#F47A24]" />
+                  <span className="hidden sm:inline text-[11px] font-semibold text-[#F47A24]">Saved</span>
                 </>
               ) : (
                 <>
                   <Bookmark className="w-4 h-4" />
-                  <span className="hidden sm:inline text-[11px] text-slate-500">Save</span>
+                  <span className="hidden sm:inline text-[11px]">Save</span>
                 </>
               )}
             </motion.span>
           </button>
         </div>
 
-        {/* Metadata items */}
-        <div className="flex flex-wrap items-center gap-y-2 gap-x-3.5 text-xs text-[#667085] mt-3.5">
+        {/* Clean Metadata items */}
+        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[#778397] mt-3.5">
           {job.location && (
             <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-[#102B4E]/50 shrink-0" />
               <span>{job.location}</span>
             </div>
           )}
           {(job.employmentType || job.workMode) && (
             <div className="flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>
-                {[job.employmentType, job.workMode].filter(Boolean).join(' • ')}
-              </span>
+              <Briefcase className="w-3.5 h-3.5 text-[#102B4E]/50 shrink-0" />
+              <span>{[job.employmentType, job.workMode].filter(Boolean).join(' · ')}</span>
             </div>
           )}
           {job.experienceLevel && (
-            <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[#101828] text-[10px] font-semibold border border-slate-200/60">
-                {job.experienceLevel}
-                {typeof job.minExperienceYears === 'number' && job.minExperienceYears > 0
-                  ? ` (${job.minExperienceYears}+ yrs)`
-                  : ''}
-              </span>
+            <div className="font-medium text-[#253449]">
+              {job.experienceLevel}
+              {typeof job.minExperienceYears === 'number' && job.minExperienceYears > 0
+                ? ` (${job.minExperienceYears}+ yrs)`
+                : ''}
             </div>
           )}
-          <div className="flex items-center gap-1 font-semibold text-[#101828]">
-            <span className="text-[#667085] font-normal">Salary:</span>
+          <div className="flex items-center gap-1 font-semibold text-[#102B4E]">
+            <span className="text-[#778397] font-normal">Salary:</span>
             <span>{formatSalary()}</span>
           </div>
-          {job.deadline && (
-            <div className="flex items-center gap-1 text-[#667085] text-[11px]">
-              <Calendar className="w-3 h-3 text-slate-400" />
-              <span>Deadline: {job.deadline}</span>
-            </div>
-          )}
         </div>
 
         {/* Short description */}
         {job.overview && (
-          <p className="text-xs text-[#667085] line-clamp-2 mt-3 leading-relaxed">
+          <p className="text-xs text-[#778397] line-clamp-2 mt-3 leading-relaxed">
             {job.overview}
           </p>
         )}
 
-        {/* Skills Pills */}
+        {/* Skills text line */}
         {Array.isArray(job.preferredSkills) && job.preferredSkills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3.5">
-            {job.preferredSkills.slice(0, 4).map((skill) => (
-              <span
-                key={skill}
-                className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#101828] text-[11px] font-medium border border-[#E4E7EC]"
-              >
-                {skill}
-              </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-3.5 text-[11px] text-[#253449]">
+            <span className="text-[#778397] font-medium">Skills:</span>
+            {job.preferredSkills.slice(0, 4).map((skill, idx) => (
+              <React.Fragment key={skill}>
+                {idx > 0 && <span className="text-[#E5EAF0]">•</span>}
+                <span className="font-medium">{skill}</span>
+              </React.Fragment>
             ))}
             {job.preferredSkills.length > 4 && (
-              <span className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#667085] text-[11px] border border-[#E4E7EC]">
-                +{job.preferredSkills.length - 4} more
-              </span>
+              <span className="text-[#778397]">+{job.preferredSkills.length - 4} more</span>
             )}
           </div>
         )}
       </div>
 
-      {/* Card Footer: Match Score & Action Buttons */}
-      <div className="pt-4 mt-4 border-t border-[#E4E7EC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          {matchScore ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-teal-50 border border-teal-200/60 text-[#004D40]">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40] shrink-0" />
-              <span className="text-xs font-bold">{matchScore}% Match</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-[11px] text-[#667085]">
-              <Clock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-              <span>Posted {job.postedDate || 'recently'}</span>
-            </div>
+      {/* Card Footer */}
+      <div className="pt-4 mt-4 border-t border-[#E5EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-[11px] text-[#778397]">
+          <Clock className="w-3.5 h-3.5 shrink-0 text-[#102B4E]/50" />
+          <span>Posted {job.postedDate || 'recently'}</span>
+          {matchScore && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="font-semibold text-[#102B4E]">{matchScore}% Profile Match</span>
+            </>
           )}
         </div>
 
@@ -250,17 +233,17 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             variant="secondary"
             size="sm"
             onClick={() => onViewDetails(job.id)}
-            iconLeft={<Eye className="w-3.5 h-3.5 text-[#667085]" />}
+            iconLeft={<Eye className="w-3.5 h-3.5 text-[#778397]" />}
             className="flex-1 sm:flex-none min-h-[38px]"
-            title="View complete job posting"
+            title="View complete job details"
           >
-            View Job
+            View Details
           </Button>
 
           {hasApplied ? (
-            <span className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] text-xs font-bold inline-flex items-center justify-center gap-1.5 min-h-[38px]">
-              <Check className="w-3.5 h-3.5 text-[#004D40]" />
-              <span>Already Applied</span>
+            <span className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-h-[38px]">
+              <Check className="w-3.5 h-3.5" />
+              <span>Applied</span>
             </span>
           ) : (
             <Button

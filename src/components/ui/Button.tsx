@@ -38,16 +38,16 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles =
     'group inline-flex items-center justify-center font-bold transition-all duration-200 cursor-pointer select-none hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:translate-y-0';
 
-  // Strict Brand Variant Definitions
+  // Official ABHI JOBS Corporate Palette Variants
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
-      'bg-[#FF2B1A] hover:bg-[#e02213] active:bg-[#c91d0f] text-white border border-[#FF2B1A] hover:border-[#e02213] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2B1A] focus-visible:ring-offset-2',
+      'bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white border border-[#F47A24] hover:border-[#DE6816] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2',
     secondary:
-      'bg-white hover:bg-[#F7F8FA] active:bg-[#EDF0F2] text-[#101828] border border-[#E4E7EC] hover:border-slate-300 shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#061226] focus-visible:ring-offset-2',
+      'bg-white hover:bg-[#F6F8FB] active:bg-[#EDF1F7] text-[#102B4E] border border-[#E5EAF0] hover:border-[#102B4E]/30 shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
     ghost:
-      'bg-transparent hover:bg-slate-100 active:bg-slate-200 text-[#344054] hover:text-[#101828] border border-transparent hover:-translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2',
+      'bg-transparent hover:bg-[#F6F8FB] active:bg-[#E5EAF0] text-[#253449] hover:text-[#102B4E] border border-transparent hover:-translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/30 focus-visible:ring-offset-2',
     dark:
-      'bg-[#061226] hover:bg-[#0c1f3d] active:bg-[#040c1a] text-white border border-[#061226] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#061226] focus-visible:ring-offset-2',
+      'bg-[#102B4E] hover:bg-[#081D36] active:bg-[#051427] text-white border border-[#102B4E] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
   };
 
   // Sizing definitions ensuring accessibility touch targets (>= 44px for md/lg)

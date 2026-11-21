@@ -6,25 +6,30 @@ html {
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-sora: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sora: 'Plus Jakarta Sans', 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
-  /* ABHI JOBS Official Color System */
-  --color-navy: #061226;
-  --color-navy-light: #0d1e3d;
-  --color-brand: #FF2B1A;
-  --color-brand-hover: #e02213;
-  --color-brand-light: #fff1f0;
-  --color-teal: #004D40;
-  --color-teal-light: #e6f4f1;
-  --color-bg-page: #F7F8FA;
-  --color-border: #E4E7EC;
-  --color-text-primary: #101828;
-  --color-text-secondary: #667085;
+
+  /* ABHI JOBS Official Corporate Design System */
+  --color-navy: #102B4E;
+  --color-navy-deep: #081D36;
+  --color-navy-logo: #0A2A73;
+  --color-orange: #F47A24;
+  --color-orange-hover: #DE6816;
+  --color-orange-light: #FFF4EC;
+  --color-brand: #F47A24;
+  --color-brand-hover: #DE6816;
+  --color-brand-light: #FFF4EC;
+  --color-bg-page: #F6F8FB;
+  --color-surface: #FFFFFF;
+  --color-border: #E5EAF0;
+  --color-text-primary: #253449;
+  --color-text-secondary: #778397;
 }
 
-.font-sora {
-  font-family: var(--font-sora);
+.font-sora,
+.font-display {
+  font-family: var(--font-display);
 }
 
 .font-inter {
@@ -35,6 +40,7 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-bg-page);
   color: var(--color-text-primary);
+  overflow-x: hidden;
 }
 
 /* Custom scrollbar */
@@ -43,13 +49,12 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #F6F8FB;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8;
 }
-
