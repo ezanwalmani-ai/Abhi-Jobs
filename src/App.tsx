@@ -30,6 +30,7 @@ import { JobSeekerApplicationsPage } from './pages/jobSeeker/JobSeekerApplicatio
 import { JobSeekerSavedJobsPage } from './pages/jobSeeker/JobSeekerSavedJobsPage';
 import { JobSeekerProfilePage } from './pages/jobSeeker/JobSeekerProfilePage';
 import { LearnWithAbhiPage } from './pages/LearnWithAbhiPage';
+import { CertificateVerificationPage } from './pages/CertificateVerificationPage';
 import { JobSeekerResumePage } from './pages/jobSeeker/JobSeekerResumePage';
 import { JobSeekerRegisterPage } from './pages/jobSeeker/JobSeekerRegisterPage';
 import { JobSeekerOnboardingPage } from './pages/jobSeeker/JobSeekerOnboardingPage';
@@ -130,6 +131,13 @@ function AppContent() {
       return;
     }
 
+    if (path.startsWith('/verify-certificate/') && path !== '/verify-certificate/') {
+      const certId = decodeURIComponent(path.replace('/verify-certificate/', '').split('?')[0]);
+      setRouteParams({ id: certId });
+      setCurrentRoute('/verify-certificate/:certificateId');
+      return;
+    }
+
     if (path.startsWith('/jobs?')) {
       const urlParams = new URLSearchParams(path.split('?')[1]);
       setRouteParams({
@@ -189,6 +197,8 @@ function AppContent() {
       route === '/learning' ||
       route === '/learn' ||
       route.startsWith('/learning/') ||
+      route === '/verify-certificate' ||
+      route.startsWith('/verify-certificate/') ||
       route === '/job-seeker/upskill' ||
       route === '/jobs' ||
       route.startsWith('/jobs/') ||
@@ -518,6 +528,17 @@ function AppContent() {
       case '/learning/admin/content':
         return <LearnWithAbhiPage navigate={navigate} section="admin-content" />;
 
+      case '/verify-certificate':
+        return <CertificateVerificationPage navigate={navigate} />;
+
+      case '/verify-certificate/:certificateId':
+        return (
+          <CertificateVerificationPage
+            navigate={navigate}
+            initialCertificateId={routeParams.id}
+          />
+        );
+
       case '/resume':
       case '/career-tools':
       case '/job-seeker/career-tools':
@@ -592,6 +613,17 @@ function AppContent() {
               navigate={navigate}
               section="course-detail"
               courseSlug={directSlug}
+            />
+          );
+        }
+        if (currentRoute.startsWith('/verify-certificate/') && currentRoute !== '/verify-certificate/') {
+          const directCertId = decodeURIComponent(
+            currentRoute.replace('/verify-certificate/', '').split('?')[0]
+          );
+          return (
+            <CertificateVerificationPage
+              navigate={navigate}
+              initialCertificateId={directCertId}
             />
           );
         }

@@ -262,10 +262,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [courses, setCourses] = useState<Course[]>(() => {
     try {
       const stored = localStorage.getItem('abhijobs_courses') || localStorage.getItem('hunar_courses');
-      return stored ? JSON.parse(stored) : INITIAL_COURSES;
+      if (stored) {
+        const list: Course[] = JSON.parse(stored);
+        return list.filter(
+          (c) => !['course-demo-1', 'course-demo-2', 'course-demo-3'].includes(c.id)
+        );
+      }
     } catch {
-      return INITIAL_COURSES;
+      // fallback
     }
+    return INITIAL_COURSES;
   });
 
   const [applications, setApplications] = useState<Application[]>(() => {

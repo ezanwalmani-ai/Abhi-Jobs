@@ -23,9 +23,11 @@ import {
   LearningCourseItem,
   LessonAttachment,
   LessonAttachmentType,
+  LessonVideoItem,
 } from '../types/learning';
 
 const LOCAL_CUSTOM_LESSONS_KEY = 'abhijobs_learning_admin_lessons_v1';
+const YOUTUBE_VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
 
 export interface ParsedVideoEmbed {
   kind: 'iframe' | 'video' | 'invalid';
@@ -211,6 +213,39 @@ function writeLocalCustomLessons(courseId: string, lessons: CourseLesson[]): voi
   }
 }
 
+function sanitizeVideoList(rawVideos: unknown): LessonVideoItem[] {
+  if (!Array.isArray(rawVideos)) return [];
+  const items: LessonVideoItem[] = [];
+  for (let i = 0; i < Math.min(rawVideos.length, 10); i++) {
+    const raw = rawVideos[i];
+    if (!raw || typeof raw !== 'object') continue;
+    const ytId = String((raw as any).youtubeVideoId || '').trim();
+    if (!YOUTUBE_VIDEO_ID_REGEX.test(ytId)) continue;
+    const title = String((raw as any).title || `Video ${i + 1}`).trim().slice(0, 180);
+    if (!title) continue;
+    items.push({
+      id: String((raw as any).id || `vid_${i + 1}`)
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 64),
+      title,
+      youtubeVideoId: ytId,
+      description: String((raw as any).description || '').trim().slice(0, 500),
+      durationSeconds:
+        typeof (raw as any).durationSeconds === 'number' && Number.isFinite((raw as any).durationSeconds)
+          ? Math.max(0, Math.min(86400, Math.round((raw as any).durationSeconds)))
+          : 0,
+      durationLabel: (raw as any).durationLabel
+        ? String((raw as any).durationLabel).trim().slice(0, 32)
+        : undefined,
+      order:
+        typeof (raw as any).order === 'number' && Number.isFinite((raw as any).order)
+          ? Math.max(1, Math.min(50, Math.round((raw as any).order)))
+          : i + 1,
+    });
+  }
+  return items.sort((a, b) => a.order - b.order);
+}
+
 function docToCourseLesson(docId: string, data: any): CourseLesson {
   const attachments: LessonAttachment[] = Array.isArray(data.attachments)
     ? data.attachments
@@ -219,6 +254,7 @@ function docToCourseLesson(docId: string, data: any): CourseLesson {
         .filter((a: LessonAttachment | null): a is LessonAttachment => Boolean(a))
     : [];
 
+  const videos = sanitizeVideoList(data.videos);
   const exerciseTitle = String(data.exerciseTitle || '').trim();
   const exerciseInstructions = String(data.exerciseInstructions || '').trim();
   const exerciseDeliverable = String(data.exerciseDeliverable || '').trim();
@@ -231,6 +267,7 @@ function docToCourseLesson(docId: string, data: any): CourseLesson {
     title: String(data.title || 'Untitled Lesson'),
     description: String(data.description || ''),
     videoUrl: String(data.videoUrl || ''),
+    videos,
     estimatedMinutes:
       typeof data.estimatedMinutes === 'number' && data.estimatedMinutes >= 1
         ? data.estimatedMinutes
@@ -248,6 +285,33 @@ function docToCourseLesson(docId: string, data: any): CourseLesson {
     isAdminManaged: true,
     updatedAt: normalizeTimestamp(data.updatedAt),
   };
+}
+
+/**
+ * Loads all persisted Firestore lesson documents for a course ordered by lesson.order.
+ */
+export async function loadCourseLessonsFromFirestore(
+  courseId: string
+): Promise<CourseLesson[]> {
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(courseId)) return [];
+  const path = `learning_courses/${courseId}/lessons`;
+  try {
+    const colRef = collection(db, 'learning_courses', courseId, 'lessons');
+    const q = query(colRef, where('courseId', '==', courseId));
+    const snap = await getDocs(q);
+    const lessons: CourseLesson[] = [];
+    snap.forEach((docSnap) => {
+      lessons.push(docToCourseLesson(docSnap.id, docSnap.data()));
+    });
+    return lessons.sort((a, b) => a.order - b.order);
+  } catch (error) {
+    try {
+      handleFirestoreError(error, OperationType.LIST, path);
+    } catch {
+      // Logged via structured helper
+    }
+    return [];
+  }
 }
 
 /**
@@ -354,6 +418,7 @@ export async function saveAdminCourseLesson(
     .slice(0, 15)
     .map((a, idx) => sanitizeAttachment(a, idx))
     .filter((a): a is LessonAttachment => Boolean(a));
+  const sanitizedVideos = sanitizeVideoList(input.videos || []);
 
   const safeLessonId = (
     input.id && input.id.trim().length > 0
@@ -369,8 +434,6 @@ export async function saveAdminCourseLesson(
   const safeMinutes = Math.max(1, Math.min(300, Math.round(input.estimatedMinutes || 15)));
 
   const fbUser = firebaseAuth.currentUser;
-  const effectiveAdminUid = fbUser?.uid || fallbackAdminId || 'admin_local';
-
   const cleanDescription = input.description.trim().slice(0, 600);
   const cleanWritten = input.writtenContent.trim().slice(0, 20000);
   const cleanExerciseTitle = input.exerciseTitle.trim().slice(0, 200);
@@ -385,6 +448,7 @@ export async function saveAdminCourseLesson(
     title: cleanTitle,
     description: cleanDescription,
     videoUrl: cleanVideoUrl,
+    videos: sanitizedVideos,
     estimatedMinutes: safeMinutes,
     writtenContent: cleanWritten,
     exercise:
@@ -413,6 +477,15 @@ export async function saveAdminCourseLesson(
       title: cleanTitle,
       description: cleanDescription,
       videoUrl: cleanVideoUrl,
+      videos: sanitizedVideos.map((v) => ({
+        id: v.id,
+        title: v.title,
+        youtubeVideoId: v.youtubeVideoId,
+        description: v.description,
+        durationSeconds: v.durationSeconds,
+        durationLabel: v.durationLabel || '',
+        order: v.order,
+      })),
       writtenContent: cleanWritten,
       exerciseTitle: cleanExerciseTitle,
       exerciseInstructions: cleanExerciseInstructions,

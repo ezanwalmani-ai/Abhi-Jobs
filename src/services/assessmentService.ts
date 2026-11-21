@@ -73,6 +73,9 @@ function normalizeAttempt(raw: any, fallbackUserId: string): AssessmentAttemptRe
     id: String(raw.id).slice(0, 128),
     userId: String(raw.userId || fallbackUserId).slice(0, 128),
     courseId: String(raw.courseId).slice(0, 128),
+    courseSlug: typeof raw.courseSlug === 'string' && raw.courseSlug.trim()
+      ? raw.courseSlug.trim().slice(0, 128)
+      : String(raw.courseId).slice(0, 128),
     courseTitle: String(raw.courseTitle || '').slice(0, 160),
     assessmentType: raw.assessmentType === 'final_assessment' ? 'final_assessment' : 'module_quiz',
     moduleId: typeof raw.moduleId === 'string' && raw.moduleId.trim() ? raw.moduleId.trim() : undefined,
@@ -85,6 +88,11 @@ function normalizeAttempt(raw: any, fallbackUserId: string): AssessmentAttemptRe
     passPercentage: Math.max(0, Math.min(100, Math.round(Number(raw.passPercentage || 70)))),
     passed: Boolean(raw.passed),
     submittedAt: normalizeTimestamp(raw.submittedAt),
+    answers: raw.answers && typeof raw.answers === 'object' ? raw.answers : undefined,
+    verificationSignature:
+      typeof raw.verificationSignature === 'string'
+        ? raw.verificationSignature.trim().slice(0, 128)
+        : undefined,
     questionResults: Array.isArray(raw.questionResults) ? raw.questionResults : undefined,
   };
 }
@@ -216,10 +224,18 @@ export async function submitAssessmentSession(params: {
     const docPath = `users/${fbUid}/assessment_attempts/${normalizedAttempt.id}`;
     const docRef = doc(db, 'users', fbUid, 'assessment_attempts', normalizedAttempt.id);
     try {
+      const sanitizedAnswers: Record<string, number> = {};
+      for (const [qId, opt] of Object.entries(normalizedAttempt.answers || params.answers || {})) {
+        if (typeof opt === 'number' && Number.isInteger(opt) && opt >= 0 && opt <= 3) {
+          sanitizedAnswers[String(qId).slice(0, 100)] = opt;
+        }
+      }
+
       const payload: Record<string, unknown> = {
         id: normalizedAttempt.id,
         userId: fbUid,
         courseId: normalizedAttempt.courseId,
+        courseSlug: normalizedAttempt.courseSlug || normalizedAttempt.courseId,
         courseTitle: normalizedAttempt.courseTitle,
         assessmentType: normalizedAttempt.assessmentType,
         assessmentTitle: normalizedAttempt.assessmentTitle,
@@ -230,6 +246,9 @@ export async function submitAssessmentSession(params: {
         scorePercent: normalizedAttempt.scorePercent,
         passPercentage: normalizedAttempt.passPercentage,
         passed: normalizedAttempt.passed,
+        answers: sanitizedAnswers,
+        questionResults: (normalizedAttempt.questionResults || []).slice(0, 30),
+        verificationSignature: normalizedAttempt.verificationSignature || '',
         submittedAt: serverTimestamp(),
       };
       if (normalizedAttempt.moduleId) {
@@ -241,7 +260,7 @@ export async function submitAssessmentSession(params: {
       try {
         handleFirestoreError(error, OperationType.CREATE, docPath);
       } catch {
-        // Logged via structured helper; local user-scoped copy still saved
+        // Logged via structured helper
       }
     }
   }
@@ -257,6 +276,8 @@ export async function submitAssessmentSession(params: {
 
 /**
  * Loads assessment attempts strictly owned by the signed-in candidate.
+ * When a verified Firebase user is active, Firestore is the authoritative source of truth
+ * so manipulated browser localStorage cannot inject forged passes or altered scores.
  */
 export async function loadCandidateAssessmentAttempts(
   appUserId: string | null | undefined,
@@ -272,15 +293,8 @@ export async function loadCandidateAssessmentAttempts(
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || appUserId;
 
-  const byId = new Map<string, AssessmentAttemptRecord>();
-  readLocalAttempts(effectiveUid).forEach((a) => byId.set(a.id, a));
-  if (fbUid && appUserId !== fbUid) {
-    readLocalAttempts(appUserId).forEach((a) => {
-      if (!byId.has(a.id)) byId.set(a.id, { ...a, userId: effectiveUid });
-    });
-  }
-
   let syncedFromCloud = false;
+  const cloudById = new Map<string, AssessmentAttemptRecord>();
 
   if (fbUid) {
     const path = `users/${fbUid}/assessment_attempts`;
@@ -292,12 +306,7 @@ export async function loadCandidateAssessmentAttempts(
         const data = docSnap.data();
         const norm = normalizeAttempt({ ...data, id: docSnap.id, userId: fbUid }, fbUid);
         if (norm) {
-          const localMatch = byId.get(norm.id);
-          // Preserve detailed questionResults if cached locally
-          byId.set(norm.id, {
-            ...norm,
-            questionResults: localMatch?.questionResults || norm.questionResults,
-          });
+          cloudById.set(norm.id, norm);
         }
       });
       syncedFromCloud = true;
@@ -305,23 +314,32 @@ export async function loadCandidateAssessmentAttempts(
       try {
         handleFirestoreError(error, OperationType.LIST, path);
       } catch {
-        // Logged via structured helper; return user-scoped local attempts safely
+        // Logged via structured helper
       }
     }
   }
 
-  const mergedAll = Array.from(byId.values()).sort(
-    (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-  );
-
-  writeLocalAttempts(effectiveUid, mergedAll);
-  if (appUserId !== effectiveUid) {
-    writeLocalAttempts(appUserId, mergedAll);
+  let authoritativeList: AssessmentAttemptRecord[];
+  if (fbUid && syncedFromCloud) {
+    // Strictly replace local cache with authoritative Firestore records
+    authoritativeList = Array.from(cloudById.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+    writeLocalAttempts(effectiveUid, authoritativeList);
+    if (appUserId !== effectiveUid) {
+      writeLocalAttempts(appUserId, authoritativeList);
+    }
+  } else {
+    const byId = new Map<string, AssessmentAttemptRecord>();
+    readLocalAttempts(effectiveUid).forEach((a) => byId.set(a.id, a));
+    authoritativeList = Array.from(byId.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
   }
 
   const filtered = courseId
-    ? mergedAll.filter((a) => a.courseId === courseId)
-    : mergedAll;
+    ? authoritativeList.filter((a) => a.courseId === courseId)
+    : authoritativeList;
 
   return { attempts: filtered, syncedFromCloud };
 }
@@ -406,6 +424,35 @@ export async function fetchAdminCourseAssessments(courseId: string): Promise<{
     { headers }
   );
   return parseApiResponse(res);
+}
+
+export async function upsertAdminAssessmentConfig(params: {
+  courseId: string;
+  courseSlug?: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  moduleOrder?: number;
+  title: string;
+  description?: string;
+  passPercentage?: number;
+  questionCount?: number;
+  randomizeOrder?: boolean;
+  requiredForCompletion?: boolean;
+  questions?: AdminAssessmentConfig['questions'];
+}): Promise<AdminAssessmentConfig> {
+  const headers = await getAdminAuthHeaders();
+  const res = await fetch('/api/learning/admin/assessments/config', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify(params),
+  });
+  const data = await parseApiResponse<{ config: AdminAssessmentConfig }>(res);
+  void mirrorAdminQuizConfigToFirestore(data.config);
+  return data.config;
 }
 
 export async function updateAdminAssessmentConfig(params: {

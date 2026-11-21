@@ -12,8 +12,10 @@ import {
   ClipboardCheck,
   Clock,
   Download,
+  Eye,
   FileText,
   List,
+  Loader2,
   Lock,
   PlayCircle,
   Settings2,
@@ -23,6 +25,7 @@ import {
   AssessmentAttemptRecord,
   AssessmentSummaryItem,
   CourseAssessmentOverview,
+  CourseCertificateRecord,
   CourseEnrolmentRecord,
   CourseLesson,
   LearningCourseItem,
@@ -56,6 +59,11 @@ interface CoursePlayerViewProps {
   onAssessmentAttemptCompleted: (attempt: AssessmentAttemptRecord) => Promise<void>;
   onBackToCourseDetails: () => void;
   onOpenAdminContentManager?: () => void;
+  certificate?: CourseCertificateRecord | null;
+  isIssuingCertificate?: boolean;
+  onViewCertificate?: (certificate: CourseCertificateRecord) => void;
+  onDownloadCertificate?: (certificate: CourseCertificateRecord) => Promise<void>;
+  onRequestCertificate?: () => Promise<void>;
 }
 
 const INTRO_VIEW_ID = '__course_intro__';
@@ -77,6 +85,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   onAssessmentAttemptCompleted,
   onBackToCourseDetails,
   onOpenAdminContentManager,
+  certificate,
+  isIssuingCertificate = false,
+  onViewCertificate,
+  onDownloadCertificate,
+  onRequestCertificate,
 }) => {
   const flatLessons = useMemo(() => flattenCourseLessons(course), [course]);
   const totalLessons = flatLessons.length;
@@ -931,28 +944,83 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
           {/* Main Learning Content Area */}
           <main className="lg:col-span-8 xl:col-span-9 min-w-0 space-y-6">
-            {/* Course Completed Confirmation Banner */}
+            {/* Course Completed & Certificate Banner */}
             {completionState.isCourseCompleted && (
-              <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-emerald-900">
-                      Course Completed — All Requirements Met
+              <div className="rounded-2xl bg-white border border-emerald-200 px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
+                    <Award className="w-5 h-5 text-[#C59B43]" />
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-sm font-bold text-[#102B4E]">
+                      Course Completed — Official Certificate Ready
                     </p>
-                    <p className="text-xs text-emerald-800">
+                    <p className="text-xs text-[#566479] leading-relaxed">
                       You completed all {totalLessons} lessons, passed all required module quizzes, and passed the Final Course Assessment
                       {bestFinalScore ? ` with ${bestFinalScore}%` : ''}.
+                      {certificate ? (
+                        <span className="font-semibold text-[#102B4E] tabular-nums">
+                          {' '}
+                          Certificate ID: {certificate.certificateId}
+                        </span>
+                      ) : null}
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={onBackToCourseDetails}
-                  className="min-h-[40px] px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer hover:bg-emerald-100/50 transition-colors"
-                >
-                  Course Summary
-                </button>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {certificate ? (
+                    <>
+                      {onViewCertificate && (
+                        <button
+                          type="button"
+                          onClick={() => onViewCertificate(certificate)}
+                          className="min-h-[40px] px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#C59B43]" />
+                          <span>View Certificate</span>
+                        </button>
+                      )}
+                      {onDownloadCertificate && (
+                        <button
+                          type="button"
+                          onClick={() => void onDownloadCertificate(certificate)}
+                          className="min-h-[40px] px-4 py-2 rounded-xl bg-white border border-[#D4DCE6] hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download PDF</span>
+                        </button>
+                      )}
+                    </>
+                  ) : onRequestCertificate ? (
+                    <button
+                      type="button"
+                      disabled={isIssuingCertificate}
+                      onClick={() => void onRequestCertificate()}
+                      className="min-h-[40px] px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors disabled:opacity-60"
+                    >
+                      {isIssuingCertificate ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Issuing Certificate...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Award className="w-3.5 h-3.5 text-[#C59B43]" />
+                          <span>Generate Certificate</span>
+                        </>
+                      )}
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={onBackToCourseDetails}
+                    className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E] text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                  >
+                    Course Summary
+                  </button>
+                </div>
               </div>
             )}
 

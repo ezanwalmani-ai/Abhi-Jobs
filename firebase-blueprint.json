@@ -55,82 +55,118 @@
         "updatedAt"
       ]
     },
-    "CourseEnrolment": {
-      "title": "CourseEnrolment",
-      "description": "Candidate enrolment and learning progress record for a Learn with ABHI course, keyed by courseId to prevent duplicates",
+    "LearningCourse": {
+      "title": "LearningCourse",
+      "description": "Admin-managed Learn with ABHI course metadata, unlock rules, and publication status",
       "type": "object",
       "properties": {
-        "courseId": { "type": "string", "description": "Unique catalogue course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
-        "courseTitle": { "type": "string", "description": "Course display title", "maxLength": 160 },
-        "categoryId": { "type": "string", "description": "Course category identifier", "maxLength": 80 },
-        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
-        "status": { "type": "string", "description": "Learning progress status", "enum": ["enrolled", "in_progress", "completed"] },
-        "currentLessonId": { "type": "string", "description": "Last viewed lesson ID for resuming", "maxLength": 128 },
-        "completedLessonIds": { "type": "array", "description": "Bounded list of completed lesson IDs (max 200)" },
-        "passedModuleQuizIds": { "type": "array", "description": "Bounded list of module IDs whose required quizzes are passed (max 40)" },
-        "finalAssessmentPassed": { "type": "boolean", "description": "Whether the final course assessment was passed at or above pass threshold" },
-        "bestFinalScorePercent": { "type": "number", "description": "Highest final assessment score percentage achieved (0-100)" },
-        "progressPercent": { "type": "number", "description": "Calculated overall course completion percentage (0-100)" },
-        "enrolledAt": { "type": "string", "description": "Server timestamp of initial enrolment" },
-        "lastAccessedAt": { "type": "string", "description": "Server timestamp of last lesson access or progress save" },
-        "completedAt": { "type": "string", "description": "ISO timestamp when all lessons, required quizzes, and final assessment passed", "maxLength": 64 }
-      },
-      "required": [
-        "courseId",
-        "courseSlug",
-        "courseTitle",
-        "categoryId",
-        "userId",
-        "status",
-        "completedLessonIds",
-        "progressPercent",
-        "enrolledAt",
-        "lastAccessedAt"
-      ]
-    },
-    "AssessmentAttempt": {
-      "title": "AssessmentAttempt",
-      "description": "Private server-graded quiz or final assessment attempt belonging strictly to an authenticated candidate",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "description": "Attempt document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
-        "courseId": { "type": "string", "description": "Course identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
-        "courseTitle": { "type": "string", "description": "Course title", "maxLength": 160 },
-        "assessmentType": { "type": "string", "description": "Quiz vs final assessment", "enum": ["module_quiz", "final_assessment"] },
-        "moduleId": { "type": "string", "description": "Module ID for module quizzes", "maxLength": 128 },
-        "assessmentTitle": { "type": "string", "description": "Display title of the quiz or final assessment", "maxLength": 180 },
-        "attemptNumber": { "type": "number", "description": "Sequential attempt counter (>= 1)" },
-        "totalQuestions": { "type": "number", "description": "Total questions graded" },
-        "correctAnswers": { "type": "number", "description": "Count of correct answers" },
-        "incorrectAnswers": { "type": "number", "description": "Count of incorrect answers" },
-        "scorePercent": { "type": "number", "description": "Percentage score (0-100)" },
-        "passPercentage": { "type": "number", "description": "Required passing score percentage (0-100)" },
-        "passed": { "type": "boolean", "description": "Whether attempt met or exceeded passPercentage" },
-        "answers": { "type": "object", "description": "Map of questionId to selected option index (0-3)" },
-        "questionResults": { "type": "array", "description": "Post-submission graded review items with explanations (max 30)" },
-        "submittedAt": { "type": "string", "description": "Server timestamp of graded submission" }
+        "id": { "type": "string", "description": "Unique course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "slug": { "type": "string", "description": "URL-safe course slug", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "categoryId": { "type": "string", "description": "Course category ID", "maxLength": 80 },
+        "categoryName": { "type": "string", "description": "Display category label", "maxLength": 100 },
+        "title": { "type": "string", "description": "Course display title", "maxLength": 160 },
+        "shortDescription": { "type": "string", "description": "Concise card summary", "maxLength": 400 },
+        "fullDescription": { "type": "string", "description": "Detailed overview", "maxLength": 4000 },
+        "level": { "type": "string", "description": "Course difficulty level", "enum": ["Beginner", "Intermediate"] },
+        "estimatedDuration": { "type": "string", "description": "Estimated completion time label", "maxLength": 64 },
+        "isFree": { "type": "boolean", "description": "Whether the course is free" },
+        "sequentialUnlock": { "type": "boolean", "description": "Whether modules unlock sequentially upon passing module quizzes" },
+        "passPercentage": { "type": "number", "description": "Required passing threshold percentage (70-100)" },
+        "certificateTemplateId": { "type": "string", "description": "Linked certificate template ID", "maxLength": 128 },
+        "status": { "type": "string", "description": "Publication visibility", "enum": ["draft", "published"] },
+        "moduleCount": { "type": "number", "description": "Total ordered modules count (0-50)" },
+        "courseIntroduction": { "type": "object", "description": "Structured course introduction copy" },
+        "whatYouWillLearn": { "type": "array", "description": "Bounded learning outcome bullets (max 20)" },
+        "skillsDeveloped": { "type": "array", "description": "Bounded skill tags (max 20)" },
+        "updatedBy": { "type": "string", "description": "Admin UID who last updated the course", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
       },
       "required": [
         "id",
-        "userId",
-        "courseId",
-        "courseSlug",
-        "courseTitle",
-        "assessmentType",
-        "assessmentTitle",
-        "attemptNumber",
-        "totalQuestions",
-        "correctAnswers",
-        "incorrectAnswers",
-        "scorePercent",
+        "slug",
+        "categoryId",
+        "categoryName",
+        "title",
+        "shortDescription",
+        "fullDescription",
+        "level",
+        "estimatedDuration",
+        "isFree",
+        "sequentialUnlock",
         "passPercentage",
-        "passed",
-        "answers",
-        "questionResults",
-        "submittedAt"
+        "certificateTemplateId",
+        "status",
+        "moduleCount",
+        "courseIntroduction",
+        "whatYouWillLearn",
+        "skillsDeveloped",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "CourseModule": {
+      "title": "CourseModule",
+      "description": "Ordered module belonging to a Learn with ABHI course",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Module document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "description": "Parent course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "order": { "type": "number", "description": "1-based sequential module order (1-50)" },
+        "title": { "type": "string", "description": "Module title", "maxLength": 160 },
+        "summary": { "type": "string", "description": "Module overview summary", "maxLength": 600 },
+        "estimatedMinutes": { "type": "number", "description": "Estimated duration in minutes (1-600)" },
+        "quizRequired": { "type": "boolean", "description": "Whether passing this module's quiz is required to unlock the next module" },
+        "passPercentage": { "type": "number", "description": "Minimum module quiz pass threshold (50-100)" },
+        "updatedBy": { "type": "string", "description": "Admin UID", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "courseId",
+        "order",
+        "title",
+        "summary",
+        "estimatedMinutes",
+        "quizRequired",
+        "passPercentage",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "CourseLessonContent": {
+      "title": "CourseLessonContent",
+      "description": "Admin-managed lesson content, embedded YouTube video items, written material, exercise, and attachments for a Learn with ABHI course",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Lesson document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "description": "Parent course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "moduleId": { "type": "string", "description": "Parent module ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "description": "Lesson display title", "maxLength": 160 },
+        "description": { "type": "string", "description": "Short lesson summary", "maxLength": 600 },
+        "videoUrl": { "type": "string", "description": "Optional legacy/primary HTTPS embedded video URL", "maxLength": 500 },
+        "videos": { "type": "array", "description": "Bounded ordered list of YouTube video metadata objects (max 10)" },
+        "writtenContent": { "type": "string", "description": "Structured written learning material", "maxLength": 20000 },
+        "exerciseTitle": { "type": "string", "description": "Practical exercise heading", "maxLength": 200 },
+        "exerciseInstructions": { "type": "string", "description": "Practical exercise instructions", "maxLength": 4000 },
+        "exerciseDeliverable": { "type": "string", "description": "Optional exercise output description", "maxLength": 500 },
+        "attachments": { "type": "array", "description": "Bounded list of downloadable resource objects (max 15)" },
+        "order": { "type": "number", "description": "Lesson sequence order within module (1-200)" },
+        "estimatedMinutes": { "type": "number", "description": "Estimated study time in minutes (1-300)" },
+        "updatedBy": { "type": "string", "description": "Admin UID who last updated the lesson", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "courseId",
+        "moduleId",
+        "title",
+        "description",
+        "writtenContent",
+        "attachments",
+        "order",
+        "estimatedMinutes",
+        "updatedBy",
+        "updatedAt"
       ]
     },
     "CourseQuizConfig": {
@@ -165,37 +201,218 @@
         "updatedAt"
       ]
     },
-    "CourseLessonContent": {
-      "title": "CourseLessonContent",
-      "description": "Admin-managed lesson content, embedded video URL, written material, exercise, and attachments for a Learn with ABHI course",
+    "CourseEnrolment": {
+      "title": "CourseEnrolment",
+      "description": "Candidate enrolment, sequential unlock state, and learning progress record for a Learn with ABHI course, keyed by courseId to prevent duplicates",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "description": "Lesson document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "courseId": { "type": "string", "description": "Parent course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "moduleId": { "type": "string", "description": "Parent module ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "title": { "type": "string", "description": "Lesson display title", "maxLength": 160 },
-        "description": { "type": "string", "description": "Short lesson summary", "maxLength": 600 },
-        "videoUrl": { "type": "string", "description": "Optional HTTPS embedded video URL", "maxLength": 500 },
-        "writtenContent": { "type": "string", "description": "Structured written learning material", "maxLength": 20000 },
-        "exerciseTitle": { "type": "string", "description": "Practical exercise heading", "maxLength": 200 },
-        "exerciseInstructions": { "type": "string", "description": "Practical exercise instructions", "maxLength": 4000 },
-        "exerciseDeliverable": { "type": "string", "description": "Optional exercise output description", "maxLength": 500 },
-        "attachments": { "type": "array", "description": "Bounded list of downloadable resource objects (max 15)" },
-        "order": { "type": "number", "description": "Lesson sequence order within module (1-200)" },
-        "estimatedMinutes": { "type": "number", "description": "Estimated study time in minutes (1-300)" },
-        "updatedBy": { "type": "string", "description": "Admin UID who last updated the lesson", "maxLength": 128 },
+        "courseId": { "type": "string", "description": "Unique course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Course display title", "maxLength": 160 },
+        "categoryId": { "type": "string", "description": "Course category identifier", "maxLength": 80 },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "status": { "type": "string", "description": "Learning progress status", "enum": ["enrolled", "in_progress", "completed"] },
+        "currentModuleId": { "type": "string", "description": "Last viewed module ID for resuming", "maxLength": 128 },
+        "currentLessonId": { "type": "string", "description": "Last viewed lesson ID for resuming", "maxLength": 128 },
+        "completedLessonIds": { "type": "array", "description": "Bounded list of completed lesson IDs (max 200)" },
+        "completedModuleIds": { "type": "array", "description": "Bounded list of completed module IDs (max 40)" },
+        "passedModuleQuizIds": { "type": "array", "description": "Bounded list of module IDs whose required quizzes are passed (max 40)" },
+        "unlockedModuleOrder": { "type": "number", "description": "Highest sequentially unlocked module order (1-50)" },
+        "lastVerifiedAttemptId": { "type": "string", "description": "Most recent passing module_quiz attempt document ID", "maxLength": 128 },
+        "lastVerifiedFinalAttemptId": { "type": "string", "description": "Passing final_assessment attempt document ID", "maxLength": 128 },
+        "finalAssessmentPassed": { "type": "boolean", "description": "Whether the final course assessment was passed at or above pass threshold" },
+        "bestFinalScorePercent": { "type": "number", "description": "Highest final assessment score percentage achieved (0-100)" },
+        "progressPercent": { "type": "number", "description": "Calculated overall course completion percentage (0-100)" },
+        "enrolledAt": { "type": "string", "description": "Server timestamp of initial enrolment" },
+        "lastAccessedAt": { "type": "string", "description": "Server timestamp of last lesson access or progress save" },
+        "completedAt": { "type": "string", "description": "ISO timestamp when all lessons, required quizzes, and final assessment passed", "maxLength": 64 }
+      },
+      "required": [
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "categoryId",
+        "userId",
+        "status",
+        "completedLessonIds",
+        "passedModuleQuizIds",
+        "unlockedModuleOrder",
+        "finalAssessmentPassed",
+        "progressPercent",
+        "enrolledAt",
+        "lastAccessedAt"
+      ]
+    },
+    "VideoProgress": {
+      "title": "VideoProgress",
+      "description": "Per-student, per-YouTube-video playback tracking record bound strictly to authenticated Firebase UID",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Composite progress key (courseId__lessonId__videoId)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "courseId": { "type": "string", "description": "Course identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "lessonId": { "type": "string", "description": "Lesson identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "videoId": { "type": "string", "description": "Lesson video item identifier", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "youtubeVideoId": { "type": "string", "description": "11-character YouTube video ID", "maxLength": 20, "pattern": "^[a-zA-Z0-9_\\-]{11}$" },
+        "durationSeconds": { "type": "number", "description": "Total video duration in seconds (0-86400)" },
+        "watchedSeconds": { "type": "number", "description": "Accumulated watched playback seconds (0-86400)" },
+        "maxPercentWatched": { "type": "number", "description": "Highest percentage reached during real playback (0-100)" },
+        "lastPositionSeconds": { "type": "number", "description": "Last resume timestamp in seconds (0-86400)" },
+        "hasPlayed": { "type": "boolean", "description": "True only after player begins real playback; never set on page load" },
+        "completedViaPlayer": { "type": "boolean", "description": "True only when hasPlayed is true and maxPercentWatched >= 80" },
+        "manualCompleted": { "type": "boolean", "description": "Optional explicit manual completion flag" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last playback sync" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "courseId",
+        "lessonId",
+        "videoId",
+        "youtubeVideoId",
+        "durationSeconds",
+        "watchedSeconds",
+        "maxPercentWatched",
+        "lastPositionSeconds",
+        "hasPlayed",
+        "completedViaPlayer",
+        "manualCompleted",
+        "updatedAt"
+      ]
+    },
+    "AssessmentAttempt": {
+      "title": "AssessmentAttempt",
+      "description": "Immutable private server-graded quiz or final assessment attempt belonging strictly to an authenticated candidate",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Attempt document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "courseId": { "type": "string", "description": "Course identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Course title", "maxLength": 160 },
+        "assessmentType": { "type": "string", "description": "Quiz vs final assessment", "enum": ["module_quiz", "final_assessment"] },
+        "moduleId": { "type": "string", "description": "Module ID for module quizzes", "maxLength": 128 },
+        "assessmentTitle": { "type": "string", "description": "Display title of the quiz or final assessment", "maxLength": 180 },
+        "attemptNumber": { "type": "number", "description": "Sequential attempt counter (>= 1)" },
+        "totalQuestions": { "type": "number", "description": "Total questions graded" },
+        "correctAnswers": { "type": "number", "description": "Count of correct answers" },
+        "incorrectAnswers": { "type": "number", "description": "Count of incorrect answers" },
+        "scorePercent": { "type": "number", "description": "Percentage score (0-100)" },
+        "passPercentage": { "type": "number", "description": "Required passing score percentage (0-100)" },
+        "passed": { "type": "boolean", "description": "Whether attempt met or exceeded passPercentage" },
+        "answers": { "type": "object", "description": "Map of questionId to selected option index (0-3)" },
+        "questionResults": { "type": "array", "description": "Post-submission graded review items with explanations (max 30)" },
+        "verificationSignature": { "type": "string", "description": "Backend HMAC-SHA256 grading receipt", "maxLength": 128, "pattern": "^[a-fA-F0-9]{32,128}$" },
+        "submittedAt": { "type": "string", "description": "Server timestamp of graded submission" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "assessmentType",
+        "assessmentTitle",
+        "attemptNumber",
+        "totalQuestions",
+        "correctAnswers",
+        "incorrectAnswers",
+        "scorePercent",
+        "passPercentage",
+        "passed",
+        "answers",
+        "questionResults",
+        "verificationSignature",
+        "submittedAt"
+      ]
+    },
+    "CourseCertificate": {
+      "title": "CourseCertificate",
+      "description": "Immutable Course Completion Certificate issued to an authenticated candidate after completing all required lessons, module quizzes, and passing the final assessment (>= 70%). Keyed by courseId under /users/{userId}/certificates/{courseId} to prevent duplicates.",
+      "type": "object",
+      "properties": {
+        "certificateId": { "type": "string", "description": "Unique human-readable certificate identifier (e.g., ABHI-2026-XXXXXXXX)", "maxLength": 64, "pattern": "^[A-Z0-9\\-]+$" },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "candidateName": { "type": "string", "description": "Candidate full name printed on certificate", "maxLength": 120 },
+        "courseId": { "type": "string", "description": "Completed course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Completed course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Completed course display title", "maxLength": 160 },
+        "completionDate": { "type": "string", "description": "ISO date of course completion", "maxLength": 64 },
+        "finalAssessmentScore": { "type": "number", "description": "Verified final assessment percentage score (70-100)" },
+        "finalAttemptId": { "type": "string", "description": "Document ID of the passing final_assessment attempt", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "templateId": { "type": "string", "description": "Certificate template ID used to render this credential", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "status": { "type": "string", "description": "Certificate validity status", "enum": ["valid", "revoked"] },
+        "verificationSignature": { "type": "string", "description": "Backend HMAC integrity signature", "maxLength": 128, "pattern": "^[a-fA-F0-9]{32,128}$" },
+        "issuedAt": { "type": "string", "description": "Server timestamp of certificate issuance" }
+      },
+      "required": [
+        "certificateId",
+        "userId",
+        "candidateName",
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "completionDate",
+        "finalAssessmentScore",
+        "finalAttemptId",
+        "templateId",
+        "status",
+        "verificationSignature",
+        "issuedAt"
+      ]
+    },
+    "PublicCertificateVerification": {
+      "title": "PublicCertificateVerification",
+      "description": "Minimal public verification record keyed by certificateId. Strictly excludes email, phone, assessment answers, and personal profile data.",
+      "type": "object",
+      "properties": {
+        "certificateId": { "type": "string", "description": "Unique certificate ID", "maxLength": 64, "pattern": "^[A-Z0-9\\-]+$" },
+        "candidateName": { "type": "string", "description": "Candidate full name", "maxLength": 120 },
+        "courseId": { "type": "string", "description": "Course catalogue identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseTitle": { "type": "string", "description": "Completed course title", "maxLength": 160 },
+        "issueDate": { "type": "string", "description": "ISO issue date", "maxLength": 64 },
+        "status": { "type": "string", "description": "Certificate validity status", "enum": ["valid", "revoked"] },
+        "issuedAt": { "type": "string", "description": "Server timestamp of issuance" }
+      },
+      "required": [
+        "certificateId",
+        "candidateName",
+        "courseId",
+        "courseTitle",
+        "issueDate",
+        "status",
+        "issuedAt"
+      ]
+    },
+    "CertificateTemplate": {
+      "title": "CertificateTemplate",
+      "description": "Admin-managed branding and layout template metadata for Learn with ABHI Course Completion Certificates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Template document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "description": "Internal template display name", "maxLength": 120 },
+        "organizationName": { "type": "string", "description": "Issuing organization label", "maxLength": 120 },
+        "certificateTitle": { "type": "string", "description": "Primary certificate heading", "maxLength": 120 },
+        "subtitle": { "type": "string", "description": "Award statement subtitle", "maxLength": 240 },
+        "signatoryName": { "type": "string", "description": "Authorized signatory name", "maxLength": 100 },
+        "signatoryDesignation": { "type": "string", "description": "Authorized signatory designation", "maxLength": 120 },
+        "primaryColor": { "type": "string", "description": "Primary hex brand color", "maxLength": 7, "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "accentColor": { "type": "string", "description": "Accent hex color", "maxLength": 7, "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "isDefault": { "type": "boolean", "description": "Whether this is the default platform template" },
+        "updatedBy": { "type": "string", "description": "Admin UID who last updated the template", "maxLength": 128 },
         "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
       },
       "required": [
         "id",
-        "courseId",
-        "moduleId",
-        "title",
-        "description",
-        "writtenContent",
-        "attachments",
-        "order",
-        "estimatedMinutes",
+        "name",
+        "organizationName",
+        "certificateTitle",
+        "subtitle",
+        "signatoryName",
+        "signatoryDesignation",
+        "primaryColor",
+        "accentColor",
+        "isDefault",
         "updatedBy",
         "updatedAt"
       ]
@@ -212,19 +429,43 @@
     },
     "/users/{userId}/course_enrolments/{courseId}": {
       "schema": "CourseEnrolment",
-      "description": "Private per-candidate Learn with ABHI course enrolments, lesson progress, and completion state keyed by courseId"
+      "description": "Private per-candidate Learn with ABHI course enrolments, sequential unlock state, lesson progress, and completion state keyed by courseId"
+    },
+    "/users/{userId}/video_progress/{progressKey}": {
+      "schema": "VideoProgress",
+      "description": "Private per-candidate YouTube video playback tracking keyed by courseId__lessonId__videoId"
     },
     "/users/{userId}/assessment_attempts/{attemptId}": {
       "schema": "AssessmentAttempt",
-      "description": "Private per-candidate server-graded quiz and final assessment attempt records"
+      "description": "Private immutable per-candidate server-graded quiz and final assessment attempt records"
+    },
+    "/users/{userId}/certificates/{courseId}": {
+      "schema": "CourseCertificate",
+      "description": "Private per-candidate immutable Course Completion Certificates keyed by courseId to prevent duplicates"
+    },
+    "/public_certificates/{certificateId}": {
+      "schema": "PublicCertificateVerification",
+      "description": "Public single-document lookup registry for QR and ID certificate verification containing strictly minimal non-PII fields"
+    },
+    "/learning_courses/{courseId}": {
+      "schema": "LearningCourse",
+      "description": "Admin-managed Learn with ABHI course metadata and publication status"
+    },
+    "/learning_courses/{courseId}/modules/{moduleId}": {
+      "schema": "CourseModule",
+      "description": "Admin-managed ordered modules for a Learn with ABHI course"
     },
     "/learning_courses/{courseId}/lessons/{lessonId}": {
       "schema": "CourseLessonContent",
-      "description": "Admin-managed Learn with ABHI lesson content, video URLs, exercises, and downloadable attachments"
+      "description": "Admin-managed Learn with ABHI lesson content, YouTube video metadata, exercises, and downloadable attachments"
     },
     "/learning_courses/{courseId}/quiz_configs/{quizId}": {
       "schema": "CourseQuizConfig",
       "description": "Admin-only quiz and final assessment definitions including answer keys and explanations"
+    },
+    "/certificate_templates/{templateId}": {
+      "schema": "CertificateTemplate",
+      "description": "Admin-managed branding and layout templates for Course Completion Certificates"
     }
   }
 }

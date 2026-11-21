@@ -6,9 +6,21 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Hardened Global Primitives
+    // Hardened Global Primitives (Pillar 3 & Pillar 4)
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidHexSignature(sig) {
+      return sig is string && sig.size() >= 32 && sig.size() <= 128 && sig.matches('^[a-fA-F0-9]{32,128}$');
+    }
+
+    function isValidYouTubeId(ytId) {
+      return ytId is string && ytId.size() == 11 && ytId.matches('^[a-zA-Z0-9_\\-]{11}$');
+    }
+
+    function isValidHexColor(color) {
+      return color is string && color.size() == 7 && color.matches('^#[0-9A-Fa-f]{6}$');
     }
 
     function incoming() {
@@ -37,6 +49,10 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
+
+    // =========================================================================
+    // PRESERVED EXISTING VALIDATION BLUEPRINTS (User & CareerAssessment)
+    // =========================================================================
 
     function isValidUser(data) {
       return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
@@ -108,119 +124,172 @@ service cloud.firestore {
              (!('submittedAt' in data) || (data.submittedAt is string && data.submittedAt.size() <= 64));
     }
 
-    function isValidCourseEnrolment(data, userId, courseId) {
+    // =========================================================================
+    // LEARN WITH ABHI VALIDATION BLUEPRINTS (Pillar 2 & Pillar 5)
+    // =========================================================================
+
+    function isValidLearningCourse(data, courseId) {
       return data.keys().hasAll([
-               'courseId',
-               'courseSlug',
-               'courseTitle',
+               'id',
+               'slug',
                'categoryId',
-               'userId',
+               'categoryName',
+               'title',
+               'shortDescription',
+               'fullDescription',
+               'level',
+               'estimatedDuration',
+               'isFree',
+               'sequentialUnlock',
+               'passPercentage',
+               'certificateTemplateId',
                'status',
-               'completedLessonIds',
-               'progressPercent',
-               'enrolledAt',
-               'lastAccessedAt'
+               'moduleCount',
+               'courseIntroduction',
+               'whatYouWillLearn',
+               'skillsDeveloped',
+               'updatedBy',
+               'updatedAt'
              ]) &&
              data.keys().hasOnly([
-               'courseId',
-               'courseSlug',
-               'courseTitle',
+               'id',
+               'slug',
                'categoryId',
-               'userId',
+               'categoryName',
+               'title',
+               'shortDescription',
+               'fullDescription',
+               'level',
+               'estimatedDuration',
+               'isFree',
+               'sequentialUnlock',
+               'passPercentage',
+               'certificateTemplateId',
                'status',
-               'currentLessonId',
-               'completedLessonIds',
-               'passedModuleQuizIds',
-               'finalAssessmentPassed',
-               'bestFinalScorePercent',
-               'progressPercent',
-               'enrolledAt',
-               'lastAccessedAt',
-               'completedAt'
+               'moduleCount',
+               'courseIntroduction',
+               'whatYouWillLearn',
+               'skillsDeveloped',
+               'updatedBy',
+               'updatedAt'
              ]) &&
-             data.courseId == courseId &&
-             isValidId(data.courseId) &&
-             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
-             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.id == courseId &&
+             isValidId(data.id) &&
+             isValidId(data.slug) &&
              data.categoryId is string && data.categoryId.size() > 0 && data.categoryId.size() <= 80 &&
-             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
-             data.status is string && (data.status == 'enrolled' || data.status == 'in_progress' || data.status == 'completed') &&
-             (!('currentLessonId' in data) || (data.currentLessonId is string && data.currentLessonId.size() <= 128)) &&
-             data.completedLessonIds is list &&
-             data.completedLessonIds.size() <= 200 &&
-             (data.completedLessonIds.size() == 0 || (data.completedLessonIds[0] is string && data.completedLessonIds[0].size() <= 128)) &&
-             (!('passedModuleQuizIds' in data) || (
-               data.passedModuleQuizIds is list &&
-               data.passedModuleQuizIds.size() <= 40 &&
-               (data.passedModuleQuizIds.size() == 0 || (data.passedModuleQuizIds[0] is string && data.passedModuleQuizIds[0].size() <= 128))
-             )) &&
-             (!('finalAssessmentPassed' in data) || data.finalAssessmentPassed is bool) &&
-             (!('bestFinalScorePercent' in data) || (data.bestFinalScorePercent is number && data.bestFinalScorePercent >= 0 && data.bestFinalScorePercent <= 100)) &&
-             (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 64)) &&
-             data.progressPercent is number &&
-             data.progressPercent >= 0 &&
-             data.progressPercent <= 100;
+             data.categoryName is string && data.categoryName.size() > 0 && data.categoryName.size() <= 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 160 &&
+             data.shortDescription is string && data.shortDescription.size() <= 400 &&
+             data.fullDescription is string && data.fullDescription.size() <= 4000 &&
+             data.level is string && (data.level == 'Beginner' || data.level == 'Intermediate') &&
+             data.estimatedDuration is string && data.estimatedDuration.size() <= 64 &&
+             data.isFree is bool &&
+             data.sequentialUnlock is bool &&
+             data.passPercentage is number && data.passPercentage >= 70 && data.passPercentage <= 100 &&
+             isValidId(data.certificateTemplateId) &&
+             data.status is string && (data.status == 'draft' || data.status == 'published') &&
+             data.moduleCount is number && data.moduleCount >= 0 && data.moduleCount <= 50 &&
+             data.courseIntroduction is map && data.courseIntroduction.size() <= 10 &&
+             data.whatYouWillLearn is list && data.whatYouWillLearn.size() <= 20 &&
+             (data.whatYouWillLearn.size() == 0 || (data.whatYouWillLearn[0] is string && data.whatYouWillLearn[0].size() <= 200)) &&
+             data.skillsDeveloped is list && data.skillsDeveloped.size() <= 20 &&
+             (data.skillsDeveloped.size() == 0 || (data.skillsDeveloped[0] is string && data.skillsDeveloped[0].size() <= 100)) &&
+             data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
-    function isValidAssessmentAttempt(data, userId, attemptId) {
+    function isValidCourseModule(data, courseId, moduleId) {
       return data.keys().hasAll([
                'id',
-               'userId',
                'courseId',
-               'courseSlug',
-               'courseTitle',
-               'assessmentType',
-               'assessmentTitle',
-               'attemptNumber',
-               'totalQuestions',
-               'correctAnswers',
-               'incorrectAnswers',
-               'scorePercent',
+               'order',
+               'title',
+               'summary',
+               'estimatedMinutes',
+               'quizRequired',
                'passPercentage',
-               'passed',
-               'answers',
-               'questionResults',
-               'submittedAt'
+               'updatedBy',
+               'updatedAt'
              ]) &&
              data.keys().hasOnly([
                'id',
-               'userId',
                'courseId',
-               'courseSlug',
-               'courseTitle',
-               'assessmentType',
-               'moduleId',
-               'assessmentTitle',
-               'attemptNumber',
-               'totalQuestions',
-               'correctAnswers',
-               'incorrectAnswers',
-               'scorePercent',
+               'order',
+               'title',
+               'summary',
+               'estimatedMinutes',
+               'quizRequired',
                'passPercentage',
-               'passed',
-               'answers',
-               'questionResults',
-               'submittedAt'
+               'updatedBy',
+               'updatedAt'
              ]) &&
-             data.id == attemptId &&
+             data.id == moduleId &&
              isValidId(data.id) &&
-             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             data.courseId == courseId &&
              isValidId(data.courseId) &&
-             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
-             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
-             data.assessmentType is string && (data.assessmentType == 'module_quiz' || data.assessmentType == 'final_assessment') &&
-             (!('moduleId' in data) || (data.moduleId is string && data.moduleId.size() <= 128)) &&
-             data.assessmentTitle is string && data.assessmentTitle.size() > 0 && data.assessmentTitle.size() <= 180 &&
-             data.attemptNumber is number && data.attemptNumber >= 1 && data.attemptNumber <= 500 &&
-             data.totalQuestions is number && data.totalQuestions >= 1 && data.totalQuestions <= 30 &&
-             data.correctAnswers is number && data.correctAnswers >= 0 && data.correctAnswers <= data.totalQuestions &&
-             data.incorrectAnswers is number && data.incorrectAnswers >= 0 && data.incorrectAnswers <= data.totalQuestions &&
-             data.scorePercent is number && data.scorePercent >= 0 && data.scorePercent <= 100 &&
-             data.passPercentage is number && data.passPercentage >= 1 && data.passPercentage <= 100 &&
-             data.passed is bool &&
-             data.answers is map && data.answers.size() <= 30 &&
-             data.questionResults is list && data.questionResults.size() <= 30 &&
-             (data.questionResults.size() == 0 || data.questionResults[0] is map);
+             data.order is number && data.order >= 1 && data.order <= 50 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 160 &&
+             data.summary is string && data.summary.size() <= 600 &&
+             data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 600 &&
+             data.quizRequired is bool &&
+             data.passPercentage is number && data.passPercentage >= 50 && data.passPercentage <= 100 &&
+             data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
+    }
+
+    function isValidCourseLesson(data, courseId, lessonId) {
+      return data.keys().hasAll([
+               'id',
+               'courseId',
+               'moduleId',
+               'title',
+               'description',
+               'writtenContent',
+               'attachments',
+               'order',
+               'estimatedMinutes',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'courseId',
+               'moduleId',
+               'title',
+               'description',
+               'videoUrl',
+               'videos',
+               'writtenContent',
+               'exerciseTitle',
+               'exerciseInstructions',
+               'exerciseDeliverable',
+               'attachments',
+               'order',
+               'estimatedMinutes',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.id == lessonId &&
+             isValidId(data.id) &&
+             data.courseId == courseId &&
+             isValidId(data.courseId) &&
+             isValidId(data.moduleId) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 160 &&
+             data.description is string && data.description.size() <= 600 &&
+             (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 500)) &&
+             (!('videos' in data) || (
+               data.videos is list &&
+               data.videos.size() <= 10 &&
+               (data.videos.size() == 0 || data.videos[0] is map)
+             )) &&
+             data.writtenContent is string && data.writtenContent.size() <= 20000 &&
+             (!('exerciseTitle' in data) || (data.exerciseTitle is string && data.exerciseTitle.size() <= 200)) &&
+             (!('exerciseInstructions' in data) || (data.exerciseInstructions is string && data.exerciseInstructions.size() <= 4000)) &&
+             (!('exerciseDeliverable' in data) || (data.exerciseDeliverable is string && data.exerciseDeliverable.size() <= 500)) &&
+             data.attachments is list &&
+             data.attachments.size() <= 15 &&
+             (data.attachments.size() == 0 || data.attachments[0] is map) &&
+             data.order is number && data.order >= 1 && data.order <= 200 &&
+             data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 300 &&
+             data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
     function isValidQuizConfig(data, courseId, quizId) {
@@ -267,63 +336,348 @@ service cloud.firestore {
              data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
-    function isValidCourseLesson(data, courseId, lessonId) {
+    function isValidCourseEnrolment(data, userId, courseId) {
+      return data.keys().hasAll([
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'categoryId',
+               'userId',
+               'status',
+               'completedLessonIds',
+               'passedModuleQuizIds',
+               'unlockedModuleOrder',
+               'finalAssessmentPassed',
+               'progressPercent',
+               'enrolledAt',
+               'lastAccessedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'categoryId',
+               'userId',
+               'status',
+               'currentModuleId',
+               'currentLessonId',
+               'completedLessonIds',
+               'completedModuleIds',
+               'passedModuleQuizIds',
+               'unlockedModuleOrder',
+               'lastVerifiedAttemptId',
+               'lastVerifiedFinalAttemptId',
+               'finalAssessmentPassed',
+               'bestFinalScorePercent',
+               'progressPercent',
+               'enrolledAt',
+               'lastAccessedAt',
+               'completedAt'
+             ]) &&
+             data.courseId == courseId &&
+             isValidId(data.courseId) &&
+             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.categoryId is string && data.categoryId.size() > 0 && data.categoryId.size() <= 80 &&
+             data.userId is string && data.userId == userId &&
+             data.status is string && (data.status == 'enrolled' || data.status == 'in_progress' || data.status == 'completed') &&
+             (!('currentModuleId' in data) || (data.currentModuleId is string && data.currentModuleId.size() <= 128)) &&
+             (!('currentLessonId' in data) || (data.currentLessonId is string && data.currentLessonId.size() <= 128)) &&
+             data.completedLessonIds is list &&
+             data.completedLessonIds.size() <= 200 &&
+             (data.completedLessonIds.size() == 0 || (data.completedLessonIds[0] is string && data.completedLessonIds[0].size() <= 128)) &&
+             (!('completedModuleIds' in data) || (
+               data.completedModuleIds is list &&
+               data.completedModuleIds.size() <= 40 &&
+               (data.completedModuleIds.size() == 0 || (data.completedModuleIds[0] is string && data.completedModuleIds[0].size() <= 128))
+             )) &&
+             data.passedModuleQuizIds is list &&
+             data.passedModuleQuizIds.size() <= 40 &&
+             (data.passedModuleQuizIds.size() == 0 || (data.passedModuleQuizIds[0] is string && data.passedModuleQuizIds[0].size() <= 128)) &&
+             data.unlockedModuleOrder is number && data.unlockedModuleOrder >= 1 && data.unlockedModuleOrder <= 50 &&
+             (!('lastVerifiedAttemptId' in data) || isValidId(data.lastVerifiedAttemptId)) &&
+             (!('lastVerifiedFinalAttemptId' in data) || isValidId(data.lastVerifiedFinalAttemptId)) &&
+             data.finalAssessmentPassed is bool &&
+             (!('bestFinalScorePercent' in data) || (data.bestFinalScorePercent is number && data.bestFinalScorePercent >= 0 && data.bestFinalScorePercent <= 100)) &&
+             (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 64)) &&
+             data.progressPercent is number &&
+             data.progressPercent >= 0 &&
+             data.progressPercent <= 100;
+    }
+
+    function isValidVideoProgress(data, userId, progressKey) {
       return data.keys().hasAll([
                'id',
+               'userId',
                'courseId',
+               'lessonId',
+               'videoId',
+               'youtubeVideoId',
+               'durationSeconds',
+               'watchedSeconds',
+               'maxPercentWatched',
+               'lastPositionSeconds',
+               'hasPlayed',
+               'completedViaPlayer',
+               'manualCompleted',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'userId',
+               'courseId',
+               'lessonId',
+               'videoId',
+               'youtubeVideoId',
+               'durationSeconds',
+               'watchedSeconds',
+               'maxPercentWatched',
+               'lastPositionSeconds',
+               'hasPlayed',
+               'completedViaPlayer',
+               'manualCompleted',
+               'updatedAt'
+             ]) &&
+             data.id == progressKey &&
+             isValidId(data.id) &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             isValidId(data.courseId) &&
+             isValidId(data.lessonId) &&
+             isValidId(data.videoId) && data.videoId.size() <= 64 &&
+             isValidYouTubeId(data.youtubeVideoId) &&
+             data.durationSeconds is number && data.durationSeconds >= 0 && data.durationSeconds <= 86400 &&
+             data.watchedSeconds is number && data.watchedSeconds >= 0 && data.watchedSeconds <= 86400 &&
+             data.maxPercentWatched is number && data.maxPercentWatched >= 0 && data.maxPercentWatched <= 100 &&
+             data.lastPositionSeconds is number && data.lastPositionSeconds >= 0 && data.lastPositionSeconds <= 86400 &&
+             data.hasPlayed is bool &&
+             data.completedViaPlayer is bool &&
+             data.manualCompleted is bool &&
+             (!data.completedViaPlayer || (data.hasPlayed == true && data.maxPercentWatched >= 80));
+    }
+
+    function isValidAssessmentAttempt(data, userId, attemptId) {
+      return data.keys().hasAll([
+               'id',
+               'userId',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'assessmentType',
+               'assessmentTitle',
+               'attemptNumber',
+               'totalQuestions',
+               'correctAnswers',
+               'incorrectAnswers',
+               'scorePercent',
+               'passPercentage',
+               'passed',
+               'answers',
+               'questionResults',
+               'verificationSignature',
+               'submittedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'userId',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'assessmentType',
                'moduleId',
-               'title',
-               'description',
-               'writtenContent',
-               'attachments',
-               'order',
-               'estimatedMinutes',
+               'assessmentTitle',
+               'attemptNumber',
+               'totalQuestions',
+               'correctAnswers',
+               'incorrectAnswers',
+               'scorePercent',
+               'passPercentage',
+               'passed',
+               'answers',
+               'questionResults',
+               'verificationSignature',
+               'submittedAt'
+             ]) &&
+             data.id == attemptId &&
+             isValidId(data.id) &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             isValidId(data.courseId) &&
+             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.assessmentType is string && (data.assessmentType == 'module_quiz' || data.assessmentType == 'final_assessment') &&
+             (!('moduleId' in data) || (data.moduleId is string && data.moduleId.size() <= 128)) &&
+             data.assessmentTitle is string && data.assessmentTitle.size() > 0 && data.assessmentTitle.size() <= 180 &&
+             data.attemptNumber is number && data.attemptNumber >= 1 && data.attemptNumber <= 500 &&
+             data.totalQuestions is number && data.totalQuestions >= 1 && data.totalQuestions <= 30 &&
+             data.correctAnswers is number && data.correctAnswers >= 0 && data.correctAnswers <= data.totalQuestions &&
+             data.incorrectAnswers is number && data.incorrectAnswers >= 0 && data.incorrectAnswers <= data.totalQuestions &&
+             (data.correctAnswers + data.incorrectAnswers == data.totalQuestions) &&
+             data.scorePercent is number && data.scorePercent >= 0 && data.scorePercent <= 100 &&
+             data.passPercentage is number && data.passPercentage >= 1 && data.passPercentage <= 100 &&
+             data.passed is bool &&
+             data.passed == (data.scorePercent >= data.passPercentage) &&
+             data.answers is map && data.answers.size() <= 30 &&
+             data.questionResults is list && data.questionResults.size() <= 30 &&
+             (data.questionResults.size() == 0 || data.questionResults[0] is map) &&
+             isValidHexSignature(data.verificationSignature);
+    }
+
+    function isValidCertificateId(certId) {
+      return certId is string && certId.size() >= 8 && certId.size() <= 64 && certId.matches('^[A-Z0-9\\-]+$');
+    }
+
+    function isValidCandidateCertificate(data, userId, courseId) {
+      return data.keys().hasAll([
+               'certificateId',
+               'userId',
+               'candidateName',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'completionDate',
+               'finalAssessmentScore',
+               'finalAttemptId',
+               'templateId',
+               'status',
+               'verificationSignature',
+               'issuedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'certificateId',
+               'userId',
+               'candidateName',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'completionDate',
+               'finalAssessmentScore',
+               'finalAttemptId',
+               'templateId',
+               'status',
+               'verificationSignature',
+               'issuedAt'
+             ]) &&
+             isValidCertificateId(data.certificateId) &&
+             data.userId is string && data.userId == userId &&
+             data.candidateName is string && data.candidateName.size() > 0 && data.candidateName.size() <= 120 &&
+             data.courseId == courseId && isValidId(data.courseId) &&
+             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.completionDate is string && data.completionDate.size() > 0 && data.completionDate.size() <= 64 &&
+             data.finalAssessmentScore is number && data.finalAssessmentScore >= 70 && data.finalAssessmentScore <= 100 &&
+             isValidId(data.finalAttemptId) &&
+             isValidId(data.templateId) &&
+             data.status is string && (data.status == 'valid' || data.status == 'revoked') &&
+             isValidHexSignature(data.verificationSignature);
+    }
+
+    function isValidPublicCertificate(data, certId) {
+      return data.keys().hasAll([
+               'certificateId',
+               'candidateName',
+               'courseId',
+               'courseTitle',
+               'issueDate',
+               'status',
+               'issuedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'certificateId',
+               'candidateName',
+               'courseId',
+               'courseTitle',
+               'issueDate',
+               'status',
+               'issuedAt'
+             ]) &&
+             data.certificateId == certId &&
+             isValidCertificateId(data.certificateId) &&
+             data.candidateName is string && data.candidateName.size() > 0 && data.candidateName.size() <= 120 &&
+             isValidId(data.courseId) &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.issueDate is string && data.issueDate.size() > 0 && data.issueDate.size() <= 64 &&
+             data.status is string && (data.status == 'valid' || data.status == 'revoked');
+    }
+
+    function isValidCertificateTemplate(data, templateId) {
+      return data.keys().hasAll([
+               'id',
+               'name',
+               'organizationName',
+               'certificateTitle',
+               'subtitle',
+               'signatoryName',
+               'signatoryDesignation',
+               'primaryColor',
+               'accentColor',
+               'isDefault',
                'updatedBy',
                'updatedAt'
              ]) &&
              data.keys().hasOnly([
                'id',
-               'courseId',
-               'moduleId',
-               'title',
-               'description',
-               'videoUrl',
-               'writtenContent',
-               'exerciseTitle',
-               'exerciseInstructions',
-               'exerciseDeliverable',
-               'attachments',
-               'order',
-               'estimatedMinutes',
+               'name',
+               'organizationName',
+               'certificateTitle',
+               'subtitle',
+               'signatoryName',
+               'signatoryDesignation',
+               'primaryColor',
+               'accentColor',
+               'isDefault',
                'updatedBy',
                'updatedAt'
              ]) &&
-             data.id == lessonId &&
+             data.id == templateId &&
              isValidId(data.id) &&
-             data.courseId == courseId &&
-             isValidId(data.courseId) &&
-             isValidId(data.moduleId) &&
-             data.title is string && data.title.size() > 0 && data.title.size() <= 160 &&
-             data.description is string && data.description.size() <= 600 &&
-             (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 500)) &&
-             data.writtenContent is string && data.writtenContent.size() <= 20000 &&
-             (!('exerciseTitle' in data) || (data.exerciseTitle is string && data.exerciseTitle.size() <= 200)) &&
-             (!('exerciseInstructions' in data) || (data.exerciseInstructions is string && data.exerciseInstructions.size() <= 4000)) &&
-             (!('exerciseDeliverable' in data) || (data.exerciseDeliverable is string && data.exerciseDeliverable.size() <= 500)) &&
-             data.attachments is list &&
-             data.attachments.size() <= 15 &&
-             (data.attachments.size() == 0 || data.attachments[0] is map) &&
-             data.order is number && data.order >= 1 && data.order <= 200 &&
-             data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 300 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.organizationName is string && data.organizationName.size() > 0 && data.organizationName.size() <= 120 &&
+             data.certificateTitle is string && data.certificateTitle.size() > 0 && data.certificateTitle.size() <= 120 &&
+             data.subtitle is string && data.subtitle.size() <= 240 &&
+             data.signatoryName is string && data.signatoryName.size() <= 100 &&
+             data.signatoryDesignation is string && data.signatoryDesignation.size() <= 120 &&
+             isValidHexColor(data.primaryColor) &&
+             isValidHexColor(data.accentColor) &&
+             data.isDefault is bool &&
              data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
-    // Admins registry (server/console-managed only; prevents client privilege escalation)
+    // Relational helpers verifying server-graded attempt integrity before allowing unlocks or certificates
+    function hasPassingModuleQuizAttempt(userId, courseId, attemptId) {
+      let attempt = get(/databases/$(database)/documents/users/$(userId)/assessment_attempts/$(attemptId)).data;
+      return isValidId(attemptId) &&
+             attempt.userId == userId &&
+             attempt.courseId == courseId &&
+             attempt.assessmentType == 'module_quiz' &&
+             attempt.passed == true &&
+             attempt.scorePercent >= attempt.passPercentage &&
+             isValidHexSignature(attempt.verificationSignature);
+    }
+
+    function hasPassingFinalAssessmentAttempt(userId, courseId, attemptId, expectedScore) {
+      let attempt = get(/databases/$(database)/documents/users/$(userId)/assessment_attempts/$(attemptId)).data;
+      return isValidId(attemptId) &&
+             attempt.userId == userId &&
+             attempt.courseId == courseId &&
+             attempt.assessmentType == 'final_assessment' &&
+             attempt.passed == true &&
+             attempt.scorePercent >= 70 &&
+             attempt.scorePercent >= attempt.passPercentage &&
+             attempt.scorePercent == expectedScore &&
+             isValidHexSignature(attempt.verificationSignature);
+    }
+
+    // =========================================================================
+    // ADMINS REGISTRY (Console/Server-managed only; prevents privilege escalation)
+    // =========================================================================
+
     match /admins/{adminId} {
       allow read, write: if false;
     }
 
-    // Users Collection (strictly private to owner)
+    // =========================================================================
+    // USERS COLLECTION & PRIVATE SUBCOLLECTIONS (Pillar 6: PII Isolation)
+    // =========================================================================
+
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);
       allow list: if isSignedIn() && resource.data.id == request.auth.uid;
@@ -340,7 +694,7 @@ service cloud.firestore {
                        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'status']);
       allow delete: if false;
 
-      // Private per-candidate Career Profile Evaluation Assessments
+      // PRESERVED: Private per-candidate Career Profile Evaluation Assessments
       match /career_assessments/{assessmentId} {
         allow get: if isOwner(userId) && isValidId(userId) && isValidId(assessmentId);
         allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
@@ -353,8 +707,6 @@ service cloud.firestore {
                          incoming().createdAt == request.time &&
                          incoming().updatedAt == request.time;
 
-        // Action-based updates with Terminal State Locking:
-        // Submitted assessments are immutable and cannot be altered after submission.
         allow update: if isVerifiedUser() &&
                          isOwner(userId) &&
                          isValidId(userId) &&
@@ -406,26 +758,32 @@ service cloud.firestore {
                          existing().status == 'in_progress';
       }
 
-      // Private per-candidate Learn with ABHI Course Enrolments & Learning Progress
-      // Document ID is courseId, preventing duplicate enrolments structurally.
-      // Candidates can only access and update their own learning progress.
+      // HARDENED: Private per-candidate Learn with ABHI Course Enrolments & Progress
+      // Keyed by courseId to prevent duplicate enrolments structurally.
+      // Enforces initial-state creation, Terminal State Locking, and relational verification
+      // against assessment_attempts before module unlocks or course completion can be recorded.
       match /course_enrolments/{courseId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(courseId);
-        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(courseId);
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
 
         allow create: if isVerifiedUser() &&
                          isOwner(userId) &&
                          isValidId(userId) &&
                          isValidId(courseId) &&
                          isValidCourseEnrolment(incoming(), userId, courseId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status == 'enrolled' &&
+                         incoming().completedLessonIds.size() == 0 &&
+                         incoming().passedModuleQuizIds.size() == 0 &&
+                         incoming().unlockedModuleOrder == 1 &&
+                         incoming().finalAssessmentPassed == false &&
+                         incoming().progressPercent == 0 &&
+                         !('completedAt' in incoming()) &&
+                         !('bestFinalScorePercent' in incoming()) &&
                          incoming().enrolledAt == request.time &&
                          incoming().lastAccessedAt == request.time;
 
-        // Action-based progress update: only learning & assessment progress fields may change.
-        // Course status may transition to 'completed' only when finalAssessmentPassed is true.
-        allow update: if isVerifiedUser() &&
-                         isOwner(userId) &&
-                         isValidId(userId) &&
+        allow update: if isValidId(userId) &&
                          isValidId(courseId) &&
                          isValidCourseEnrolment(incoming(), userId, courseId) &&
                          incoming().courseId == existing().courseId &&
@@ -435,25 +793,117 @@ service cloud.firestore {
                          incoming().userId == existing().userId &&
                          incoming().enrolledAt == existing().enrolledAt &&
                          incoming().lastAccessedAt == request.time &&
-                         (incoming().status != 'completed' || ('finalAssessmentPassed' in incoming() && incoming().finalAssessmentPassed == true)) &&
-                         incoming().diff(existing()).affectedKeys().hasOnly([
-                           'currentLessonId',
-                           'completedLessonIds',
-                           'passedModuleQuizIds',
-                           'finalAssessmentPassed',
-                           'bestFinalScorePercent',
-                           'progressPercent',
-                           'status',
-                           'completedAt',
-                           'lastAccessedAt'
-                         ]);
+                         (
+                           isAdmin() ||
+                           (
+                             isVerifiedUser() &&
+                             isOwner(userId) &&
+                             existing().status != 'completed' &&
+                             (
+                               // Action 1: Lesson navigation & lesson completion only (cannot alter quiz passes, unlocks, or final status)
+                               (
+                                 incoming().status != 'completed' &&
+                                 incoming().progressPercent < 100 &&
+                                 incoming().passedModuleQuizIds == existing().passedModuleQuizIds &&
+                                 incoming().unlockedModuleOrder == existing().unlockedModuleOrder &&
+                                 incoming().finalAssessmentPassed == existing().finalAssessmentPassed &&
+                                 incoming().diff(existing()).affectedKeys().hasOnly([
+                                   'currentModuleId',
+                                   'currentLessonId',
+                                   'completedLessonIds',
+                                   'progressPercent',
+                                   'status',
+                                   'lastAccessedAt'
+                                 ])
+                               ) ||
+                               // Action 2: Verified module quiz pass & sequential unlock (+1 max per verified passing attempt)
+                               (
+                                 incoming().status != 'completed' &&
+                                 incoming().progressPercent < 100 &&
+                                 incoming().finalAssessmentPassed == existing().finalAssessmentPassed &&
+                                 incoming().unlockedModuleOrder >= existing().unlockedModuleOrder &&
+                                 incoming().unlockedModuleOrder <= existing().unlockedModuleOrder + 1 &&
+                                 'lastVerifiedAttemptId' in incoming() &&
+                                 hasPassingModuleQuizAttempt(userId, courseId, incoming().lastVerifiedAttemptId) &&
+                                 incoming().diff(existing()).affectedKeys().hasOnly([
+                                   'passedModuleQuizIds',
+                                   'completedModuleIds',
+                                   'unlockedModuleOrder',
+                                   'lastVerifiedAttemptId',
+                                   'progressPercent',
+                                   'status',
+                                   'lastAccessedAt'
+                                 ])
+                               ) ||
+                               // Action 3: Verified final assessment pass (>= 70%) & course completion transition
+                               (
+                                 incoming().finalAssessmentPassed == true &&
+                                 'bestFinalScorePercent' in incoming() &&
+                                 incoming().bestFinalScorePercent >= 70 &&
+                                 'lastVerifiedFinalAttemptId' in incoming() &&
+                                 hasPassingFinalAssessmentAttempt(
+                                   userId,
+                                   courseId,
+                                   incoming().lastVerifiedFinalAttemptId,
+                                   incoming().bestFinalScorePercent
+                                 ) &&
+                                 incoming().diff(existing()).affectedKeys().hasOnly([
+                                   'finalAssessmentPassed',
+                                   'bestFinalScorePercent',
+                                   'lastVerifiedFinalAttemptId',
+                                   'progressPercent',
+                                   'status',
+                                   'completedAt',
+                                   'lastAccessedAt'
+                                 ])
+                               )
+                             )
+                           )
+                         );
 
-        allow delete: if false;
+        allow delete: if isAdmin() && isValidId(userId) && isValidId(courseId);
       }
 
-      // Private per-candidate Quiz & Final Assessment Attempts
-      // Candidates can only read their own results and create immutable graded attempts.
-      // Admins may read or remove attempts for management.
+      // NEW: Private per-candidate YouTube Video Playback Progress
+      match /video_progress/{progressKey} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(progressKey);
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(progressKey) &&
+                         isValidVideoProgress(incoming(), userId, progressKey) &&
+                         incoming().updatedAt == request.time;
+
+        allow update: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(progressKey) &&
+                         isValidVideoProgress(incoming(), userId, progressKey) &&
+                         incoming().id == existing().id &&
+                         incoming().userId == existing().userId &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().lessonId == existing().lessonId &&
+                         incoming().videoId == existing().videoId &&
+                         incoming().youtubeVideoId == existing().youtubeVideoId &&
+                         incoming().updatedAt == request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'durationSeconds',
+                           'watchedSeconds',
+                           'maxPercentWatched',
+                           'lastPositionSeconds',
+                           'hasPlayed',
+                           'completedViaPlayer',
+                           'manualCompleted',
+                           'updatedAt'
+                         ]);
+
+        allow delete: if isAdmin() && isValidId(userId) && isValidId(progressKey);
+      }
+
+      // HARDENED: Private per-candidate Immutable Quiz & Final Assessment Attempts
+      // Enforces score/pass consistency and backend HMAC receipt structure; strictly immutable & admin-only delete.
       match /assessment_attempts/{attemptId} {
         allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(attemptId);
         allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
@@ -468,65 +918,217 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isAdmin() && isValidId(userId) && isValidId(attemptId);
       }
+
+      // HARDENED: Private per-candidate Immutable Course Completion Certificates
+      // Keyed by courseId to prevent duplicates. Requires completed enrolment, verified passing final
+      // assessment attempt matching the printed score, and atomic public verification doc via getAfter.
+      match /certificates/{courseId} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(courseId);
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(courseId) &&
+                         isValidCandidateCertificate(incoming(), userId, courseId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status == 'valid' &&
+                         incoming().issuedAt == request.time &&
+                         get(/databases/$(database)/documents/users/$(userId)/course_enrolments/$(courseId)).data.status == 'completed' &&
+                         get(/databases/$(database)/documents/users/$(userId)/course_enrolments/$(courseId)).data.finalAssessmentPassed == true &&
+                         hasPassingFinalAssessmentAttempt(
+                           userId,
+                           courseId,
+                           incoming().finalAttemptId,
+                           incoming().finalAssessmentScore
+                         ) &&
+                         getAfter(/databases/$(database)/documents/public_certificates/$(incoming().certificateId)).data.courseId == courseId &&
+                         getAfter(/databases/$(database)/documents/public_certificates/$(incoming().certificateId)).data.status == 'valid';
+
+        allow update: if isAdmin() &&
+                         isValidId(userId) &&
+                         isValidId(courseId) &&
+                         isValidCandidateCertificate(incoming(), userId, courseId) &&
+                         incoming().certificateId == existing().certificateId &&
+                         incoming().userId == existing().userId &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().finalAttemptId == existing().finalAttemptId &&
+                         incoming().issuedAt == existing().issuedAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+
+        allow delete: if isAdmin() && isValidId(userId) && isValidId(courseId);
+      }
     }
 
-    // Learn with ABHI Admin-Managed Course Lessons (Publicly readable curriculum, strictly Admin writable)
-    match /learning_courses/{courseId}/lessons/{lessonId} {
-      allow get: if isValidId(courseId) && isValidId(lessonId);
-      allow list: if resource.data.courseId == courseId;
+    // =========================================================================
+    // PUBLIC CERTIFICATE VERIFICATION REGISTRY (Single-Doc Lookup, Zero PII)
+    // =========================================================================
+
+    match /public_certificates/{certificateId} {
+      allow get: if isValidCertificateId(certificateId);
+      allow list: if isAdmin();
+
+      allow create: if isVerifiedUser() &&
+                       isValidCertificateId(certificateId) &&
+                       isValidPublicCertificate(incoming(), certificateId) &&
+                       incoming().status == 'valid' &&
+                       incoming().issuedAt == request.time &&
+                       getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/certificates/$(incoming().courseId)).data.certificateId == certificateId &&
+                       getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/certificates/$(incoming().courseId)).data.status == 'valid';
+
+      allow update: if isAdmin() &&
+                       isValidCertificateId(certificateId) &&
+                       isValidPublicCertificate(incoming(), certificateId) &&
+                       incoming().certificateId == existing().certificateId &&
+                       incoming().courseId == existing().courseId &&
+                       incoming().issuedAt == existing().issuedAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+
+      allow delete: if isAdmin() && isValidCertificateId(certificateId);
+    }
+
+    // =========================================================================
+    // ADMIN-MANAGED LEARN WITH ABHI COURSES, MODULES, LESSONS & QUIZ CONFIGS
+    // =========================================================================
+
+    match /learning_courses/{courseId} {
+      allow get: if isValidId(courseId) && (resource.data.status == 'published' || isAdmin());
+      allow list: if resource.data.status == 'published' || isAdmin();
 
       allow create: if isAdmin() &&
                        isValidId(courseId) &&
-                       isValidId(lessonId) &&
-                       isValidCourseLesson(incoming(), courseId, lessonId) &&
+                       isValidLearningCourse(incoming(), courseId) &&
                        incoming().updatedAt == request.time;
 
       allow update: if isAdmin() &&
                        isValidId(courseId) &&
-                       isValidId(lessonId) &&
-                       isValidCourseLesson(incoming(), courseId, lessonId) &&
+                       isValidLearningCourse(incoming(), courseId) &&
                        incoming().id == existing().id &&
-                       incoming().courseId == existing().courseId &&
-                       incoming().updatedAt == request.time &&
-                       incoming().diff(existing()).affectedKeys().hasOnly([
-                         'moduleId',
-                         'title',
-                         'description',
-                         'videoUrl',
-                         'writtenContent',
-                         'exerciseTitle',
-                         'exerciseInstructions',
-                         'exerciseDeliverable',
-                         'attachments',
-                         'order',
-                         'estimatedMinutes',
-                         'updatedBy',
-                         'updatedAt'
-                       ]);
+                       incoming().updatedAt == request.time;
 
-      allow delete: if isAdmin() && isValidId(courseId) && isValidId(lessonId);
+      allow delete: if isAdmin() && isValidId(courseId);
+
+      // Ordered course modules (Publicly readable curriculum, strictly Admin writable)
+      match /modules/{moduleId} {
+        allow get: if isValidId(courseId) && isValidId(moduleId);
+        allow list: if resource.data.courseId == courseId;
+
+        allow create: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(moduleId) &&
+                         isValidCourseModule(incoming(), courseId, moduleId) &&
+                         incoming().updatedAt == request.time;
+
+        allow update: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(moduleId) &&
+                         isValidCourseModule(incoming(), courseId, moduleId) &&
+                         incoming().id == existing().id &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().updatedAt == request.time;
+
+        allow delete: if isAdmin() && isValidId(courseId) && isValidId(moduleId);
+      }
+
+      // Course lessons & YouTube video metadata (Publicly readable curriculum, strictly Admin writable)
+      match /lessons/{lessonId} {
+        allow get: if isValidId(courseId) && isValidId(lessonId);
+        allow list: if resource.data.courseId == courseId;
+
+        allow create: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(lessonId) &&
+                         isValidCourseLesson(incoming(), courseId, lessonId) &&
+                         incoming().updatedAt == request.time;
+
+        allow update: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(lessonId) &&
+                         isValidCourseLesson(incoming(), courseId, lessonId) &&
+                         incoming().id == existing().id &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().updatedAt == request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'moduleId',
+                           'title',
+                           'description',
+                           'videoUrl',
+                           'videos',
+                           'writtenContent',
+                           'exerciseTitle',
+                           'exerciseInstructions',
+                           'exerciseDeliverable',
+                           'attachments',
+                           'order',
+                           'estimatedMinutes',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+        allow delete: if isAdmin() && isValidId(courseId) && isValidId(lessonId);
+      }
+
+      // Admin-Only Quiz & Final Assessment Configurations (Answer keys strictly hidden from students)
+      match /quiz_configs/{quizId} {
+        allow get: if isAdmin() && isValidId(courseId) && isValidId(quizId);
+        allow list: if isAdmin() && resource.data.courseId == courseId;
+
+        allow create: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(quizId) &&
+                         isValidQuizConfig(incoming(), courseId, quizId) &&
+                         incoming().updatedAt == request.time;
+
+        allow update: if isAdmin() &&
+                         isValidId(courseId) &&
+                         isValidId(quizId) &&
+                         isValidQuizConfig(incoming(), courseId, quizId) &&
+                         incoming().id == existing().id &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().updatedAt == request.time;
+
+        allow delete: if isAdmin() && isValidId(courseId) && isValidId(quizId);
+      }
     }
 
-    // Admin-Only Quiz & Final Assessment Configurations (Answer keys strictly hidden from candidates)
-    match /learning_courses/{courseId}/quiz_configs/{quizId} {
-      allow get: if isAdmin() && isValidId(courseId) && isValidId(quizId);
-      allow list: if isAdmin() && resource.data.courseId == courseId;
+    // =========================================================================
+    // ADMIN-MANAGED CERTIFICATE TEMPLATES (Publicly readable branding, Admin writable)
+    // =========================================================================
+
+    match /certificate_templates/{templateId} {
+      allow get: if isValidId(templateId);
+      allow list: if true;
 
       allow create: if isAdmin() &&
-                       isValidId(courseId) &&
-                       isValidId(quizId) &&
-                       isValidQuizConfig(incoming(), courseId, quizId) &&
+                       isValidId(templateId) &&
+                       isValidCertificateTemplate(incoming(), templateId) &&
                        incoming().updatedAt == request.time;
 
       allow update: if isAdmin() &&
-                       isValidId(courseId) &&
-                       isValidId(quizId) &&
-                       isValidQuizConfig(incoming(), courseId, quizId) &&
+                       isValidId(templateId) &&
+                       isValidCertificateTemplate(incoming(), templateId) &&
                        incoming().id == existing().id &&
-                       incoming().courseId == existing().courseId &&
                        incoming().updatedAt == request.time;
 
-      allow delete: if isAdmin() && isValidId(courseId) && isValidId(quizId);
+      allow delete: if isAdmin() && isValidId(templateId);
+    }
+
+    // Narrowly-scoped Admin-Only CollectionGroup Audit Rules (strictly for Learn with ABHI course records)
+    // Candidate profiles (/users/{userId}) and Career Readiness Assessments (/career_assessments) remain untouched.
+    match /{path=**}/course_enrolments/{courseId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/video_progress/{progressKey} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/assessment_attempts/{attemptId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/certificates/{courseId} {
+      allow read: if isAdmin();
     }
 
     match /test/connection {

@@ -13,13 +13,24 @@ import {
   deleteServerAttemptById,
   getAssessmentConfig,
   getAssessmentConfigById,
+  getAuthoritativeCandidateCourseStatus,
   getCandidateAttemptCount,
   getCourseAssessments,
   listAllServerAttempts,
   recordServerAttempt,
   removeQuestion,
+  resetAllCourseAssessmentsAndAttempts,
   updateAssessmentConfigSettings,
+  upsertAssessmentConfig,
 } from './server/quizBank';
+import {
+  issueVerifiedCertificate,
+  listCandidateServerCertificates,
+  recordServerLessonProgress,
+  resetAllServerCertificatesAndProgress,
+  verifyPublicCertificateById,
+} from './server/certificateStore';
+import { upsertRegisteredCourseDefinition } from './server/learningStore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -257,6 +268,54 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction): Pr
   next();
 }
 
+/**
+ * Cryptographically authenticates a student using their Firebase ID token.
+ * Rejects missing, invalid, unverified-email, or UID-spoofed requests so student
+ * quiz attempts, progress, and certificates are strictly bound to Firebase UID.
+ */
+async function requireVerifiedCandidate(
+  req: Request,
+  res: Response,
+  claimedCandidateId?: string
+): Promise<VerifiedFirebaseUser | null> {
+  const bearer = extractBearerToken(req);
+  if (!bearer || bearer.startsWith('adm.')) {
+    res.status(401).json({
+      error: 'Valid Firebase authentication token is required.',
+      code: 'CANDIDATE_AUTH_REQUIRED',
+    });
+    return null;
+  }
+
+  const fbUser = await verifyFirebaseIdToken(bearer);
+  if (!fbUser || !fbUser.uid) {
+    res.status(401).json({
+      error: 'Invalid or expired authentication token. Please sign in again.',
+      code: 'CANDIDATE_TOKEN_INVALID',
+    });
+    return null;
+  }
+
+  if (!fbUser.emailVerified) {
+    res.status(403).json({
+      error: 'A verified email account is required to record learning progress and assessments.',
+      code: 'EMAIL_VERIFICATION_REQUIRED',
+    });
+    return null;
+  }
+
+  const claimed = sanitizeShortText(claimedCandidateId, 128);
+  if (claimed && claimed !== fbUser.uid) {
+    res.status(403).json({
+      error: 'Account mismatch detected. You may only access your own learning records.',
+      code: 'CANDIDATE_UID_MISMATCH',
+    });
+    return null;
+  }
+
+  return fbUser;
+}
+
 // ============================================================================
 // SERVER-SIDE ASSESSMENT SESSIONS (ZERO ANSWER LEAKAGE + BACKEND GRADING)
 // ============================================================================
@@ -358,9 +417,12 @@ async function startServer() {
     });
   });
 
-  // 2. Start a quiz or final assessment session — returns ONLY prompts & 4 options
+  // 2. Start a quiz or final assessment session — returns ONLY prompts & 4 options (strictly authenticated UID)
   app.post('/api/learning/assessments/start', async (req: Request, res: Response) => {
     pruneExpiredSessions();
+
+    const fbUser = await requireVerifiedCandidate(req, res, req.body?.candidateId);
+    if (!fbUser) return;
 
     const courseId = sanitizeShortText(req.body?.courseId, 128);
     const assessmentType: AssessmentType =
@@ -382,21 +444,10 @@ async function startServer() {
       return;
     }
 
-    // Check optional Firebase Bearer token to bind session strictly to verified UID when signed in
-    const bearer = extractBearerToken(req);
-    const fbUser = bearer && !bearer.startsWith('adm.') ? await verifyFirebaseIdToken(bearer) : null;
-
-    const candidateId =
-      fbUser?.uid || sanitizeShortText(req.body?.candidateId, 128);
-    if (!candidateId) {
-      res.status(401).json({ error: 'Please sign in to start this assessment.' });
-      return;
-    }
-
+    const candidateId = fbUser.uid;
     const candidateName =
-      fbUser?.name || sanitizeShortText(req.body?.candidateName, 120) || 'ABHI JOBS Candidate';
-    const candidateEmail =
-      fbUser?.email || sanitizeShortText(req.body?.candidateEmail, 160) || '';
+      fbUser.name || sanitizeShortText(req.body?.candidateName, 120) || 'ABHI JOBS Candidate';
+    const candidateEmail = fbUser.email || '';
 
     const countToServe = Math.max(1, Math.min(config.questionCount, config.questions.length));
     const orderedPool = config.randomizeOrder
@@ -412,7 +463,7 @@ async function startServer() {
       assessmentType: config.assessmentType,
       moduleId: config.moduleId,
       userId: candidateId,
-      firebaseUid: fbUser?.uid,
+      firebaseUid: fbUser.uid,
       candidateName,
       candidateEmail,
       servedQuestionIds: selectedQuestions.map((q) => q.id),
@@ -443,9 +494,12 @@ async function startServer() {
     });
   });
 
-  // 3. Submit candidate answers — validated and graded strictly on the backend
+  // 3. Submit candidate answers — validated, graded, and HMAC-signed strictly on the backend
   app.post('/api/learning/assessments/submit', async (req: Request, res: Response) => {
     pruneExpiredSessions();
+
+    const fbUser = await requireVerifiedCandidate(req, res);
+    if (!fbUser) return;
 
     const sessionId = sanitizeShortText(req.body?.sessionId, 128);
     const rawAnswers = req.body?.answers;
@@ -470,16 +524,11 @@ async function startServer() {
       return;
     }
 
-    // If session was created by a Firebase-authenticated user, verify caller matches that exact UID
-    if (session.firebaseUid) {
-      const bearer = extractBearerToken(req);
-      const fbUser = bearer && !bearer.startsWith('adm.') ? await verifyFirebaseIdToken(bearer) : null;
-      if (!fbUser || fbUser.uid !== session.firebaseUid) {
-        res.status(403).json({
-          error: 'Authentication mismatch. You may only submit your own assessment session.',
-        });
-        return;
-      }
+    if (session.userId !== fbUser.uid || (session.firebaseUid && session.firebaseUid !== fbUser.uid)) {
+      res.status(403).json({
+        error: 'Authentication mismatch. You may only submit your own assessment session.',
+      });
+      return;
     }
 
     const config = getAssessmentConfigById(session.configId);
@@ -504,6 +553,7 @@ async function startServer() {
 
     // Validate every served question has a single valid answer option index (0..3)
     let correctAnswers = 0;
+    const sanitizedAnswers: Record<string, number> = {};
     const questionResults = [];
 
     for (const q of servedQuestions) {
@@ -523,6 +573,7 @@ async function startServer() {
         return;
       }
 
+      sanitizedAnswers[q.id] = selectedOptionIndex;
       const isCorrect = selectedOptionIndex === q.correctOptionIndex;
       if (isCorrect) correctAnswers += 1;
 
@@ -556,13 +607,15 @@ async function startServer() {
     const attemptNumber = priorCount + 1;
     const submittedAt = new Date().toISOString();
     const attemptId = `att_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+    const courseSlug = config.courseSlug || session.courseId;
 
-    recordServerAttempt({
+    const persistedAttempt = recordServerAttempt({
       id: attemptId,
       userId: session.userId,
       candidateName: session.candidateName,
       candidateEmail: session.candidateEmail,
       courseId: session.courseId,
+      courseSlug,
       courseTitle: config.courseTitle,
       assessmentType: session.assessmentType,
       moduleId: session.moduleId,
@@ -577,24 +630,135 @@ async function startServer() {
       submittedAt,
     });
 
+    const authoritativeStatus = getAuthoritativeCandidateCourseStatus(
+      session.userId,
+      session.courseId
+    );
+
     res.json({
-      id: attemptId,
-      userId: session.userId,
-      courseId: session.courseId,
-      courseTitle: config.courseTitle,
-      assessmentType: session.assessmentType,
-      moduleId: session.moduleId,
-      assessmentTitle: config.title,
-      attemptNumber,
-      totalQuestions,
-      correctAnswers,
-      incorrectAnswers,
-      scorePercent,
-      passPercentage,
-      passed,
-      submittedAt,
+      id: persistedAttempt.id,
+      userId: persistedAttempt.userId,
+      courseId: persistedAttempt.courseId,
+      courseSlug: persistedAttempt.courseSlug,
+      courseTitle: persistedAttempt.courseTitle,
+      assessmentType: persistedAttempt.assessmentType,
+      moduleId: persistedAttempt.moduleId,
+      assessmentTitle: persistedAttempt.assessmentTitle,
+      attemptNumber: persistedAttempt.attemptNumber,
+      totalQuestions: persistedAttempt.totalQuestions,
+      correctAnswers: persistedAttempt.correctAnswers,
+      incorrectAnswers: persistedAttempt.incorrectAnswers,
+      scorePercent: persistedAttempt.scorePercent,
+      passPercentage: persistedAttempt.passPercentage,
+      passed: persistedAttempt.passed,
+      submittedAt: persistedAttempt.submittedAt,
+      verificationSignature: persistedAttempt.verificationSignature,
+      answers: sanitizedAnswers,
       questionResults,
+      courseProgressStatus: authoritativeStatus,
     });
+  });
+
+  // 4. Sync candidate lesson progress to backend (strictly authenticated UID)
+  app.post('/api/learning/progress/sync', async (req: Request, res: Response) => {
+    const fbUser = await requireVerifiedCandidate(req, res, req.body?.candidateId);
+    if (!fbUser) return;
+
+    const courseId = sanitizeShortText(req.body?.courseId, 128);
+    const rawCompleted = req.body?.completedLessonIds;
+    if (!courseId || !Array.isArray(rawCompleted)) {
+      res.status(400).json({ error: 'courseId and completedLessonIds array are required.' });
+      return;
+    }
+
+    const lessonIds = rawCompleted
+      .filter((id): id is string => typeof id === 'string')
+      .slice(0, 200);
+    const result = recordServerLessonProgress(fbUser.uid, courseId, lessonIds);
+    res.json({ synced: true, ...result });
+  });
+
+  // 4b. Authoritative server-computed course unlock & quiz pass status (anti-tampering source of truth)
+  app.get('/api/learning/progress/course/:courseId/status', async (req: Request, res: Response) => {
+    const fbUser = await requireVerifiedCandidate(req, res);
+    if (!fbUser) return;
+
+    const courseId = sanitizeShortText(req.params.courseId, 128);
+    if (!courseId) {
+      res.status(400).json({ error: 'Invalid courseId.' });
+      return;
+    }
+
+    const status = getAuthoritativeCandidateCourseStatus(fbUser.uid, courseId);
+    res.json(status);
+  });
+
+  // 5. Issue a verified Course Completion Certificate (backend validates all 3 requirements)
+  app.post('/api/learning/certificates/issue', async (req: Request, res: Response) => {
+    const fbUser = await requireVerifiedCandidate(req, res, req.body?.candidateId);
+    if (!fbUser) return;
+
+    const courseId = sanitizeShortText(req.body?.courseId, 128);
+    const completedLessonIds = Array.isArray(req.body?.completedLessonIds)
+      ? req.body.completedLessonIds.filter((id: unknown): id is string => typeof id === 'string')
+      : undefined;
+
+    const candidateName =
+      sanitizeShortText(req.body?.candidateName, 120) || fbUser.name || '';
+
+    if (!courseId || !candidateName) {
+      res.status(400).json({ error: 'courseId and candidateName are required.' });
+      return;
+    }
+
+    const outcome = issueVerifiedCertificate({
+      userId: fbUser.uid,
+      candidateName,
+      courseId,
+      completedLessonIds,
+    });
+
+    if ('error' in outcome) {
+      res.status(outcome.statusCode).json({
+        error: outcome.error,
+        missingRequirements: outcome.missingRequirements,
+      });
+      return;
+    }
+
+    res.status(outcome.alreadyIssued ? 200 : 201).json({
+      alreadyIssued: outcome.alreadyIssued,
+      certificate: outcome.certificate,
+    });
+  });
+
+  // 6. List authenticated candidate's own certificates
+  app.get('/api/learning/certificates/mine', async (req: Request, res: Response) => {
+    const fbUser = await requireVerifiedCandidate(
+      req,
+      res,
+      typeof req.query.candidateId === 'string' ? req.query.candidateId : undefined
+    );
+    if (!fbUser) return;
+
+    const certificates = listCandidateServerCertificates(fbUser.uid);
+    res.json({ certificates });
+  });
+
+  // 7. Public Certificate Verification Endpoint (strictly minimal non-PII response)
+  app.get('/api/learning/certificates/verify/:certificateId', (req: Request, res: Response) => {
+    const certificateId = sanitizeShortText(req.params.certificateId, 64);
+    if (!certificateId) {
+      res.status(400).json({
+        found: false,
+        valid: false,
+        status: 'not_found',
+      });
+      return;
+    }
+
+    const result = verifyPublicCertificateById(certificateId);
+    res.json(result);
   });
 
   // --------------------------------------------------------------------------
@@ -682,6 +846,117 @@ async function startServer() {
         moduleQuizzes,
         finalAssessment,
       });
+    }
+  );
+
+  // Register or update course structural requirements in durable server store — ADMIN ONLY
+  app.post(
+    '/api/learning/admin/courses/register',
+    requireAdmin,
+    (req: Request, res: Response) => {
+      const courseId = sanitizeShortText(req.body?.courseId, 128);
+      const courseSlug = sanitizeShortText(req.body?.courseSlug, 128);
+      const courseTitle = sanitizeShortText(req.body?.courseTitle, 160);
+      const orderedModuleIds = Array.isArray(req.body?.orderedModuleIds)
+        ? req.body.orderedModuleIds.filter((id: unknown): id is string => typeof id === 'string')
+        : [];
+      const requiredLessonIds = Array.isArray(req.body?.requiredLessonIds)
+        ? req.body.requiredLessonIds.filter((id: unknown): id is string => typeof id === 'string')
+        : [];
+      const passPercentage =
+        typeof req.body?.passPercentage === 'number' ? req.body.passPercentage : 70;
+      const certificateTemplateId =
+        sanitizeShortText(req.body?.certificateTemplateId, 128) || 'default_abhi_certificate';
+
+      if (!courseId || !courseTitle) {
+        res.status(400).json({ error: 'courseId and courseTitle are required.' });
+        return;
+      }
+
+      const registered = upsertRegisteredCourseDefinition({
+        courseId,
+        courseSlug: courseSlug || courseId,
+        courseTitle,
+        orderedModuleIds,
+        requiredLessonIds,
+        passPercentage,
+        certificateTemplateId,
+      });
+
+      res.status(200).json({ courseDefinition: registered });
+    }
+  );
+
+  // Create or upsert a module quiz or final assessment configuration — ADMIN ONLY
+  app.post(
+    '/api/learning/admin/assessments/config',
+    requireAdmin,
+    (req: Request, res: Response) => {
+      const courseId = sanitizeShortText(req.body?.courseId, 128);
+      const courseSlug = sanitizeShortText(req.body?.courseSlug, 128);
+      const courseTitle = sanitizeShortText(req.body?.courseTitle, 160);
+      const assessmentType: AssessmentType =
+        req.body?.assessmentType === 'final_assessment' ? 'final_assessment' : 'module_quiz';
+      const moduleId = sanitizeShortText(req.body?.moduleId, 128) || undefined;
+      const title = sanitizeShortText(req.body?.title, 180);
+
+      if (!courseId || !courseTitle || !title) {
+        res.status(400).json({ error: 'courseId, courseTitle, and title are required.' });
+        return;
+      }
+      if (assessmentType === 'module_quiz' && !moduleId) {
+        res.status(400).json({ error: 'moduleId is required for a module quiz configuration.' });
+        return;
+      }
+
+      const rawQuestions = Array.isArray(req.body?.questions) ? req.body.questions : undefined;
+      if (rawQuestions) {
+        const invalidQuestion = rawQuestions.some(
+          (q: any) =>
+            !q ||
+            typeof q.prompt !== 'string' ||
+            !q.prompt.trim() ||
+            !Array.isArray(q.options) ||
+            q.options.length !== 4 ||
+            q.options.some((o: unknown) => typeof o !== 'string' || !o.trim()) ||
+            typeof q.correctOptionIndex !== 'number' ||
+            ![0, 1, 2, 3].includes(q.correctOptionIndex) ||
+            typeof q.explanation !== 'string' ||
+            !q.explanation.trim()
+        );
+        if (invalidQuestion) {
+          res.status(400).json({
+            error:
+              'Every question must include a prompt, 4 non-empty options, a correctOptionIndex (0-3), and an explanation.',
+          });
+          return;
+        }
+      }
+
+      const config = upsertAssessmentConfig({
+        courseId,
+        courseSlug: courseSlug || courseId,
+        courseTitle,
+        assessmentType,
+        moduleId,
+        moduleOrder:
+          typeof req.body?.moduleOrder === 'number' ? req.body.moduleOrder : undefined,
+        title,
+        description: sanitizeShortText(req.body?.description, 500),
+        passPercentage:
+          typeof req.body?.passPercentage === 'number' ? req.body.passPercentage : 70,
+        questionCount:
+          typeof req.body?.questionCount === 'number' ? req.body.questionCount : undefined,
+        randomizeOrder:
+          typeof req.body?.randomizeOrder === 'boolean' ? req.body.randomizeOrder : true,
+        requiredForCompletion:
+          typeof req.body?.requiredForCompletion === 'boolean'
+            ? req.body.requiredForCompletion
+            : true,
+        questions: rawQuestions,
+      });
+
+      res.status(201).json({ config });
     }
   );
 
@@ -863,6 +1138,25 @@ async function startServer() {
         return;
       }
       res.json({ deleted: true, attemptId });
+    }
+  );
+
+  // Reset all in-memory Learn with ABHI course quizzes, active sessions, attempts, progress & certificates — ADMIN ONLY
+  app.post(
+    '/api/learning/admin/reset-course-data',
+    requireAdmin,
+    (_req: Request, res: Response) => {
+      const assessmentReset = resetAllCourseAssessmentsAndAttempts();
+      const certificateReset = resetAllServerCertificatesAndProgress();
+      const clearedActiveSessions = activeSessions.size;
+      activeSessions.clear();
+
+      res.json({
+        reset: true,
+        ...assessmentReset,
+        ...certificateReset,
+        clearedActiveSessions,
+      });
     }
   );
 

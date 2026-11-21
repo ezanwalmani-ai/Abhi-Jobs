@@ -496,7 +496,17 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
       </div>
 
       {/* TAB 1: QUESTION BANK & SETTINGS */}
-      {activeSubTab === 'questions' && (
+      {activeSubTab === 'questions' &&
+        (LEARNING_CATALOGUE_COURSES.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 sm:p-10 text-center space-y-2.5">
+            <h3 className="font-display text-lg font-bold text-[#102B4E]">
+              No courses available yet
+            </h3>
+            <p className="text-sm text-[#566479] max-w-xl mx-auto leading-relaxed">
+              All previous course quizzes and final assessments have been removed. Once new courses are added to Learn with ABHI, you can configure module quizzes, passing scores, and final assessments right here.
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Selector Column */}
           <div className="lg:col-span-4 bg-white rounded-2xl border border-[#E5EAF0] p-5 space-y-5">
@@ -917,7 +927,7 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
             )}
           </div>
         </div>
-      )}
+        ))}
 
       {/* TAB 2: CANDIDATE ASSESSMENT ATTEMPTS */}
       {activeSubTab === 'attempts' && (

@@ -23,8 +23,20 @@ import {
   loadCandidateAssessmentAttempts,
 } from '../services/assessmentService';
 import {
+  issueCourseCertificate,
+  loadCandidateCertificates,
+} from '../services/certificateService';
+import { downloadCertificatePdf } from '../services/certificatePdfGenerator';
+import { CertificateViewerModal } from '../components/learning/CertificateDocument';
+import { MyCertificatesCard } from '../components/learning/MyCertificatesCard';
+import {
+  cleanupOwnLegacyCourseRecords,
+  purgeLegacyLocalLearningData,
+} from '../services/learningResetService';
+import {
   AssessmentAttemptRecord,
   CourseAssessmentOverview,
+  CourseCertificateRecord,
   CourseEnrolmentRecord,
   LearningCourseItem,
 } from '../types/learning';
@@ -52,6 +64,10 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
     useState<CourseAssessmentOverview | null>(null);
   const [courseAttempts, setCourseAttempts] = useState<AssessmentAttemptRecord[]>([]);
   const [adminSubTab, setAdminSubTab] = useState<'lessons' | 'assessments'>('lessons');
+  const [certificates, setCertificates] = useState<CourseCertificateRecord[]>([]);
+  const [isIssuingCertificate, setIsIssuingCertificate] = useState(false);
+  const [viewingCertificate, setViewingCertificate] =
+    useState<CourseCertificateRecord | null>(null);
 
   const isAuthenticated = Boolean(currentUser);
   const isAdmin =
@@ -62,22 +78,32 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
   const fullName = currentCandidate?.name || currentUser?.name || '';
   const firstName = fullName ? fullName.trim().split(' ')[0] : null;
 
-  // Load candidate enrolments & progress records
+  // Purge removed legacy course caches & records before loading enrolments & certificates
   useEffect(() => {
     let active = true;
+    purgeLegacyLocalLearningData(false);
 
     if (!currentUser?.id) {
       setEnrolments([]);
+      setCertificates([]);
       return () => {
         active = false;
       };
     }
 
-    loadCandidateEnrolments(currentUser.id).then((res) => {
-      if (active) {
-        setEnrolments(res.enrolments);
-      }
-    });
+    cleanupOwnLegacyCourseRecords(currentUser.id)
+      .catch(() => 0)
+      .then(() =>
+        Promise.all([
+          loadCandidateEnrolments(currentUser.id),
+          loadCandidateCertificates(currentUser.id),
+        ])
+      )
+      .then(([enrRes, certRes]) => {
+        if (!active) return;
+        setEnrolments(enrRes.enrolments);
+        setCertificates(certRes.certificates);
+      });
 
     return () => {
       active = false;
@@ -198,6 +224,62 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
     }
   };
 
+  const triggerCertificateIssuance = async (
+    course: LearningCourseItem,
+    completedLessonIds: string[],
+    notifyOnSuccess = true
+  ): Promise<CourseCertificateRecord | null> => {
+    if (!currentUser?.id) return null;
+
+    const existing = certificates.find((c) => c.courseId === course.id);
+    if (existing) return existing;
+
+    setIsIssuingCertificate(true);
+    try {
+      const outcome = await issueCourseCertificate({
+        appUserId: currentUser.id,
+        candidateName: fullName || currentUser.name || 'ABHI JOBS Candidate',
+        courseId: course.id,
+        completedLessonIds,
+      });
+
+      if (outcome.success && outcome.certificate) {
+        const issued = outcome.certificate;
+        setCertificates((prev) => [
+          issued,
+          ...prev.filter((item) => item.courseId !== issued.courseId),
+        ]);
+        if (notifyOnSuccess && !outcome.alreadyIssued) {
+          showToast(
+            'success',
+            'Certificate Issued!',
+            `Your official certificate (${issued.certificateId}) for ${course.title} is ready to view and download.`
+          );
+        }
+        return issued;
+      }
+
+      if (notifyOnSuccess && outcome.error) {
+        showToast('info', 'Certificate Requirements', outcome.error);
+      }
+      return null;
+    } finally {
+      setIsIssuingCertificate(false);
+    }
+  };
+
+  const handleDownloadCertificate = async (cert: CourseCertificateRecord) => {
+    try {
+      await downloadCertificatePdf(cert);
+    } catch {
+      showToast(
+        'error',
+        'Download Failed',
+        'Unable to generate the certificate PDF right now. Please try printing instead.'
+      );
+    }
+  };
+
   const handleUpdateProgress = async (
     course: LearningCourseItem,
     params: {
@@ -218,6 +300,10 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
           ...prev.filter((item) => item.courseId !== savedRecord.courseId),
         ]);
         setLastSavedLabel('Progress saved');
+
+        if (savedRecord.status === 'completed') {
+          void triggerCertificateIssuance(course, savedRecord.completedLessonIds, true);
+        }
       }
     } finally {
       setIsSavingProgress(false);
@@ -273,6 +359,10 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
         requiredModuleQuizIds,
         finalAssessmentPassed: finalPassed,
         bestFinalScorePercent: bestFinal > 0 ? bestFinal : undefined,
+        verifiedAttemptId:
+          attempt.assessmentType === 'module_quiz' && attempt.passed ? attempt.id : undefined,
+        verifiedFinalAttemptId:
+          attempt.assessmentType === 'final_assessment' && attempt.passed ? attempt.id : undefined,
       });
 
       if (res.success && res.enrolment) {
@@ -290,6 +380,9 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
             'Course Completed!',
             `Congratulations! You completed ${course.title} with a ${savedRecord.bestFinalScorePercent ?? attempt.scorePercent}% final assessment score.`
           );
+          void triggerCertificateIssuance(course, savedRecord.completedLessonIds, true);
+        } else if (savedRecord.status === 'completed') {
+          void triggerCertificateIssuance(course, savedRecord.completedLessonIds, false);
         } else if (attempt.passed) {
           showToast(
             'success',
@@ -444,24 +537,45 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
 
     const matchingEnrolment =
       enrolments.find((item) => item.courseId === selectedCourse.id) || null;
+    const matchingCertificate =
+      certificates.find((item) => item.courseId === selectedCourse.id) || null;
 
     return (
-      <CourseDetailsView
-        course={selectedCourse}
-        isAuthenticated={isAuthenticated}
-        isAdmin={isAdmin}
-        enrolment={matchingEnrolment}
-        assessmentOverview={assessmentOverview}
-        isEnrolling={isEnrolling}
-        onEnrol={(c) => handleEnrolCourse(c, true)}
-        onStartLearning={(c) => navigate(`/learning/courses/${c.slug}/learn`)}
-        onBackToCatalogue={() => {
-          navigate('/learning');
-          setTimeout(() => scrollToElement('explore-courses'), 180);
-        }}
-        onNavigateLogin={() => navigate('/login')}
-        onOpenAdminContentManager={() => navigate('/learning/admin/content')}
-      />
+      <>
+        <CourseDetailsView
+          course={selectedCourse}
+          isAuthenticated={isAuthenticated}
+          isAdmin={isAdmin}
+          enrolment={matchingEnrolment}
+          assessmentOverview={assessmentOverview}
+          isEnrolling={isEnrolling}
+          onEnrol={(c) => handleEnrolCourse(c, true)}
+          onStartLearning={(c) => navigate(`/learning/courses/${c.slug}/learn`)}
+          onBackToCatalogue={() => {
+            navigate('/learning');
+            setTimeout(() => scrollToElement('explore-courses'), 180);
+          }}
+          onNavigateLogin={() => navigate('/login')}
+          onOpenAdminContentManager={() => navigate('/learning/admin/content')}
+          certificate={matchingCertificate}
+          isIssuingCertificate={isIssuingCertificate}
+          onViewCertificate={(cert) => setViewingCertificate(cert)}
+          onDownloadCertificate={handleDownloadCertificate}
+          onRequestCertificate={async () => {
+            const issued = await triggerCertificateIssuance(
+              selectedCourse,
+              matchingEnrolment?.completedLessonIds || [],
+              true
+            );
+            if (issued) setViewingCertificate(issued);
+          }}
+        />
+        <CertificateViewerModal
+          certificate={viewingCertificate}
+          onClose={() => setViewingCertificate(null)}
+          onVerifyCertificate={(certId) => navigate(`/verify-certificate/${certId}`)}
+        />
+      </>
     );
   }
 
@@ -590,27 +704,49 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
       );
     }
 
+    const matchingCertificate =
+      certificates.find((item) => item.courseId === selectedCourse.id) || null;
+
     return (
-      <CoursePlayerView
-        course={selectedCourse}
-        enrolment={effectiveEnrolment}
-        assessmentOverview={assessmentOverview}
-        courseAttempts={courseAttempts}
-        candidateId={currentUser.id}
-        candidateName={fullName || currentUser.name || 'ABHI JOBS Candidate'}
-        candidateEmail={currentUser.email || ''}
-        isAdmin={isAdmin}
-        isSavingProgress={isSavingProgress}
-        lastSavedLabel={lastSavedLabel}
-        onUpdateProgress={(params) => handleUpdateProgress(selectedCourse, params)}
-        onAssessmentAttemptCompleted={(attempt) =>
-          handleAssessmentAttemptCompleted(selectedCourse, attempt)
-        }
-        onBackToCourseDetails={() =>
-          navigate(`/learning/courses/${selectedCourse.slug}`)
-        }
-        onOpenAdminContentManager={() => navigate('/learning/admin/content')}
-      />
+      <>
+        <CoursePlayerView
+          course={selectedCourse}
+          enrolment={effectiveEnrolment}
+          assessmentOverview={assessmentOverview}
+          courseAttempts={courseAttempts}
+          candidateId={currentUser.id}
+          candidateName={fullName || currentUser.name || 'ABHI JOBS Candidate'}
+          candidateEmail={currentUser.email || ''}
+          isAdmin={isAdmin}
+          isSavingProgress={isSavingProgress}
+          lastSavedLabel={lastSavedLabel}
+          onUpdateProgress={(params) => handleUpdateProgress(selectedCourse, params)}
+          onAssessmentAttemptCompleted={(attempt) =>
+            handleAssessmentAttemptCompleted(selectedCourse, attempt)
+          }
+          onBackToCourseDetails={() =>
+            navigate(`/learning/courses/${selectedCourse.slug}`)
+          }
+          onOpenAdminContentManager={() => navigate('/learning/admin/content')}
+          certificate={matchingCertificate}
+          isIssuingCertificate={isIssuingCertificate}
+          onViewCertificate={(cert) => setViewingCertificate(cert)}
+          onDownloadCertificate={handleDownloadCertificate}
+          onRequestCertificate={async () => {
+            const issued = await triggerCertificateIssuance(
+              selectedCourse,
+              effectiveEnrolment.completedLessonIds,
+              true
+            );
+            if (issued) setViewingCertificate(issued);
+          }}
+        />
+        <CertificateViewerModal
+          certificate={viewingCertificate}
+          onClose={() => setViewingCertificate(null)}
+          onVerifyCertificate={(certId) => navigate(`/verify-certificate/${certId}`)}
+        />
+      </>
     );
   }
 
@@ -636,6 +772,39 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
           navigate(`/learning/courses/${course.slug}/learn`)
         }
       />
+
+      {/* Admin Management Shortcut (visible only to verified ABHI JOBS administrators) */}
+      {isAdmin && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-semibold text-[#F47A24]">Administrator Controls</p>
+              <p className="text-sm font-bold text-[#102B4E]">
+                Course Management &amp; Database Reset Tools
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/learning/admin/content')}
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Open Course Manager</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* 3.5. Candidate's Earned Certificates (visible when candidate has certificates) */}
+      {isAuthenticated && currentUser && certificates.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+          <MyCertificatesCard
+            userId={currentUser.id}
+            navigate={navigate}
+            certificatesOverride={certificates}
+          />
+        </section>
+      )}
 
       {/* 4. Why Learn with ABHI? */}
       <WhyLearnSection />

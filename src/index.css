@@ -156,3 +156,66 @@ input[type="radio"]:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================================
+   Learn with ABHI — Certificate Typography & Printable A4 Landscape Mode
+   ============================================================================ */
+.font-certificate-serif {
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+}
+
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .certificate-print-root,
+  .certificate-print-root .certificate-sheet,
+  .certificate-print-root .certificate-sheet * {
+    visibility: visible !important;
+  }
+
+  .certificate-print-root {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .certificate-sheet {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    page-break-inside: avoid !important;
+  }
+}
+

@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  Database,
   Edit3,
   FileText,
   Film,
   Loader2,
   Plus,
   Save,
+  Search,
+  ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react';
@@ -19,6 +23,11 @@ import {
   parseSafeVideoEmbed,
   saveAdminCourseLesson,
 } from '../../services/courseContentService';
+import {
+  CourseResetInspectionReport,
+  executeSafeFirestoreCourseReset,
+  inspectAffectedFirestoreCourseRecords,
+} from '../../services/learningResetService';
 import {
   CourseLesson,
   LearningCourseItem,
@@ -49,20 +58,29 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
   onPreviewCourse,
   onBack,
 }) => {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(
-    initialCourseId && LEARNING_CATALOGUE_COURSES.some((c) => c.id === initialCourseId)
-      ? initialCourseId
-      : LEARNING_CATALOGUE_COURSES[0].id
-  );
-  const [hydratedCourse, setHydratedCourse] = useState<LearningCourseItem>(
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(() => {
+    if (initialCourseId && LEARNING_CATALOGUE_COURSES.some((c) => c.id === initialCourseId)) {
+      return initialCourseId;
+    }
+    return LEARNING_CATALOGUE_COURSES[0]?.id || '';
+  });
+  const [hydratedCourse, setHydratedCourse] = useState<LearningCourseItem | null>(
     () =>
       LEARNING_CATALOGUE_COURSES.find((c) => c.id === selectedCourseId) ||
-      LEARNING_CATALOGUE_COURSES[0]
+      LEARNING_CATALOGUE_COURSES[0] ||
+      null
   );
   const [selectedModuleId, setSelectedModuleId] = useState<string>(
-    hydratedCourse.modules[0]?.id || ''
+    hydratedCourse?.modules[0]?.id || ''
   );
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
+
+  // Two-step Safe Database Course Reset Inspector state
+  const [isInspectingReset, setIsInspectingReset] = useState(false);
+  const [isExecutingReset, setIsExecutingReset] = useState(false);
+  const [resetInspection, setResetInspection] = useState<CourseResetInspectionReport | null>(null);
+  const [confirmResetArmed, setConfirmResetArmed] = useState(false);
+  const [resetCompletedMessage, setResetCompletedMessage] = useState<string | null>(null);
 
   // Lesson Form State
   const [showForm, setShowForm] = useState(false);
@@ -89,7 +107,13 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
   const refreshCourse = async (courseIdToLoad: string) => {
     const base =
       LEARNING_CATALOGUE_COURSES.find((c) => c.id === courseIdToLoad) ||
-      LEARNING_CATALOGUE_COURSES[0];
+      LEARNING_CATALOGUE_COURSES[0] ||
+      null;
+    if (!base) {
+      setHydratedCourse(null);
+      setSelectedModuleId('');
+      return;
+    }
     setIsLoadingCourse(true);
     try {
       const loaded = await loadHydratedCourse(base);
@@ -103,15 +127,61 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
   };
 
   useEffect(() => {
+    if (!selectedCourseId) {
+      setHydratedCourse(null);
+      setSelectedModuleId('');
+      return;
+    }
     void refreshCourse(selectedCourseId);
   }, [selectedCourseId]);
 
   const activeModule = useMemo(
     () =>
-      hydratedCourse.modules.find((m) => m.id === selectedModuleId) ||
-      hydratedCourse.modules[0],
+      hydratedCourse?.modules.find((m) => m.id === selectedModuleId) ||
+      hydratedCourse?.modules[0] ||
+      null,
     [hydratedCourse, selectedModuleId]
   );
+
+  const handleInspectDatabaseCourseRecords = async () => {
+    setIsInspectingReset(true);
+    setConfirmResetArmed(false);
+    setResetCompletedMessage(null);
+    try {
+      const report = await inspectAffectedFirestoreCourseRecords();
+      setResetInspection(report);
+      onNotify?.(
+        'info',
+        'Course Database Inspection Complete',
+        report.totalAffectedDocs === 0
+          ? 'No legacy course records remain in Firestore.'
+          : `Found ${report.totalAffectedDocs} course-specific Firestore document(s) ready for safe cleanup.`
+      );
+    } finally {
+      setIsInspectingReset(false);
+    }
+  };
+
+  const handleExecuteDatabaseCourseReset = async () => {
+    if (!resetInspection) return;
+    setIsExecutingReset(true);
+    try {
+      const result = await executeSafeFirestoreCourseReset(resetInspection);
+      if (!result.success) {
+        onNotify?.('error', 'Database Reset Failed', result.error);
+        return;
+      }
+      setConfirmResetArmed(false);
+      const summary = `Deleted ${result.deletedFirestoreDocs} course record(s) from Firestore and cleared ${result.clearedLocalKeys} course cache key(s). Candidate accounts, jobs, resumes, and Career Readiness Assessments were preserved.`;
+      setResetCompletedMessage(summary);
+      onNotify?.('success', 'Course Database Reset Complete', summary);
+      // Re-inspect to confirm 0 remaining docs
+      const refreshed = await inspectAffectedFirestoreCourseRecords();
+      setResetInspection(refreshed);
+    } finally {
+      setIsExecutingReset(false);
+    }
+  };
 
   const videoValidation = useMemo(() => {
     if (!videoUrl.trim()) return null;
@@ -198,8 +268,8 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
       return;
     }
 
-    if (!activeModule) {
-      setFormError('Please select a target module.');
+    if (!hydratedCourse || !activeModule) {
+      setFormError('Please select a target course and module.');
       return;
     }
 
@@ -247,6 +317,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
   };
 
   const handleDeleteLesson = async (lesson: CourseLesson) => {
+    if (!hydratedCourse) return;
     await deleteAdminCourseLesson(hydratedCourse.id, lesson.id);
     await refreshCourse(hydratedCourse.id);
     onNotify?.(
@@ -282,7 +353,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          {onPreviewCourse && (
+          {onPreviewCourse && hydratedCourse && (
             <button
               type="button"
               onClick={() => onPreviewCourse(hydratedCourse.slug)}
@@ -291,67 +362,81 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
               Open Course Player
             </button>
           )}
-          <button
-            type="button"
-            onClick={resetFormForCreate}
-            className="min-h-[42px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Lesson</span>
-          </button>
+          {hydratedCourse && (
+            <button
+              type="button"
+              onClick={resetFormForCreate}
+              className="min-h-[42px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Lesson</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Course & Module Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-2xl border border-[#E5EAF0] p-5">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="admin-course-select"
-            className="block text-xs font-semibold text-[#102B4E]"
-          >
-            Select Course ({LEARNING_CATALOGUE_COURSES.length} catalogue courses)
-          </label>
-          <select
-            id="admin-course-select"
-            value={selectedCourseId}
-            onChange={(e) => {
-              setSelectedCourseId(e.target.value);
-              setShowForm(false);
-            }}
-            className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#FAFBFD] text-sm text-[#102B4E] focus:outline-none focus:ring-2 focus:ring-[#102B4E]"
-          >
-            {LEARNING_CATALOGUE_COURSES.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title} ({c.categoryName})
-              </option>
-            ))}
-          </select>
+      {/* Empty Catalogue State (Preserves Course Management Tools & Adds Safe Firestore Reset Inspector) */}
+      {!hydratedCourse ? (
+        <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 sm:p-10 text-center space-y-3">
+          <h3 className="font-display text-lg font-bold text-[#102B4E]">
+            No courses in the Learn with ABHI catalogue yet
+          </h3>
+          <p className="text-sm text-[#566479] max-w-xl mx-auto leading-relaxed">
+            All previous sample courses, modules, lessons, quizzes, enrolments, and certificates have been cleared from the platform. Course management tools remain fully intact and ready whenever you add new courses from scratch.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Course & Module Selectors */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-2xl border border-[#E5EAF0] p-5">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="admin-course-select"
+                className="block text-xs font-semibold text-[#102B4E]"
+              >
+                Select Course ({LEARNING_CATALOGUE_COURSES.length} catalogue courses)
+              </label>
+              <select
+                id="admin-course-select"
+                value={selectedCourseId}
+                onChange={(e) => {
+                  setSelectedCourseId(e.target.value);
+                  setShowForm(false);
+                }}
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#FAFBFD] text-sm text-[#102B4E] focus:outline-none focus:ring-2 focus:ring-[#102B4E]"
+              >
+                {LEARNING_CATALOGUE_COURSES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title} ({c.categoryName})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="admin-module-select"
-            className="block text-xs font-semibold text-[#102B4E]"
-          >
-            Select Module ({hydratedCourse.modules.length} modules)
-          </label>
-          <select
-            id="admin-module-select"
-            value={selectedModuleId}
-            onChange={(e) => {
-              setSelectedModuleId(e.target.value);
-              setShowForm(false);
-            }}
-            className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#FAFBFD] text-sm text-[#102B4E] focus:outline-none focus:ring-2 focus:ring-[#102B4E]"
-          >
-            {hydratedCourse.modules.map((m) => (
-              <option key={m.id} value={m.id}>
-                Module 0{m.order}: {m.title} ({m.lessons.length} lessons)
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="admin-module-select"
+                className="block text-xs font-semibold text-[#102B4E]"
+              >
+                Select Module ({hydratedCourse.modules.length} modules)
+              </label>
+              <select
+                id="admin-module-select"
+                value={selectedModuleId}
+                onChange={(e) => {
+                  setSelectedModuleId(e.target.value);
+                  setShowForm(false);
+                }}
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#FAFBFD] text-sm text-[#102B4E] focus:outline-none focus:ring-2 focus:ring-[#102B4E]"
+              >
+                {hydratedCourse.modules.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    Module 0{m.order}: {m.title} ({m.lessons.length} lessons)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
       {/* Add / Edit Lesson Form */}
       {showForm && activeModule && (
@@ -756,6 +841,171 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
         ) : (
           <div className="p-8 text-center text-sm text-[#778397]">
             No lessons in this module yet. Click "Add Lesson" above to create one.
+          </div>
+        )}
+      </div>
+        </>
+      )}
+
+      {/* Audited Two-Step Firestore Course Database Reset Inspector */}
+      <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-[#E5EAF0] pb-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5" />
+              <span>Safe Database Maintenance</span>
+            </p>
+            <h3 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+              Inspect &amp; Purge Legacy Course Records in Firestore
+            </h3>
+            <p className="text-xs sm:text-sm text-[#566479] max-w-2xl leading-relaxed">
+              Audit Firestore first to verify exact affected records across Learn with ABHI course collections (lessons, quiz configs, enrolments, test attempts, and course certificates) before permanently deleting them.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={isInspectingReset || isExecutingReset}
+            onClick={() => void handleInspectDatabaseCourseRecords()}
+            className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors disabled:opacity-60"
+          >
+            {isInspectingReset ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Inspecting Records...</span>
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                <span>Inspect Affected Records</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Guaranteed Preserved Data Checklist */}
+        <div className="rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] p-4 space-y-2">
+          <p className="text-xs font-bold text-[#102B4E] inline-flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <span>Strictly Preserved (Never Modified or Deleted)</span>
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-[#566479]">
+            <span>• Candidate accounts &amp; profiles</span>
+            <span>• Google authentication &amp; admin permissions</span>
+            <span>• Career Readiness Assessments &amp; reports</span>
+            <span>• Job listings, applications &amp; resumes</span>
+          </div>
+        </div>
+
+        {resetCompletedMessage && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs sm:text-sm text-emerald-900 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <span>{resetCompletedMessage}</span>
+          </div>
+        )}
+
+        {resetInspection && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#566479]">
+              <span>
+                Total affected learning-course documents:{' '}
+                <strong className="text-[#102B4E] tabular-nums">
+                  {resetInspection.totalAffectedDocs}
+                </strong>
+              </span>
+              <span>
+                Inspected at {new Date(resetInspection.inspectedAt).toLocaleTimeString()}
+              </span>
+            </div>
+
+            {resetInspection.warnings.length > 0 && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900 space-y-1">
+                {resetInspection.warnings.map((w, idx) => (
+                  <p key={idx}>• {w}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {resetInspection.buckets.map((bucket) => (
+                <div
+                  key={bucket.key}
+                  className="rounded-xl border border-[#E5EAF0] bg-[#FAFBFD] p-3.5 space-y-1"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-[#102B4E] truncate">{bucket.label}</p>
+                    <span className="text-sm font-extrabold text-[#102B4E] tabular-nums shrink-0">
+                      {bucket.count}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-mono text-[#778397] truncate">
+                    {bucket.collectionPath}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {resetInspection.totalAffectedDocs === 0 ? (
+              <div className="rounded-xl bg-emerald-50/70 border border-emerald-200 p-4 text-xs sm:text-sm text-emerald-900 inline-flex items-center gap-2 w-full">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                <span>
+                  Firestore is clean — zero legacy Learn with ABHI course records remain.
+                </span>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 space-y-3">
+                <div className="flex items-start gap-2.5 text-xs sm:text-sm text-rose-900">
+                  <AlertTriangle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                  <p>
+                    Ready to permanently delete strictly the{' '}
+                    <strong className="tabular-nums">{resetInspection.totalAffectedDocs}</strong>{' '}
+                    inspected learning-course document(s) above. Unrelated ABHI JOBS records will not be touched.
+                  </p>
+                </div>
+
+                {!confirmResetArmed ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmResetArmed(true)}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Confirm Course-Only Cleanup</span>
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      disabled={isExecutingReset}
+                      onClick={() => void handleExecuteDatabaseCourseReset()}
+                      className="min-h-[44px] px-5 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-60"
+                    >
+                      {isExecutingReset ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Deleting Course Records...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4" />
+                          <span>
+                            Permanently Delete {resetInspection.totalAffectedDocs} Course Record(s)
+                          </span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isExecutingReset}
+                      onClick={() => setConfirmResetArmed(false)}
+                      className="min-h-[44px] px-4 py-2 rounded-xl border border-[#D4DCE6] bg-white text-xs sm:text-sm font-semibold text-[#566479] hover:text-[#102B4E] cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

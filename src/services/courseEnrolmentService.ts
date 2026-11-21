@@ -21,6 +21,7 @@ import {
   CourseProgressStatus,
   LearningCourseItem,
 } from '../types/learning';
+import { syncLessonProgressToServer } from './certificateService';
 
 const LOCAL_ENROLMENTS_PREFIX = 'abhijobs_course_enrolments_v1_';
 
@@ -66,7 +67,8 @@ function normalizeStatus(
 function normalizeEnrolmentRecord(raw: any, fallbackUserId: string): CourseEnrolmentRecord | null {
   if (!raw || typeof raw !== 'object' || !raw.courseId) return null;
   const completedLessonIds = normalizeStringIdList(raw.completedLessonIds, 200);
-  const passedModuleQuizIds = normalizeStringIdList(raw.passedModuleQuizIds, 50);
+  const completedModuleIds = normalizeStringIdList(raw.completedModuleIds, 40);
+  const passedModuleQuizIds = normalizeStringIdList(raw.passedModuleQuizIds, 40);
   const finalAssessmentPassed = Boolean(raw.finalAssessmentPassed);
   const bestFinalScorePercent =
     typeof raw.bestFinalScorePercent === 'number' && !Number.isNaN(raw.bestFinalScorePercent)
@@ -79,9 +81,28 @@ function normalizeEnrolmentRecord(raw: any, fallbackUserId: string): CourseEnrol
     progressPercent = 95;
   }
 
+  const currentModuleId =
+    typeof raw.currentModuleId === 'string' && raw.currentModuleId.trim().length > 0
+      ? raw.currentModuleId.trim().slice(0, 128)
+      : undefined;
   const currentLessonId =
     typeof raw.currentLessonId === 'string' && raw.currentLessonId.trim().length > 0
       ? raw.currentLessonId.trim().slice(0, 128)
+      : undefined;
+
+  const unlockedModuleOrder =
+    typeof raw.unlockedModuleOrder === 'number' && Number.isFinite(raw.unlockedModuleOrder)
+      ? Math.max(1, Math.min(50, Math.round(raw.unlockedModuleOrder)))
+      : Math.max(1, passedModuleQuizIds.length + 1);
+
+  const lastVerifiedAttemptId =
+    typeof raw.lastVerifiedAttemptId === 'string' && raw.lastVerifiedAttemptId.trim().length > 0
+      ? raw.lastVerifiedAttemptId.trim().slice(0, 128)
+      : undefined;
+  const lastVerifiedFinalAttemptId =
+    typeof raw.lastVerifiedFinalAttemptId === 'string' &&
+    raw.lastVerifiedFinalAttemptId.trim().length > 0
+      ? raw.lastVerifiedFinalAttemptId.trim().slice(0, 128)
       : undefined;
 
   const enrolledAt = normalizeTimestamp(raw.enrolledAt);
@@ -102,9 +123,14 @@ function normalizeEnrolmentRecord(raw: any, fallbackUserId: string): CourseEnrol
     categoryId: raw.categoryId,
     userId: String(raw.userId || fallbackUserId).slice(0, 128),
     status: normalizeStatus(raw.status, finalAssessmentPassed, progressPercent, hasActivity),
+    currentModuleId,
     currentLessonId,
     completedLessonIds,
+    completedModuleIds,
     passedModuleQuizIds,
+    unlockedModuleOrder,
+    lastVerifiedAttemptId,
+    lastVerifiedFinalAttemptId,
     finalAssessmentPassed,
     bestFinalScorePercent,
     progressPercent,
@@ -160,8 +186,7 @@ export function evaluateCourseCompletion(params: {
 
   if (completedMilestones === 0) progressPercent = 0;
 
-  const hasActivity =
-    completedMilestones > 0 || Boolean(params.hasCurrentLesson);
+  const hasActivity = completedMilestones > 0 || Boolean(params.hasCurrentLesson);
 
   const status: CourseProgressStatus = isCourseCompleted
     ? 'completed'
@@ -224,8 +249,48 @@ function writeLocalEnrolments(userId: string, enrolments: CourseEnrolmentRecord[
   }
 }
 
+export interface ServerCourseProgressStatus {
+  userId: string;
+  courseId: string;
+  passedModuleQuizIds: string[];
+  unlockedModuleOrder: number;
+  finalAssessmentPassed: boolean;
+  bestFinalScorePercent: number | null;
+  lastVerifiedAttemptId: string | null;
+  lastVerifiedFinalAttemptId: string | null;
+  completedLessonIds: string[];
+}
+
+/**
+ * Fetches authoritative module unlock & assessment status from the Express backend
+ * (computed strictly from HMAC-verified server-graded attempts, never browser storage).
+ */
+export async function fetchServerCourseProgressStatus(
+  courseId: string
+): Promise<ServerCourseProgressStatus | null> {
+  const fbUser = firebaseAuth.currentUser;
+  if (!fbUser || !courseId) return null;
+  try {
+    const idToken = await fbUser.getIdToken();
+    const res = await fetch(
+      `/api/learning/progress/course/${encodeURIComponent(courseId)}/status`,
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      }
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as ServerCourseProgressStatus;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Loads all Learn with ABHI course enrolments & progress records strictly belonging to the authenticated candidate.
+ * When a verified Firebase user is active, Firestore is treated as the authoritative source of truth
+ * so browser localStorage edits CANNOT alter unlocked modules, passed quizzes, or completion status.
  */
 export async function loadCandidateEnrolments(
   appUserId: string | null | undefined
@@ -240,18 +305,8 @@ export async function loadCandidateEnrolments(
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || appUserId;
 
-  const byCourseId = new Map<string, CourseEnrolmentRecord>();
-
-  readLocalEnrolments(effectiveUid).forEach((rec) => byCourseId.set(rec.courseId, rec));
-  if (fbUid && appUserId !== fbUid) {
-    readLocalEnrolments(appUserId).forEach((rec) => {
-      if (!byCourseId.has(rec.courseId)) {
-        byCourseId.set(rec.courseId, { ...rec, userId: effectiveUid });
-      }
-    });
-  }
-
   let syncedFromCloud = false;
+  const cloudByCourseId = new Map<string, CourseEnrolmentRecord>();
 
   if (fbUid) {
     const path = `users/${fbUid}/course_enrolments`;
@@ -266,14 +321,7 @@ export async function loadCandidateEnrolments(
           fbUid
         );
         if (normalized) {
-          const existingLocal = byCourseId.get(normalized.courseId);
-          if (
-            !existingLocal ||
-            new Date(normalized.lastAccessedAt).getTime() >=
-              new Date(existingLocal.lastAccessedAt).getTime()
-          ) {
-            byCourseId.set(normalized.courseId, normalized);
-          }
+          cloudByCourseId.set(normalized.courseId, normalized);
         }
       });
       syncedFromCloud = true;
@@ -281,26 +329,36 @@ export async function loadCandidateEnrolments(
       try {
         handleFirestoreError(error, OperationType.LIST, path);
       } catch {
-        // Logged via structured error helper; continue safely with local state
+        // Logged via structured error helper
       }
     }
   }
 
-  const merged = Array.from(byCourseId.values()).sort(
-    (a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime()
-  );
-
-  writeLocalEnrolments(effectiveUid, merged);
-  if (appUserId !== effectiveUid) {
-    writeLocalEnrolments(appUserId, merged);
+  let authoritativeList: CourseEnrolmentRecord[];
+  if (fbUid && syncedFromCloud) {
+    // Strictly replace local cache with authoritative Firestore records
+    authoritativeList = Array.from(cloudByCourseId.values()).sort(
+      (a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime()
+    );
+    writeLocalEnrolments(effectiveUid, authoritativeList);
+    if (appUserId !== effectiveUid) {
+      writeLocalEnrolments(appUserId, authoritativeList);
+    }
+  } else {
+    const localMap = new Map<string, CourseEnrolmentRecord>();
+    readLocalEnrolments(effectiveUid).forEach((rec) => localMap.set(rec.courseId, rec));
+    authoritativeList = Array.from(localMap.values()).sort(
+      (a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime()
+    );
   }
 
-  return { enrolments: merged, syncedFromCloud };
+  return { enrolments: authoritativeList, syncedFromCloud };
 }
 
 /**
  * Enrols an authenticated candidate into a course without allowing duplicate enrolments.
  * Keyed by courseId under /users/{uid}/course_enrolments/{courseId}.
+ * Starts strictly at `unlockedModuleOrder: 1`, `status: 'enrolled'`, `finalAssessmentPassed: false`.
  */
 export async function enrolCandidateInCourse(
   appUserId: string | null | undefined,
@@ -322,19 +380,8 @@ export async function enrolCandidateInCourse(
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || appUserId;
 
-  const existingLocal = readLocalEnrolments(effectiveUid).find(
-    (item) => item.courseId === course.id
-  );
-  if (existingLocal) {
-    return {
-      success: true,
-      alreadyEnrolled: true,
-      savedToCloud: Boolean(fbUid),
-      enrolment: existingLocal,
-    };
-  }
-
   const nowIso = new Date().toISOString();
+  const firstModuleId = course.modules[0]?.id;
   const firstLessonId = course.modules[0]?.lessons[0]?.id;
 
   const newRecord: CourseEnrolmentRecord = {
@@ -344,9 +391,12 @@ export async function enrolCandidateInCourse(
     categoryId: course.categoryId,
     userId: effectiveUid,
     status: 'enrolled',
+    currentModuleId: firstModuleId ? firstModuleId.slice(0, 128) : undefined,
     currentLessonId: firstLessonId ? firstLessonId.slice(0, 128) : undefined,
     completedLessonIds: [],
+    completedModuleIds: [],
     passedModuleQuizIds: [],
+    unlockedModuleOrder: 1,
     finalAssessmentPassed: false,
     progressPercent: 0,
     enrolledAt: nowIso,
@@ -375,7 +425,10 @@ export async function enrolCandidateInCourse(
           fbUid
         );
         if (existingCloud) {
-          const nextList = [existingCloud, ...readLocalEnrolments(effectiveUid)];
+          const nextList = [
+            existingCloud,
+            ...readLocalEnrolments(effectiveUid).filter((c) => c.courseId !== existingCloud.courseId),
+          ];
           writeLocalEnrolments(effectiveUid, nextList);
           if (appUserId !== effectiveUid) writeLocalEnrolments(appUserId, nextList);
           return {
@@ -395,12 +448,17 @@ export async function enrolCandidateInCourse(
         userId: fbUid,
         status: 'enrolled',
         completedLessonIds: [],
+        completedModuleIds: [],
         passedModuleQuizIds: [],
+        unlockedModuleOrder: 1,
         finalAssessmentPassed: false,
         progressPercent: 0,
         enrolledAt: serverTimestamp(),
         lastAccessedAt: serverTimestamp(),
       };
+      if (newRecord.currentModuleId) {
+        payload.currentModuleId = newRecord.currentModuleId;
+      }
       if (newRecord.currentLessonId) {
         payload.currentLessonId = newRecord.currentLessonId;
       }
@@ -411,12 +469,27 @@ export async function enrolCandidateInCourse(
       try {
         handleFirestoreError(error, OperationType.CREATE, docPath);
       } catch {
-        // Logged via structured error helper; local enrolment still saved cleanly
+        // Logged via structured error helper
       }
+    }
+  } else {
+    const existingLocal = readLocalEnrolments(effectiveUid).find(
+      (item) => item.courseId === course.id
+    );
+    if (existingLocal) {
+      return {
+        success: true,
+        alreadyEnrolled: true,
+        savedToCloud: false,
+        enrolment: existingLocal,
+      };
     }
   }
 
-  const nextList = [newRecord, ...readLocalEnrolments(effectiveUid)];
+  const nextList = [
+    newRecord,
+    ...readLocalEnrolments(effectiveUid).filter((item) => item.courseId !== course.id),
+  ];
   writeLocalEnrolments(effectiveUid, nextList);
   if (appUserId !== effectiveUid) {
     writeLocalEnrolments(appUserId, nextList);
@@ -431,20 +504,28 @@ export async function enrolCandidateInCourse(
 }
 
 /**
- * Saves candidate's lessons, module quizzes, final assessment state, and strictly enforces
- * Learn with ABHI completion rules (all required lessons + required module quizzes + final assessment >= 70%).
+ * Saves candidate's lessons, verified module quiz passes, or verified final assessment pass.
+ * Strictly maps each update to the corresponding action-based Firestore rule so students
+ * cannot self-unlock modules or mark a course complete without a verified attempt record.
  */
 export async function saveCandidateCourseProgress(
   appUserId: string | null | undefined,
   course: LearningCourseItem,
   params: {
+    currentModuleId?: string;
     currentLessonId?: string;
     completedLessonIds: string[];
     totalLessons: number;
     passedModuleQuizIds?: string[];
+    completedModuleIds?: string[];
+    unlockedModuleOrder?: number;
     requiredModuleQuizIds?: string[];
     finalAssessmentPassed?: boolean;
     bestFinalScorePercent?: number;
+    /** Server-graded passing module quiz attempt ID (required by Firestore rules to advance quiz unlock) */
+    verifiedAttemptId?: string;
+    /** Server-graded passing final assessment attempt ID (required by Firestore rules to mark course completed) */
+    verifiedFinalAttemptId?: string;
   }
 ): Promise<{
   success: boolean;
@@ -470,7 +551,13 @@ export async function saveCandidateCourseProgress(
   const sanitizedCompleted = normalizeStringIdList(params.completedLessonIds, 200);
   const sanitizedPassedQuizzes = normalizeStringIdList(
     params.passedModuleQuizIds ?? existingLocal?.passedModuleQuizIds ?? [],
-    50
+    40
+  );
+  const sanitizedCompletedModules = normalizeStringIdList(
+    params.completedModuleIds ??
+      existingLocal?.completedModuleIds ??
+      sanitizedPassedQuizzes,
+    40
   );
   const requiredQuizIds =
     params.requiredModuleQuizIds ?? course.modules.map((m) => m.id);
@@ -488,10 +575,20 @@ export async function saveCandidateCourseProgress(
         )
       : existingLocal?.bestFinalScorePercent;
 
+  const safeCurrentModuleId =
+    params.currentModuleId && params.currentModuleId.trim().length > 0
+      ? params.currentModuleId.trim().slice(0, 128)
+      : existingLocal?.currentModuleId;
   const safeCurrentLessonId =
     params.currentLessonId && params.currentLessonId.trim().length > 0
       ? params.currentLessonId.trim().slice(0, 128)
       : existingLocal?.currentLessonId;
+
+  const currentUnlocked = existingLocal?.unlockedModuleOrder ?? 1;
+  const computedUnlocked =
+    typeof params.unlockedModuleOrder === 'number'
+      ? Math.max(currentUnlocked, Math.min(50, Math.round(params.unlockedModuleOrder)))
+      : Math.max(currentUnlocked, sanitizedPassedQuizzes.length + 1);
 
   const evalResult = evaluateCourseCompletion({
     completedLessonIds: sanitizedCompleted,
@@ -514,9 +611,15 @@ export async function saveCandidateCourseProgress(
     categoryId: course.categoryId,
     userId: effectiveUid,
     status: evalResult.status,
+    currentModuleId: safeCurrentModuleId,
     currentLessonId: safeCurrentLessonId,
     completedLessonIds: sanitizedCompleted,
+    completedModuleIds: sanitizedCompletedModules,
     passedModuleQuizIds: sanitizedPassedQuizzes,
+    unlockedModuleOrder: computedUnlocked,
+    lastVerifiedAttemptId: params.verifiedAttemptId || existingLocal?.lastVerifiedAttemptId,
+    lastVerifiedFinalAttemptId:
+      params.verifiedFinalAttemptId || existingLocal?.lastVerifiedFinalAttemptId,
     finalAssessmentPassed,
     bestFinalScorePercent,
     progressPercent: evalResult.progressPercent,
@@ -533,58 +636,98 @@ export async function saveCandidateCourseProgress(
 
     try {
       const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const updatePayload: Record<string, unknown> = {
-          completedLessonIds: sanitizedCompleted,
-          passedModuleQuizIds: sanitizedPassedQuizzes,
-          finalAssessmentPassed,
-          progressPercent: evalResult.progressPercent,
-          status: evalResult.status,
-          lastAccessedAt: serverTimestamp(),
-        };
-        if (updatedRecord.currentLessonId) {
-          updatePayload.currentLessonId = updatedRecord.currentLessonId;
-        }
-        if (typeof bestFinalScorePercent === 'number') {
-          updatePayload.bestFinalScorePercent = bestFinalScorePercent;
-        }
-        if (evalResult.isCourseCompleted && !snap.data()?.completedAt) {
-          updatePayload.completedAt = serverTimestamp();
-        }
-        await updateDoc(docRef, updatePayload);
-        savedToCloud = true;
-      } else {
+      if (!snap.exists()) {
+        // Initial creation MUST always begin in clean initial state (no pre-completed enrolment)
         const createPayload: Record<string, unknown> = {
           courseId: updatedRecord.courseId,
           courseSlug: updatedRecord.courseSlug,
           courseTitle: updatedRecord.courseTitle,
           categoryId: updatedRecord.categoryId,
           userId: fbUid,
-          status: evalResult.status,
-          completedLessonIds: sanitizedCompleted,
-          passedModuleQuizIds: sanitizedPassedQuizzes,
-          finalAssessmentPassed,
-          progressPercent: evalResult.progressPercent,
+          status: 'enrolled',
+          completedLessonIds: [],
+          completedModuleIds: [],
+          passedModuleQuizIds: [],
+          unlockedModuleOrder: 1,
+          finalAssessmentPassed: false,
+          progressPercent: 0,
           enrolledAt: serverTimestamp(),
           lastAccessedAt: serverTimestamp(),
         };
+        if (updatedRecord.currentModuleId) {
+          createPayload.currentModuleId = updatedRecord.currentModuleId;
+        }
         if (updatedRecord.currentLessonId) {
           createPayload.currentLessonId = updatedRecord.currentLessonId;
         }
-        if (typeof bestFinalScorePercent === 'number') {
-          createPayload.bestFinalScorePercent = bestFinalScorePercent;
-        }
-        if (evalResult.isCourseCompleted) {
-          createPayload.completedAt = serverTimestamp();
-        }
         await setDoc(docRef, createPayload);
+      }
+
+      const freshSnap = snap.exists() ? snap : await getDoc(docRef);
+      const existingData = freshSnap.data() || {};
+
+      // Respect terminal state lock: completed enrolments are immutable for students
+      if (existingData.status !== 'completed') {
+        if (params.verifiedFinalAttemptId && finalAssessmentPassed) {
+          // Action 3: Verified Final Assessment Pass / Course Completion
+          const finalPayload: Record<string, unknown> = {
+            finalAssessmentPassed: true,
+            lastVerifiedFinalAttemptId: params.verifiedFinalAttemptId,
+            progressPercent: evalResult.progressPercent,
+            status: evalResult.isCourseCompleted ? 'completed' : 'in_progress',
+            lastAccessedAt: serverTimestamp(),
+          };
+          if (typeof bestFinalScorePercent === 'number') {
+            finalPayload.bestFinalScorePercent = bestFinalScorePercent;
+          }
+          if (evalResult.isCourseCompleted && !existingData.completedAt) {
+            finalPayload.completedAt = nowIso;
+          }
+          await updateDoc(docRef, finalPayload);
+          savedToCloud = true;
+        } else if (params.verifiedAttemptId) {
+          // Action 2: Verified Module Quiz Pass & Sequential Unlock Progression (+1 max per verified pass)
+          const existingUnlocked =
+            typeof existingData.unlockedModuleOrder === 'number'
+              ? existingData.unlockedModuleOrder
+              : 1;
+          const nextUnlocked = Math.min(existingUnlocked + 1, computedUnlocked);
+          const quizPayload: Record<string, unknown> = {
+            passedModuleQuizIds: sanitizedPassedQuizzes,
+            completedModuleIds: sanitizedCompletedModules,
+            unlockedModuleOrder: Math.max(existingUnlocked, nextUnlocked),
+            lastVerifiedAttemptId: params.verifiedAttemptId,
+            progressPercent: Math.min(99, evalResult.progressPercent),
+            status: 'in_progress',
+            lastAccessedAt: serverTimestamp(),
+          };
+          await updateDoc(docRef, quizPayload);
+          savedToCloud = true;
+        } else {
+          // Action 1: Lesson Navigation & Lesson Completion ONLY (cannot alter quiz passes or final status)
+          const lessonPayload: Record<string, unknown> = {
+            completedLessonIds: sanitizedCompleted,
+            progressPercent: Math.min(99, evalResult.progressPercent),
+            status: sanitizedCompleted.length > 0 || safeCurrentLessonId ? 'in_progress' : 'enrolled',
+            lastAccessedAt: serverTimestamp(),
+          };
+          if (updatedRecord.currentModuleId) {
+            lessonPayload.currentModuleId = updatedRecord.currentModuleId;
+          }
+          if (updatedRecord.currentLessonId) {
+            lessonPayload.currentLessonId = updatedRecord.currentLessonId;
+          }
+          await updateDoc(docRef, lessonPayload);
+          savedToCloud = true;
+        }
+      } else {
         savedToCloud = true;
       }
     } catch (error) {
       try {
         handleFirestoreError(error, OperationType.UPDATE, docPath);
       } catch {
-        // Logged via structured error helper; local state still updated cleanly
+        // Logged via structured error helper
       }
     }
   }
@@ -597,6 +740,13 @@ export async function saveCandidateCourseProgress(
   if (appUserId !== effectiveUid) {
     writeLocalEnrolments(appUserId, nextList);
   }
+
+  // Keep backend lesson progress synchronized for certificate eligibility checks
+  void syncLessonProgressToServer({
+    courseId: course.id,
+    completedLessonIds: sanitizedCompleted,
+    candidateId: effectiveUid,
+  });
 
   return {
     success: true,

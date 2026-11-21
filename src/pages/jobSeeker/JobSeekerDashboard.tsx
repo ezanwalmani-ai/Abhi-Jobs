@@ -6,6 +6,7 @@ import { JobCard } from '../../components/JobCard';
 import { Button } from '../../components/ui/Button';
 import { ApplyModal } from '../../components/ApplyModal';
 import { CandidateLearningProgressCard } from '../../components/learning/CandidateLearningProgressCard';
+import { MyCertificatesCard } from '../../components/learning/MyCertificatesCard';
 import { Job, Application } from '../../types';
 import {
   Briefcase,
@@ -1042,6 +1043,12 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
             {/* SECTION: MY LEARNING — Courses, Quiz Results & Final Assessment Scores */}
             <CandidateLearningProgressCard
+              userId={currentUser?.id || ''}
+              navigate={navigate}
+            />
+
+            {/* SECTION: MY CERTIFICATES — Verified Course Completion Certificates */}
+            <MyCertificatesCard
               userId={currentUser?.id || ''}
               navigate={navigate}
             />

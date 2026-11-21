@@ -53,6 +53,8 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
     selectedCategory !== 'all' ||
     selectedDifficulty !== 'all';
 
+  const isCatalogueEmpty = LEARNING_CATALOGUE_COURSES.length === 0;
+
   return (
     <section
       id="explore-courses"
@@ -80,135 +82,148 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
             </h2>
           </div>
 
-          <p className="text-xs sm:text-sm text-[#778397] max-w-sm lg:text-right">
-            Showing{' '}
-            <span className="font-semibold text-[#102B4E] tabular-nums">
-              {visibleCourses.length}
-            </span>{' '}
-            of{' '}
-            <span className="font-semibold text-[#102B4E] tabular-nums">
-              {LEARNING_CATALOGUE_COURSES.length}
-            </span>{' '}
-            free career courses across six focus areas.
-          </p>
+          {!isCatalogueEmpty && (
+            <p className="text-xs sm:text-sm text-[#778397] max-w-sm lg:text-right">
+              Showing{' '}
+              <span className="font-semibold text-[#102B4E] tabular-nums">
+                {visibleCourses.length}
+              </span>{' '}
+              of{' '}
+              <span className="font-semibold text-[#102B4E] tabular-nums">
+                {LEARNING_CATALOGUE_COURSES.length}
+              </span>{' '}
+              free career courses across six focus areas.
+            </p>
+          )}
         </motion.div>
 
-        {/* Search & Difficulty Controls Row */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
-          {/* Course Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#778397] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search courses by title, category, or skill..."
-              aria-label="Search courses"
-              className="w-full min-h-[44px] pl-10 pr-9 py-2.5 rounded-xl border border-[#D4DCE6] bg-white text-sm text-[#102B4E] placeholder:text-[#778397] focus:outline-none focus:border-[#102B4E]"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear course search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#778397] hover:text-[#102B4E] cursor-pointer"
+        {isCatalogueEmpty ? (
+          <div className="rounded-2xl border border-[#E5EAF0] bg-[#FAFBFD] p-10 sm:p-16 text-center space-y-3">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+              No courses available yet. New courses are coming soon.
+            </h3>
+            <p className="text-sm text-[#566479] max-w-md mx-auto leading-relaxed">
+              We are preparing a fresh library of free career development courses for Learn with ABHI. In the meantime, you can take the Career Readiness Assessment above.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Search & Difficulty Controls Row */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+              {/* Course Search Input */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-[#778397] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search courses by title, category, or skill..."
+                  aria-label="Search courses"
+                  className="w-full min-h-[44px] pl-10 pr-9 py-2.5 rounded-xl border border-[#D4DCE6] bg-white text-sm text-[#102B4E] placeholder:text-[#778397] focus:outline-none focus:border-[#102B4E]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear course search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#778397] hover:text-[#102B4E] cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Difficulty Filter Segmented Control */}
+              <div
+                role="group"
+                aria-label="Filter by difficulty level"
+                className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] self-start md:self-auto"
               >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+                {(['all', 'Beginner', 'Intermediate'] as const).map((level) => {
+                  const active = selectedDifficulty === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setSelectedDifficulty(level)}
+                      className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-[#102B4E] text-white'
+                          : 'text-[#566479] hover:text-[#102B4E]'
+                      }`}
+                    >
+                      {level === 'all' ? 'All Levels' : level}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-          {/* Difficulty Filter Segmented Control */}
-          <div
-            role="group"
-            aria-label="Filter by difficulty level"
-            className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] self-start md:self-auto"
-          >
-            {(['all', 'Beginner', 'Intermediate'] as const).map((level) => {
-              const active = selectedDifficulty === level;
-              return (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setSelectedDifficulty(level)}
-                  className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-[#102B4E] text-white'
-                      : 'text-[#566479] hover:text-[#102B4E]'
-                  }`}
-                >
-                  {level === 'all' ? 'All Levels' : level}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Category Filter Tabs */}
-        <div
-          role="tablist"
-          aria-label="Course categories"
-          className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#E5EAF0]"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={selectedCategory === 'all'}
-            onClick={() => setSelectedCategory('all')}
-            className={`min-h-[40px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
-              selectedCategory === 'all'
-                ? 'bg-[#102B4E] text-white'
-                : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
-            }`}
-          >
-            All Categories
-          </button>
-
-          {LEARNING_CATEGORIES.map((category) => {
-            const active = selectedCategory === category.id;
-            return (
+            {/* Category Filter Tabs */}
+            <div
+              role="tablist"
+              aria-label="Course categories"
+              className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#E5EAF0]"
+            >
               <button
-                key={category.id}
                 type="button"
                 role="tab"
-                aria-selected={active}
-                onClick={() => setSelectedCategory(category.id)}
+                aria-selected={selectedCategory === 'all'}
+                onClick={() => setSelectedCategory('all')}
                 className={`min-h-[40px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
-                  active
+                  selectedCategory === 'all'
                     ? 'bg-[#102B4E] text-white'
                     : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
                 }`}
               >
-                {category.name}
+                All Categories
               </button>
-            );
-          })}
-        </div>
 
-        {/* Course Catalogue Grid or Empty State */}
-        {visibleCourses.length === 0 ? (
-          <div className="rounded-2xl border border-[#E5EAF0] bg-[#FAFBFD] p-10 sm:p-14 text-center space-y-4">
-            <h3 className="font-display text-lg font-bold text-[#102B4E]">
-              No courses match your current filters
-            </h3>
-            <p className="text-sm text-[#778397] max-w-md mx-auto">
-              Try clearing your search term or switching back to all categories and difficulty levels.
-            </p>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  setSelectedDifficulty('all');
-                }}
-                className="min-h-[42px] px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
-              >
-                Reset Filters
-              </button>
-            )}
-          </div>
-        ) : (
+              {LEARNING_CATEGORIES.map((category) => {
+                const active = selectedCategory === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`min-h-[40px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
+                      active
+                        ? 'bg-[#102B4E] text-white'
+                        : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Course Catalogue Grid or Filtered Empty State */}
+            {visibleCourses.length === 0 ? (
+              <div className="rounded-2xl border border-[#E5EAF0] bg-[#FAFBFD] p-10 sm:p-14 text-center space-y-4">
+                <h3 className="font-display text-lg font-bold text-[#102B4E]">
+                  No courses match your current filters
+                </h3>
+                <p className="text-sm text-[#778397] max-w-md mx-auto">
+                  Try clearing your search term or switching back to all categories and difficulty levels.
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('all');
+                      setSelectedDifficulty('all');
+                    }}
+                    className="min-h-[42px] px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+            ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleCourses.map((course, idx) => {
               const enrolment = enrolmentByCourseId.get(course.id);
@@ -289,6 +304,8 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
               );
             })}
           </div>
+            )}
+          </>
         )}
       </div>
     </section>

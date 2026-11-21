@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Clock,
+  Download,
+  Eye,
   FileText,
   Layers,
   Loader2,
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react';
 import {
   CourseAssessmentOverview,
+  CourseCertificateRecord,
   CourseEnrolmentRecord,
   LearningCourseItem,
 } from '../../types/learning';
@@ -37,6 +40,11 @@ interface CourseDetailsViewProps {
   onBackToCatalogue: () => void;
   onNavigateLogin: () => void;
   onOpenAdminContentManager?: () => void;
+  certificate?: CourseCertificateRecord | null;
+  isIssuingCertificate?: boolean;
+  onViewCertificate?: (certificate: CourseCertificateRecord) => void;
+  onDownloadCertificate?: (certificate: CourseCertificateRecord) => Promise<void>;
+  onRequestCertificate?: () => Promise<void>;
 }
 
 export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
@@ -51,6 +59,11 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   onBackToCatalogue,
   onNavigateLogin,
   onOpenAdminContentManager,
+  certificate,
+  isIssuingCertificate = false,
+  onViewCertificate,
+  onDownloadCertificate,
+  onRequestCertificate,
 }) => {
   const flatLessons = useMemo(() => flattenCourseLessons(course), [course]);
   const totalLessons = flatLessons.length;
@@ -243,6 +256,57 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
+
+                  {completionEval.isCourseCompleted && (
+                    <div className="pt-1 space-y-2">
+                      {certificate ? (
+                        <>
+                          {onViewCertificate && (
+                            <button
+                              type="button"
+                              onClick={() => onViewCertificate(certificate)}
+                              className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                            >
+                              <Eye className="w-4 h-4 text-[#C59B43]" />
+                              <span>View Certificate</span>
+                            </button>
+                          )}
+                          {onDownloadCertificate && (
+                            <button
+                              type="button"
+                              onClick={() => void onDownloadCertificate(certificate)}
+                              className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-white border border-[#D4DCE6] hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download Certificate PDF</span>
+                            </button>
+                          )}
+                          <p className="text-[11px] text-[#778397] text-center tabular-nums">
+                            Certificate ID: {certificate.certificateId}
+                          </p>
+                        </>
+                      ) : onRequestCertificate ? (
+                        <button
+                          type="button"
+                          disabled={isIssuingCertificate}
+                          onClick={() => void onRequestCertificate()}
+                          className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-60"
+                        >
+                          {isIssuingCertificate ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Issuing Certificate...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Award className="w-4 h-4 text-[#C59B43]" />
+                              <span>Generate Official Certificate</span>
+                            </>
+                          )}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               ) : isAuthenticated ? (
                 <div className="space-y-2.5">
