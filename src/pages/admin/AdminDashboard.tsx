@@ -37,6 +37,7 @@ import {
   HiringEnquiry,
 } from '../../types';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
+import { AdminCourseContentManager } from '../../components/learning/AdminCourseContentManager';
 
 interface AdminDashboardProps {
   navigate: (route: string) => void;
@@ -1458,11 +1459,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
 
         {/* TAB 6: COURSES MANAGEMENT */}
         {activeTab === 'courses' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Learn with ABHI Structured Lesson & Content Manager */}
+            <AdminCourseContentManager
+              adminUserId={currentUser?.id || 'admin'}
+              onNotify={showToast}
+              onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
+            />
+
             <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
               <div>
                 <h2 className="text-base font-bold text-[#102B4E]">
-                  Learn with ABHI — Course Catalogue
+                  Partner Upskilling Programmes
                 </h2>
                 <p className="text-xs text-[#778397]">
                   Publish and manage partner upskilling programs shown to candidates.

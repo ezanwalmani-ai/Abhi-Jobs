@@ -31,6 +31,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'ezanwalmani@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
     function isValidUser(data) {
       return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
              data.name is string && data.name.size() <= 100 &&
@@ -101,6 +108,104 @@ service cloud.firestore {
              (!('submittedAt' in data) || (data.submittedAt is string && data.submittedAt.size() <= 64));
     }
 
+    function isValidCourseEnrolment(data, userId, courseId) {
+      return data.keys().hasAll([
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'categoryId',
+               'userId',
+               'status',
+               'completedLessonIds',
+               'progressPercent',
+               'enrolledAt',
+               'lastAccessedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'categoryId',
+               'userId',
+               'status',
+               'currentLessonId',
+               'completedLessonIds',
+               'progressPercent',
+               'enrolledAt',
+               'lastAccessedAt'
+             ]) &&
+             data.courseId == courseId &&
+             isValidId(data.courseId) &&
+             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.categoryId is string && data.categoryId.size() > 0 && data.categoryId.size() <= 80 &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             data.status is string && (data.status == 'enrolled' || data.status == 'in_progress' || data.status == 'completed') &&
+             (!('currentLessonId' in data) || (data.currentLessonId is string && data.currentLessonId.size() <= 128)) &&
+             data.completedLessonIds is list &&
+             data.completedLessonIds.size() <= 200 &&
+             (data.completedLessonIds.size() == 0 || (data.completedLessonIds[0] is string && data.completedLessonIds[0].size() <= 128)) &&
+             data.progressPercent is number &&
+             data.progressPercent >= 0 &&
+             data.progressPercent <= 100;
+    }
+
+    function isValidCourseLesson(data, courseId, lessonId) {
+      return data.keys().hasAll([
+               'id',
+               'courseId',
+               'moduleId',
+               'title',
+               'description',
+               'writtenContent',
+               'attachments',
+               'order',
+               'estimatedMinutes',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'courseId',
+               'moduleId',
+               'title',
+               'description',
+               'videoUrl',
+               'writtenContent',
+               'exerciseTitle',
+               'exerciseInstructions',
+               'exerciseDeliverable',
+               'attachments',
+               'order',
+               'estimatedMinutes',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.id == lessonId &&
+             isValidId(data.id) &&
+             data.courseId == courseId &&
+             isValidId(data.courseId) &&
+             isValidId(data.moduleId) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 160 &&
+             data.description is string && data.description.size() <= 600 &&
+             (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 500)) &&
+             data.writtenContent is string && data.writtenContent.size() <= 20000 &&
+             (!('exerciseTitle' in data) || (data.exerciseTitle is string && data.exerciseTitle.size() <= 200)) &&
+             (!('exerciseInstructions' in data) || (data.exerciseInstructions is string && data.exerciseInstructions.size() <= 4000)) &&
+             (!('exerciseDeliverable' in data) || (data.exerciseDeliverable is string && data.exerciseDeliverable.size() <= 500)) &&
+             data.attachments is list &&
+             data.attachments.size() <= 15 &&
+             (data.attachments.size() == 0 || data.attachments[0] is map) &&
+             data.order is number && data.order >= 1 && data.order <= 200 &&
+             data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 300 &&
+             data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
+    }
+
+    // Admins registry (server/console-managed only; prevents client privilege escalation)
+    match /admins/{adminId} {
+      allow read, write: if false;
+    }
+
     // Users Collection (strictly private to owner)
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);
@@ -108,11 +213,13 @@ service cloud.firestore {
       allow create: if isOwner(userId) &&
                        isValidId(userId) &&
                        incoming().id == request.auth.uid &&
-                       isValidUser(incoming());
+                       isValidUser(incoming()) &&
+                       incoming().role == 'job_seeker';
       allow update: if isOwner(userId) &&
                        isValidId(userId) &&
                        incoming().id == existing().id &&
                        isValidUser(incoming()) &&
+                       incoming().role == existing().role &&
                        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'status']);
       allow delete: if false;
 
@@ -142,7 +249,6 @@ service cloud.firestore {
                          incoming().createdAt == existing().createdAt &&
                          incoming().updatedAt == request.time &&
                          (
-                           // Action 1: Save draft progress
                            (incoming().status == 'in_progress' &&
                              incoming().diff(existing()).affectedKeys().hasOnly([
                                'currentStep',
@@ -156,7 +262,6 @@ service cloud.firestore {
                                'recruitmentConsent',
                                'updatedAt'
                              ])) ||
-                           // Action 2: Submit final assessment & readiness report
                            (incoming().status == 'submitted' &&
                              incoming().learningRecommendationConsent == true &&
                              'report' in incoming() &&
@@ -177,13 +282,89 @@ service cloud.firestore {
                              ]))
                          );
 
-        // Allow deleting only unsubmitted drafts; submitted evaluations are retained
         allow delete: if isVerifiedUser() &&
                          isOwner(userId) &&
                          isValidId(userId) &&
                          isValidId(assessmentId) &&
                          existing().status == 'in_progress';
       }
+
+      // Private per-candidate Learn with ABHI Course Enrolments & Learning Progress
+      // Document ID is courseId, preventing duplicate enrolments structurally.
+      // Candidates can only access and update their own learning progress.
+      match /course_enrolments/{courseId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(courseId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(courseId) &&
+                         isValidCourseEnrolment(incoming(), userId, courseId) &&
+                         incoming().enrolledAt == request.time &&
+                         incoming().lastAccessedAt == request.time;
+
+        // Action-based progress update: only currentLessonId, completedLessonIds,
+        // progressPercent, status, and lastAccessedAt may change.
+        allow update: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(courseId) &&
+                         isValidCourseEnrolment(incoming(), userId, courseId) &&
+                         incoming().courseId == existing().courseId &&
+                         incoming().courseSlug == existing().courseSlug &&
+                         incoming().courseTitle == existing().courseTitle &&
+                         incoming().categoryId == existing().categoryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().enrolledAt == existing().enrolledAt &&
+                         incoming().lastAccessedAt == request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'currentLessonId',
+                           'completedLessonIds',
+                           'progressPercent',
+                           'status',
+                           'lastAccessedAt'
+                         ]);
+
+        allow delete: if false;
+      }
+    }
+
+    // Learn with ABHI Admin-Managed Course Lessons (Publicly readable curriculum, strictly Admin writable)
+    match /learning_courses/{courseId}/lessons/{lessonId} {
+      allow get: if isValidId(courseId) && isValidId(lessonId);
+      allow list: if resource.data.courseId == courseId;
+
+      allow create: if isAdmin() &&
+                       isValidId(courseId) &&
+                       isValidId(lessonId) &&
+                       isValidCourseLesson(incoming(), courseId, lessonId) &&
+                       incoming().updatedAt == request.time;
+
+      allow update: if isAdmin() &&
+                       isValidId(courseId) &&
+                       isValidId(lessonId) &&
+                       isValidCourseLesson(incoming(), courseId, lessonId) &&
+                       incoming().id == existing().id &&
+                       incoming().courseId == existing().courseId &&
+                       incoming().updatedAt == request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'moduleId',
+                         'title',
+                         'description',
+                         'videoUrl',
+                         'writtenContent',
+                         'exerciseTitle',
+                         'exerciseInstructions',
+                         'exerciseDeliverable',
+                         'attachments',
+                         'order',
+                         'estimatedMinutes',
+                         'updatedBy',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isAdmin() && isValidId(courseId) && isValidId(lessonId);
     }
 
     match /test/connection {

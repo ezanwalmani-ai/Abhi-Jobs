@@ -54,6 +54,71 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "CourseEnrolment": {
+      "title": "CourseEnrolment",
+      "description": "Candidate enrolment and learning progress record for a Learn with ABHI course, keyed by courseId to prevent duplicates",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string", "description": "Unique catalogue course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Course display title", "maxLength": 160 },
+        "categoryId": { "type": "string", "description": "Course category identifier", "maxLength": 80 },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "status": { "type": "string", "description": "Learning progress status", "enum": ["enrolled", "in_progress", "completed"] },
+        "currentLessonId": { "type": "string", "description": "Last viewed lesson ID for resuming", "maxLength": 128 },
+        "completedLessonIds": { "type": "array", "description": "Bounded list of completed lesson IDs (max 200)" },
+        "progressPercent": { "type": "number", "description": "Calculated course completion percentage (0-100)" },
+        "enrolledAt": { "type": "string", "description": "Server timestamp of initial enrolment" },
+        "lastAccessedAt": { "type": "string", "description": "Server timestamp of last lesson access or progress save" }
+      },
+      "required": [
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "categoryId",
+        "userId",
+        "status",
+        "completedLessonIds",
+        "progressPercent",
+        "enrolledAt",
+        "lastAccessedAt"
+      ]
+    },
+    "CourseLessonContent": {
+      "title": "CourseLessonContent",
+      "description": "Admin-managed lesson content, embedded video URL, written material, exercise, and attachments for a Learn with ABHI course",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Lesson document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "description": "Parent course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "moduleId": { "type": "string", "description": "Parent module ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "description": "Lesson display title", "maxLength": 160 },
+        "description": { "type": "string", "description": "Short lesson summary", "maxLength": 600 },
+        "videoUrl": { "type": "string", "description": "Optional HTTPS embedded video URL", "maxLength": 500 },
+        "writtenContent": { "type": "string", "description": "Structured written learning material", "maxLength": 20000 },
+        "exerciseTitle": { "type": "string", "description": "Practical exercise heading", "maxLength": 200 },
+        "exerciseInstructions": { "type": "string", "description": "Practical exercise instructions", "maxLength": 4000 },
+        "exerciseDeliverable": { "type": "string", "description": "Optional exercise output description", "maxLength": 500 },
+        "attachments": { "type": "array", "description": "Bounded list of downloadable resource objects (max 15)" },
+        "order": { "type": "number", "description": "Lesson sequence order within module (1-200)" },
+        "estimatedMinutes": { "type": "number", "description": "Estimated study time in minutes (1-300)" },
+        "updatedBy": { "type": "string", "description": "Admin UID who last updated the lesson", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "courseId",
+        "moduleId",
+        "title",
+        "description",
+        "writtenContent",
+        "attachments",
+        "order",
+        "estimatedMinutes",
+        "updatedBy",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -64,6 +129,14 @@
     "/users/{userId}/career_assessments/{assessmentId}": {
       "schema": "CareerAssessment",
       "description": "Private per-candidate Job Seeker Profile Evaluation Test drafts and submitted reports"
+    },
+    "/users/{userId}/course_enrolments/{courseId}": {
+      "schema": "CourseEnrolment",
+      "description": "Private per-candidate Learn with ABHI course enrolments and learning progress keyed by courseId"
+    },
+    "/learning_courses/{courseId}/lessons/{lessonId}": {
+      "schema": "CourseLessonContent",
+      "description": "Admin-managed Learn with ABHI lesson content, video URLs, exercises, and downloadable attachments"
     }
   }
 }

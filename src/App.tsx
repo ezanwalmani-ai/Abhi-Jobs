@@ -114,6 +114,22 @@ function AppContent() {
       return;
     }
 
+    if (path.startsWith('/learning/courses/') && path.endsWith('/learn')) {
+      const slug = path.replace('/learning/courses/', '').replace(/\/learn$/, '');
+      if (slug) {
+        setRouteParams({ id: slug });
+        setCurrentRoute('/learning/courses/:slug/learn');
+        return;
+      }
+    }
+
+    if (path.startsWith('/learning/courses/') && path !== '/learning/courses/') {
+      const slug = path.replace('/learning/courses/', '');
+      setRouteParams({ id: slug });
+      setCurrentRoute('/learning/courses/:slug');
+      return;
+    }
+
     if (path.startsWith('/jobs?')) {
       const urlParams = new URLSearchParams(path.split('?')[1]);
       setRouteParams({
@@ -481,6 +497,27 @@ function AppContent() {
       case '/learning/assessment':
         return <LearnWithAbhiPage navigate={navigate} section="assessment" />;
 
+      case '/learning/courses/:slug':
+        return (
+          <LearnWithAbhiPage
+            navigate={navigate}
+            section="course-detail"
+            courseSlug={routeParams.id}
+          />
+        );
+
+      case '/learning/courses/:slug/learn':
+        return (
+          <LearnWithAbhiPage
+            navigate={navigate}
+            section="course-player"
+            courseSlug={routeParams.id}
+          />
+        );
+
+      case '/learning/admin/content':
+        return <LearnWithAbhiPage navigate={navigate} section="admin-content" />;
+
       case '/resume':
       case '/career-tools':
       case '/job-seeker/career-tools':
@@ -533,6 +570,31 @@ function AppContent() {
         return <NotFoundPage navigate={navigate} />;
 
       default:
+        // Handle direct deep-link loads to /learning/courses/<slug>/learn and /learning/courses/<slug>
+        if (currentRoute.startsWith('/learning/courses/') && currentRoute.endsWith('/learn')) {
+          const directLearnSlug = currentRoute
+            .replace('/learning/courses/', '')
+            .replace(/\/learn$/, '');
+          if (directLearnSlug) {
+            return (
+              <LearnWithAbhiPage
+                navigate={navigate}
+                section="course-player"
+                courseSlug={directLearnSlug}
+              />
+            );
+          }
+        }
+        if (currentRoute.startsWith('/learning/courses/') && currentRoute !== '/learning/courses/') {
+          const directSlug = currentRoute.replace('/learning/courses/', '');
+          return (
+            <LearnWithAbhiPage
+              navigate={navigate}
+              section="course-detail"
+              courseSlug={directSlug}
+            />
+          );
+        }
         // If route is explicitly home or empty, render HomePage, otherwise show branded 404
         if (!currentRoute || currentRoute === '/' || currentRoute === '') {
           return <HomePage navigate={navigate} />;
