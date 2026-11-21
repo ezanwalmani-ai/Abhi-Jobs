@@ -3,8 +3,10 @@ import { motion } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
+  Award,
   BookOpen,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
   FileText,
   Layers,
@@ -13,9 +15,14 @@ import {
   PlayCircle,
   Settings2,
 } from 'lucide-react';
-import { CourseEnrolmentRecord, LearningCourseItem } from '../../types/learning';
+import {
+  CourseAssessmentOverview,
+  CourseEnrolmentRecord,
+  LearningCourseItem,
+} from '../../types/learning';
 import { flattenCourseLessons } from '../../data/learningCatalog';
 import { parseSafeVideoEmbed } from '../../services/courseContentService';
+import { evaluateCourseCompletion } from '../../services/courseEnrolmentService';
 import { EASE_PREMIUM } from '../../lib/motion';
 
 interface CourseDetailsViewProps {
@@ -23,6 +30,7 @@ interface CourseDetailsViewProps {
   isAuthenticated: boolean;
   isAdmin: boolean;
   enrolment: CourseEnrolmentRecord | null;
+  assessmentOverview?: CourseAssessmentOverview | null;
   isEnrolling: boolean;
   onEnrol: (course: LearningCourseItem) => Promise<void>;
   onStartLearning: (course: LearningCourseItem) => void;
@@ -36,6 +44,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   isAuthenticated,
   isAdmin,
   enrolment,
+  assessmentOverview,
   isEnrolling,
   onEnrol,
   onStartLearning,
@@ -56,10 +65,34 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
     return s;
   }, [enrolment?.completedLessonIds, flatLessons]);
 
-  const progressPercent =
-    totalLessons > 0
-      ? Math.min(100, Math.round((completedSet.size / totalLessons) * 100))
-      : enrolment?.progressPercent || 0;
+  const requiredQuizIds = useMemo(() => {
+    if (assessmentOverview && assessmentOverview.moduleQuizzes.length > 0) {
+      return assessmentOverview.moduleQuizzes
+        .filter((q) => q.requiredForCompletion && q.moduleId)
+        .map((q) => q.moduleId as string);
+    }
+    return course.modules.map((m) => m.id);
+  }, [assessmentOverview, course.modules]);
+
+  const passedQuizSet = useMemo(
+    () => new Set(enrolment?.passedModuleQuizIds || []),
+    [enrolment?.passedModuleQuizIds]
+  );
+
+  const completionEval = useMemo(
+    () =>
+      evaluateCourseCompletion({
+        completedLessonIds: Array.from(completedSet),
+        totalLessons,
+        passedModuleQuizIds: Array.from(passedQuizSet),
+        requiredModuleQuizIds: requiredQuizIds,
+        finalAssessmentPassed: Boolean(enrolment?.finalAssessmentPassed),
+        hasCurrentLesson: Boolean(enrolment?.currentLessonId),
+      }),
+    [completedSet, totalLessons, passedQuizSet, requiredQuizIds, enrolment]
+  );
+
+  const progressPercent = isEnrolled ? completionEval.progressPercent : 0;
 
   const lastAccessedLabel = enrolment?.lastAccessedAt
     ? new Date(enrolment.lastAccessedAt).toLocaleDateString(undefined, {
@@ -90,7 +123,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               className="min-h-[40px] px-4 py-2 rounded-xl border border-[#D4DCE6] bg-white hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
             >
               <Settings2 className="w-3.5 h-3.5 text-[#F47A24]" />
-              <span>Manage Course Lessons</span>
+              <span>Manage Course &amp; Quizzes</span>
             </button>
           )}
         </div>
@@ -115,7 +148,11 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   <>
                     <span aria-hidden="true">·</span>
                     <span className="font-semibold text-emerald-700 tabular-nums">
-                      {progressPercent > 0 ? `${progressPercent}% Complete` : 'Enrolled'}
+                      {completionEval.isCourseCompleted
+                        ? 'Completed'
+                        : progressPercent > 0
+                        ? `${progressPercent}% Complete`
+                        : 'Enrolled'}
                     </span>
                   </>
                 )}
@@ -140,6 +177,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     {course.modules.length} modules · {totalLessons} lessons
                   </span>
                 </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-[#F47A24]" />
+                  <span>
+                    Module Quizzes &amp; Final Assessment ({assessmentOverview?.finalAssessment?.passPercentage ?? 70}% pass)
+                  </span>
+                </span>
               </div>
             </div>
 
@@ -151,7 +194,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   100% Free
                 </p>
                 <p className="text-xs text-[#778397]">
-                  Self-paced lessons, practical exercises, and downloadable study sheets.
+                  Self-paced lessons, module quizzes, practical exercises, and a final assessment.
                 </p>
               </div>
 
@@ -161,7 +204,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-[#102B4E] inline-flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Your Progress</span>
+                        <span>
+                          {completionEval.isCourseCompleted ? 'Course Completed' : 'Your Progress'}
+                        </span>
                       </span>
                       <span className="font-bold text-[#102B4E] tabular-nums">
                         {progressPercent}%
@@ -169,13 +214,18 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-[#E5EAF0] overflow-hidden">
                       <div
-                        className="h-full bg-[#F47A24] rounded-full transition-all duration-300"
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          completionEval.isCourseCompleted ? 'bg-emerald-600' : 'bg-[#F47A24]'
+                        }`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
                     <p className="text-[11px] text-[#778397] tabular-nums">
-                      {completedSet.size} of {totalLessons} lessons completed
-                      {lastAccessedLabel ? ` · Last accessed ${lastAccessedLabel}` : ''}
+                      {completedSet.size}/{totalLessons} lessons · {passedQuizSet.size}/{requiredQuizIds.length} quizzes · Final{' '}
+                      {enrolment?.finalAssessmentPassed
+                        ? `passed${enrolment.bestFinalScorePercent ? ` (${enrolment.bestFinalScorePercent}%)` : ''}`
+                        : 'pending'}
+                      {lastAccessedLabel ? ` · ${lastAccessedLabel}` : ''}
                     </p>
                   </div>
 
@@ -185,7 +235,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
                   >
                     <span>
-                      {completedSet.size > 0 || enrolment?.currentLessonId
+                      {completionEval.isCourseCompleted
+                        ? 'Review Course & Assessments'
+                        : completedSet.size > 0 || enrolment?.currentLessonId
                         ? 'Continue Learning'
                         : 'Start Learning'}
                     </span>
@@ -307,7 +359,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               </h2>
             </div>
             <span className="text-xs text-[#778397] tabular-nums">
-              {course.modules.length} modules · {totalLessons} lessons · Quizzes coming next
+              {course.modules.length} modules · {totalLessons} lessons · Module Quizzes &amp; Final Assessment
             </span>
           </div>
 
@@ -315,73 +367,124 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             {course.modules
               .slice()
               .sort((a, b) => a.order - b.order)
-              .map((mod) => (
-                <div key={mod.id} className="py-5 space-y-3.5">
-                  <div className="flex items-start gap-4">
-                    <span className="font-display text-sm font-bold text-[#F47A24] tabular-nums pt-0.5 shrink-0">
-                      0{mod.order}
-                    </span>
-                    <div className="space-y-1 min-w-0">
-                      <h3 className="font-display text-base font-bold text-[#102B4E]">
-                        {mod.title}
-                      </h3>
-                      <p className="text-sm text-[#566479] leading-relaxed">{mod.summary}</p>
+              .map((mod) => {
+                const modQuizMeta = assessmentOverview?.moduleQuizzes.find(
+                  (q) => q.moduleId === mod.id
+                );
+                const quizPassed = passedQuizSet.has(mod.id);
+                return (
+                  <div key={mod.id} className="py-5 space-y-3.5">
+                    <div className="flex items-start gap-4">
+                      <span className="font-display text-sm font-bold text-[#F47A24] tabular-nums pt-0.5 shrink-0">
+                        0{mod.order}
+                      </span>
+                      <div className="space-y-1 min-w-0">
+                        <h3 className="font-display text-base font-bold text-[#102B4E]">
+                          {mod.title}
+                        </h3>
+                        <p className="text-sm text-[#566479] leading-relaxed">{mod.summary}</p>
+                      </div>
+                    </div>
+
+                    {/* Lesson Rows Inside Module */}
+                    <div className="pl-7 sm:pl-9 space-y-2">
+                      {mod.lessons
+                        .slice()
+                        .sort((a, b) => a.order - b.order)
+                        .map((lesson) => {
+                          const completed = completedSet.has(lesson.id);
+                          const hasVideo = Boolean(
+                            lesson.videoUrl &&
+                              parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+                          );
+                          return (
+                            <div
+                              key={lesson.id}
+                              className="py-2 px-3 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {completed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                ) : hasVideo ? (
+                                  <PlayCircle className="w-4 h-4 text-[#F47A24] shrink-0" />
+                                ) : (
+                                  <FileText className="w-4 h-4 text-[#566479] shrink-0" />
+                                )}
+                                <span className="font-semibold text-[#102B4E] truncate">
+                                  {lesson.title}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-x-2 text-xs text-[#778397] shrink-0 tabular-nums pl-6 sm:pl-0">
+                                <span>{hasVideo ? 'Video & Reading' : 'Written Lesson'}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>{lesson.estimatedMinutes} min</span>
+                                {completed && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="font-semibold text-emerald-700">
+                                      Completed
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                      <div className="py-2 px-3 rounded-xl bg-white border border-[#E5EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
+                        <span className="inline-flex items-center gap-2 font-semibold text-[#102B4E]">
+                          {quizPassed ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          ) : (
+                            <ClipboardCheck className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
+                          )}
+                          <span>Module 0{mod.order} Quiz</span>
+                        </span>
+                        <span className="text-[#778397] tabular-nums pl-5 sm:pl-0">
+                          {modQuizMeta ? `${modQuizMeta.questionCount} questions` : '3 questions'} ·{' '}
+                          {quizPassed ? (
+                            <span className="font-semibold text-emerald-700">Passed</span>
+                          ) : (
+                            <span>
+                              Pass {modQuizMeta?.passPercentage ?? 60}%+ · Instant feedback
+                            </span>
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
 
-                  {/* Lesson Rows Inside Module */}
-                  <div className="pl-7 sm:pl-9 space-y-2">
-                    {mod.lessons
-                      .slice()
-                      .sort((a, b) => a.order - b.order)
-                      .map((lesson) => {
-                        const completed = completedSet.has(lesson.id);
-                        const hasVideo = Boolean(
-                          lesson.videoUrl &&
-                            parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
-                        );
-                        return (
-                          <div
-                            key={lesson.id}
-                            className="py-2 px-3 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {completed ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                              ) : hasVideo ? (
-                                <PlayCircle className="w-4 h-4 text-[#F47A24] shrink-0" />
-                              ) : (
-                                <FileText className="w-4 h-4 text-[#566479] shrink-0" />
-                              )}
-                              <span className="font-semibold text-[#102B4E] truncate">
-                                {lesson.title}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-x-2 text-xs text-[#778397] shrink-0 tabular-nums pl-6 sm:pl-0">
-                              <span>{hasVideo ? 'Video & Reading' : 'Written Lesson'}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>{lesson.estimatedMinutes} min</span>
-                              {completed && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span className="font-semibold text-emerald-700">
-                                    Completed
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                    <div className="pt-1 flex items-center justify-between text-[11px] text-[#8B97A8] px-3">
-                      <span>Module 0{mod.order} Quiz</span>
-                      <span>Scheduled for next update</span>
-                    </div>
-                  </div>
+            {/* Final Course Assessment Row */}
+            <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Award className="w-5 h-5 text-[#F47A24] shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <h3 className="font-display text-base font-bold text-[#102B4E]">
+                    Final Course Assessment
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#566479]">
+                    Unlocks after completing all required lessons and module quizzes. Retakes allowed.
+                  </p>
                 </div>
-              ))}
+              </div>
+              <div className="text-xs text-[#566479] tabular-nums sm:text-right shrink-0 pl-8 sm:pl-0">
+                <p className="font-semibold text-[#102B4E]">
+                  {assessmentOverview?.finalAssessment?.questionCount ?? 12} randomized questions ·{' '}
+                  {assessmentOverview?.finalAssessment?.passPercentage ?? 70}% to pass
+                </p>
+                {enrolment?.finalAssessmentPassed && (
+                  <p className="font-semibold text-emerald-700 mt-0.5">
+                    Passed
+                    {typeof enrolment.bestFinalScorePercent === 'number'
+                      ? ` (${enrolment.bestFinalScorePercent}%)`
+                      : ''}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </div>

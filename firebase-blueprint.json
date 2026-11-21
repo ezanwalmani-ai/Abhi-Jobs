@@ -68,9 +68,13 @@
         "status": { "type": "string", "description": "Learning progress status", "enum": ["enrolled", "in_progress", "completed"] },
         "currentLessonId": { "type": "string", "description": "Last viewed lesson ID for resuming", "maxLength": 128 },
         "completedLessonIds": { "type": "array", "description": "Bounded list of completed lesson IDs (max 200)" },
-        "progressPercent": { "type": "number", "description": "Calculated course completion percentage (0-100)" },
+        "passedModuleQuizIds": { "type": "array", "description": "Bounded list of module IDs whose required quizzes are passed (max 40)" },
+        "finalAssessmentPassed": { "type": "boolean", "description": "Whether the final course assessment was passed at or above pass threshold" },
+        "bestFinalScorePercent": { "type": "number", "description": "Highest final assessment score percentage achieved (0-100)" },
+        "progressPercent": { "type": "number", "description": "Calculated overall course completion percentage (0-100)" },
         "enrolledAt": { "type": "string", "description": "Server timestamp of initial enrolment" },
-        "lastAccessedAt": { "type": "string", "description": "Server timestamp of last lesson access or progress save" }
+        "lastAccessedAt": { "type": "string", "description": "Server timestamp of last lesson access or progress save" },
+        "completedAt": { "type": "string", "description": "ISO timestamp when all lessons, required quizzes, and final assessment passed", "maxLength": 64 }
       },
       "required": [
         "courseId",
@@ -83,6 +87,82 @@
         "progressPercent",
         "enrolledAt",
         "lastAccessedAt"
+      ]
+    },
+    "AssessmentAttempt": {
+      "title": "AssessmentAttempt",
+      "description": "Private server-graded quiz or final assessment attempt belonging strictly to an authenticated candidate",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Attempt document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Authenticated candidate UID", "maxLength": 128 },
+        "courseId": { "type": "string", "description": "Course identifier", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Course title", "maxLength": 160 },
+        "assessmentType": { "type": "string", "description": "Quiz vs final assessment", "enum": ["module_quiz", "final_assessment"] },
+        "moduleId": { "type": "string", "description": "Module ID for module quizzes", "maxLength": 128 },
+        "assessmentTitle": { "type": "string", "description": "Display title of the quiz or final assessment", "maxLength": 180 },
+        "attemptNumber": { "type": "number", "description": "Sequential attempt counter (>= 1)" },
+        "totalQuestions": { "type": "number", "description": "Total questions graded" },
+        "correctAnswers": { "type": "number", "description": "Count of correct answers" },
+        "incorrectAnswers": { "type": "number", "description": "Count of incorrect answers" },
+        "scorePercent": { "type": "number", "description": "Percentage score (0-100)" },
+        "passPercentage": { "type": "number", "description": "Required passing score percentage (0-100)" },
+        "passed": { "type": "boolean", "description": "Whether attempt met or exceeded passPercentage" },
+        "answers": { "type": "object", "description": "Map of questionId to selected option index (0-3)" },
+        "questionResults": { "type": "array", "description": "Post-submission graded review items with explanations (max 30)" },
+        "submittedAt": { "type": "string", "description": "Server timestamp of graded submission" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "assessmentType",
+        "assessmentTitle",
+        "attemptNumber",
+        "totalQuestions",
+        "correctAnswers",
+        "incorrectAnswers",
+        "scorePercent",
+        "passPercentage",
+        "passed",
+        "answers",
+        "questionResults",
+        "submittedAt"
+      ]
+    },
+    "CourseQuizConfig": {
+      "title": "CourseQuizConfig",
+      "description": "Admin-only quiz and final assessment configuration including answer keys and explanations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Quiz configuration ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "description": "Parent course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "assessmentType": { "type": "string", "description": "Module quiz or final assessment", "enum": ["module_quiz", "final_assessment"] },
+        "moduleId": { "type": "string", "description": "Target module ID for module quizzes", "maxLength": 128 },
+        "title": { "type": "string", "description": "Assessment display title", "maxLength": 180 },
+        "passPercentage": { "type": "number", "description": "Passing threshold (1-100)" },
+        "questionCount": { "type": "number", "description": "Number of questions served per attempt (1-30)" },
+        "randomizeOrder": { "type": "boolean", "description": "Whether to shuffle question order" },
+        "requiredForCompletion": { "type": "boolean", "description": "Whether passing is required to complete course" },
+        "questions": { "type": "array", "description": "Bounded question bank array (max 50)" },
+        "updatedBy": { "type": "string", "description": "Admin UID", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of update" }
+      },
+      "required": [
+        "id",
+        "courseId",
+        "assessmentType",
+        "title",
+        "passPercentage",
+        "questionCount",
+        "randomizeOrder",
+        "requiredForCompletion",
+        "questions",
+        "updatedBy",
+        "updatedAt"
       ]
     },
     "CourseLessonContent": {
@@ -132,11 +212,19 @@
     },
     "/users/{userId}/course_enrolments/{courseId}": {
       "schema": "CourseEnrolment",
-      "description": "Private per-candidate Learn with ABHI course enrolments and learning progress keyed by courseId"
+      "description": "Private per-candidate Learn with ABHI course enrolments, lesson progress, and completion state keyed by courseId"
+    },
+    "/users/{userId}/assessment_attempts/{attemptId}": {
+      "schema": "AssessmentAttempt",
+      "description": "Private per-candidate server-graded quiz and final assessment attempt records"
     },
     "/learning_courses/{courseId}/lessons/{lessonId}": {
       "schema": "CourseLessonContent",
       "description": "Admin-managed Learn with ABHI lesson content, video URLs, exercises, and downloadable attachments"
+    },
+    "/learning_courses/{courseId}/quiz_configs/{quizId}": {
+      "schema": "CourseQuizConfig",
+      "description": "Admin-only quiz and final assessment definitions including answer keys and explanations"
     }
   }
 }

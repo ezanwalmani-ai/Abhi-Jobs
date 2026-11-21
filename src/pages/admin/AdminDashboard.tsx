@@ -38,6 +38,7 @@ import {
 } from '../../types';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { AdminCourseContentManager } from '../../components/learning/AdminCourseContentManager';
+import { AdminAssessmentManager } from '../../components/learning/AdminAssessmentManager';
 
 interface AdminDashboardProps {
   navigate: (route: string) => void;
@@ -186,6 +187,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   const [courseCategory, setCourseCategory] = useState('Technology & Engineering');
   const [courseLevel, setCourseLevel] = useState<Course['level']>('Intermediate');
   const [courseMode, setCourseMode] = useState<NonNullable<Course['learningMode']>>('Live Online');
+  const [coursesSubTab, setCoursesSubTab] = useState<'lessons' | 'assessments' | 'partner'>('lessons');
   const [courseDuration, setCourseDuration] = useState('6 Weeks');
   const [courseModules, setCourseModules] = useState(8);
   const [courseFees, setCourseFees] = useState('₹14,999');
@@ -1459,35 +1461,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
 
         {/* TAB 6: COURSES MANAGEMENT */}
         {activeTab === 'courses' && (
-          <div className="space-y-8">
-            {/* Learn with ABHI Structured Lesson & Content Manager */}
-            <AdminCourseContentManager
-              adminUserId={currentUser?.id || 'admin'}
-              onNotify={showToast}
-              onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
-            />
-
-            <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-[#102B4E]">
-                  Partner Upskilling Programmes
-                </h2>
-                <p className="text-xs text-[#778397]">
-                  Publish and manage partner upskilling programs shown to candidates.
-                </p>
-              </div>
+          <div className="space-y-6">
+            {/* Sub-tab navigation for Learn with ABHI Lessons, Quizzes & Assessments, and Partner Programmes */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={openCreateCourseModal}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => setCoursesSubTab('lessons')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                  coursesSubTab === 'lessons'
+                    ? 'bg-[#102B4E] text-white'
+                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                }`}
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Course</span>
+                Course Lessons
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoursesSubTab('assessments')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                  coursesSubTab === 'assessments'
+                    ? 'bg-[#102B4E] text-white'
+                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                }`}
+              >
+                Quizzes &amp; Assessments
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoursesSubTab('partner')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                  coursesSubTab === 'partner'
+                    ? 'bg-[#102B4E] text-white'
+                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                }`}
+              >
+                Partner Programmes ({courses.length})
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {courses.map((course) => (
+            {coursesSubTab === 'lessons' && (
+              <AdminCourseContentManager
+                adminUserId={currentUser?.id || 'admin'}
+                onNotify={showToast}
+                onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
+              />
+            )}
+
+            {coursesSubTab === 'assessments' && (
+              <AdminAssessmentManager onNotify={showToast} />
+            )}
+
+            {coursesSubTab === 'partner' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-[#102B4E]">
+                      Partner Upskilling Programmes
+                    </h2>
+                    <p className="text-xs text-[#778397]">
+                      Publish and manage partner upskilling programs shown to candidates.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openCreateCourseModal}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Course</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {courses.map((course) => (
                 <div
                   key={course.id}
                   className="bg-white rounded-2xl border border-[#E5EAF0] p-5 flex flex-col justify-between space-y-4"
@@ -1600,6 +1646,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                 </div>
               )}
             </div>
+              </div>
+            )}
           </div>
         )}
       </div>

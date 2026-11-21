@@ -96,9 +96,131 @@ export interface CourseEnrolmentRecord {
   status: CourseProgressStatus;
   currentLessonId?: string;
   completedLessonIds: string[];
+  passedModuleQuizIds: string[];
+  finalAssessmentPassed: boolean;
+  bestFinalScorePercent?: number;
   progressPercent: number;
   enrolledAt: string;
   lastAccessedAt: string;
+  completedAt?: string;
+}
+
+export type AssessmentType = 'module_quiz' | 'final_assessment';
+
+export interface ClientQuizQuestion {
+  id: string;
+  prompt: string;
+  options: [string, string, string, string];
+}
+
+export interface AssessmentSummaryItem {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  moduleOrder?: number;
+  title: string;
+  description: string;
+  passPercentage: number;
+  questionCount: number;
+  totalBankQuestions: number;
+  randomizeOrder: boolean;
+  requiredForCompletion: boolean;
+}
+
+export interface CourseAssessmentOverview {
+  courseId: string;
+  moduleQuizzes: AssessmentSummaryItem[];
+  finalAssessment: AssessmentSummaryItem | null;
+}
+
+export interface StartedAssessmentSession {
+  sessionId: string;
+  assessmentId: string;
+  courseId: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  title: string;
+  description: string;
+  passPercentage: number;
+  totalQuestions: number;
+  previousAttempts: number;
+  questions: ClientQuizQuestion[];
+}
+
+export interface GradedQuestionResult {
+  questionId: string;
+  prompt: string;
+  options: [string, string, string, string];
+  selectedOptionIndex: 0 | 1 | 2 | 3;
+  correctOptionIndex: 0 | 1 | 2 | 3;
+  isCorrect: boolean;
+  explanation: string;
+}
+
+export interface AssessmentAttemptRecord {
+  id: string;
+  userId: string;
+  courseId: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  assessmentTitle: string;
+  attemptNumber: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  scorePercent: number;
+  passPercentage: number;
+  passed: boolean;
+  submittedAt: string;
+  questionResults?: GradedQuestionResult[];
+}
+
+export interface AdminEditableQuestion {
+  id: string;
+  prompt: string;
+  options: [string, string, string, string];
+  correctOptionIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+export interface AdminAssessmentConfig {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  moduleOrder?: number;
+  title: string;
+  description: string;
+  passPercentage: number;
+  questionCount: number;
+  randomizeOrder: boolean;
+  requiredForCompletion: boolean;
+  questions: AdminEditableQuestion[];
+}
+
+export interface AdminAttemptSummary {
+  id: string;
+  userId: string;
+  candidateName: string;
+  candidateEmail: string;
+  courseId: string;
+  courseTitle: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  assessmentTitle: string;
+  attemptNumber: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  scorePercent: number;
+  passPercentage: number;
+  passed: boolean;
+  submittedAt: string;
 }
 
 export interface AdminLessonInput {

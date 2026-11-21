@@ -37,38 +37,63 @@ function normalizeTimestamp(val: unknown): string {
   return new Date().toISOString();
 }
 
-function normalizeStatus(val: unknown, progressPercent: number, hasCurrent: boolean): CourseProgressStatus {
-  if (progressPercent >= 100) return 'completed';
-  if (val === 'completed' || val === 'in_progress' || val === 'enrolled') {
-    return val;
-  }
-  if (progressPercent > 0 || hasCurrent) return 'in_progress';
-  return 'enrolled';
-}
-
-function normalizeCompletedIds(val: unknown): string[] {
+function normalizeStringIdList(val: unknown, maxSize = 200): string[] {
   if (!Array.isArray(val)) return [];
   const unique = new Set<string>();
   for (const item of val) {
     if (typeof item === 'string' && item.trim().length > 0) {
       unique.add(item.trim().slice(0, 128));
-      if (unique.size >= 200) break;
+      if (unique.size >= maxSize) break;
     }
   }
   return Array.from(unique);
 }
 
+function normalizeStatus(
+  val: unknown,
+  finalAssessmentPassed: boolean,
+  progressPercent: number,
+  hasActivity: boolean
+): CourseProgressStatus {
+  // Enforce strict rule: a course can only be 'completed' if the final assessment is passed
+  if (val === 'completed' && finalAssessmentPassed) {
+    return 'completed';
+  }
+  if (progressPercent > 0 || hasActivity) return 'in_progress';
+  return 'enrolled';
+}
+
 function normalizeEnrolmentRecord(raw: any, fallbackUserId: string): CourseEnrolmentRecord | null {
   if (!raw || typeof raw !== 'object' || !raw.courseId) return null;
-  const completedLessonIds = normalizeCompletedIds(raw.completedLessonIds);
+  const completedLessonIds = normalizeStringIdList(raw.completedLessonIds, 200);
+  const passedModuleQuizIds = normalizeStringIdList(raw.passedModuleQuizIds, 50);
+  const finalAssessmentPassed = Boolean(raw.finalAssessmentPassed);
+  const bestFinalScorePercent =
+    typeof raw.bestFinalScorePercent === 'number' && !Number.isNaN(raw.bestFinalScorePercent)
+      ? Math.max(0, Math.min(100, Math.round(raw.bestFinalScorePercent)))
+      : undefined;
+
   const progressRaw = typeof raw.progressPercent === 'number' ? raw.progressPercent : 0;
-  const progressPercent = Math.max(0, Math.min(100, Math.round(progressRaw)));
+  let progressPercent = Math.max(0, Math.min(100, Math.round(progressRaw)));
+  if (!finalAssessmentPassed && progressPercent >= 100) {
+    progressPercent = 95;
+  }
+
   const currentLessonId =
     typeof raw.currentLessonId === 'string' && raw.currentLessonId.trim().length > 0
       ? raw.currentLessonId.trim().slice(0, 128)
       : undefined;
+
   const enrolledAt = normalizeTimestamp(raw.enrolledAt);
   const lastAccessedAt = raw.lastAccessedAt ? normalizeTimestamp(raw.lastAccessedAt) : enrolledAt;
+  const completedAt =
+    finalAssessmentPassed && raw.completedAt ? normalizeTimestamp(raw.completedAt) : undefined;
+
+  const hasActivity =
+    completedLessonIds.length > 0 ||
+    passedModuleQuizIds.length > 0 ||
+    finalAssessmentPassed ||
+    Boolean(currentLessonId);
 
   return {
     courseId: String(raw.courseId).slice(0, 128),
@@ -76,12 +101,81 @@ function normalizeEnrolmentRecord(raw: any, fallbackUserId: string): CourseEnrol
     courseTitle: String(raw.courseTitle || '').slice(0, 160),
     categoryId: raw.categoryId,
     userId: String(raw.userId || fallbackUserId).slice(0, 128),
-    status: normalizeStatus(raw.status, progressPercent, Boolean(currentLessonId)),
+    status: normalizeStatus(raw.status, finalAssessmentPassed, progressPercent, hasActivity),
     currentLessonId,
     completedLessonIds,
+    passedModuleQuizIds,
+    finalAssessmentPassed,
+    bestFinalScorePercent,
     progressPercent,
     enrolledAt,
     lastAccessedAt,
+    completedAt,
+  };
+}
+
+/**
+ * Evaluates strict Learn with ABHI course completion rules:
+ * 1. All required lessons are completed.
+ * 2. All required module quizzes are passed.
+ * 3. The final course assessment is passed (>= 70%).
+ */
+export function evaluateCourseCompletion(params: {
+  completedLessonIds: string[];
+  totalLessons: number;
+  passedModuleQuizIds: string[];
+  requiredModuleQuizIds: string[];
+  finalAssessmentPassed: boolean;
+  hasCurrentLesson?: boolean;
+}): {
+  allLessonsCompleted: boolean;
+  allRequiredQuizzesPassed: boolean;
+  finalAssessmentPassed: boolean;
+  isCourseCompleted: boolean;
+  progressPercent: number;
+  status: CourseProgressStatus;
+} {
+  const safeTotalLessons = Math.max(1, params.totalLessons);
+  const uniqueLessonsDone = Math.min(safeTotalLessons, new Set(params.completedLessonIds).size);
+  const allLessonsCompleted = uniqueLessonsDone >= safeTotalLessons;
+
+  const passedQuizSet = new Set(params.passedModuleQuizIds);
+  const requiredQuizIds = Array.from(new Set(params.requiredModuleQuizIds));
+  const passedRequiredQuizzesCount = requiredQuizIds.filter((id) => passedQuizSet.has(id)).length;
+  const allRequiredQuizzesPassed =
+    requiredQuizIds.length === 0 || passedRequiredQuizzesCount >= requiredQuizIds.length;
+
+  const finalAssessmentPassed = Boolean(params.finalAssessmentPassed);
+  const isCourseCompleted =
+    allLessonsCompleted && allRequiredQuizzesPassed && finalAssessmentPassed;
+
+  // Weight milestones: every lesson + every required module quiz + final assessment
+  const totalMilestones = safeTotalLessons + requiredQuizIds.length + 1;
+  const completedMilestones =
+    uniqueLessonsDone + passedRequiredQuizzesCount + (finalAssessmentPassed ? 1 : 0);
+
+  let progressPercent = isCourseCompleted
+    ? 100
+    : Math.min(99, Math.round((completedMilestones / totalMilestones) * 100));
+
+  if (completedMilestones === 0) progressPercent = 0;
+
+  const hasActivity =
+    completedMilestones > 0 || Boolean(params.hasCurrentLesson);
+
+  const status: CourseProgressStatus = isCourseCompleted
+    ? 'completed'
+    : hasActivity
+    ? 'in_progress'
+    : 'enrolled';
+
+  return {
+    allLessonsCompleted,
+    allRequiredQuizzesPassed,
+    finalAssessmentPassed,
+    isCourseCompleted,
+    progressPercent,
+    status,
   };
 }
 
@@ -173,7 +267,6 @@ export async function loadCandidateEnrolments(
         );
         if (normalized) {
           const existingLocal = byCourseId.get(normalized.courseId);
-          // Prefer whichever record was accessed more recently
           if (
             !existingLocal ||
             new Date(normalized.lastAccessedAt).getTime() >=
@@ -253,6 +346,8 @@ export async function enrolCandidateInCourse(
     status: 'enrolled',
     currentLessonId: firstLessonId ? firstLessonId.slice(0, 128) : undefined,
     completedLessonIds: [],
+    passedModuleQuizIds: [],
+    finalAssessmentPassed: false,
     progressPercent: 0,
     enrolledAt: nowIso,
     lastAccessedAt: nowIso,
@@ -300,6 +395,8 @@ export async function enrolCandidateInCourse(
         userId: fbUid,
         status: 'enrolled',
         completedLessonIds: [],
+        passedModuleQuizIds: [],
+        finalAssessmentPassed: false,
         progressPercent: 0,
         enrolledAt: serverTimestamp(),
         lastAccessedAt: serverTimestamp(),
@@ -334,8 +431,8 @@ export async function enrolCandidateInCourse(
 }
 
 /**
- * Automatically saves candidate's current lesson, completed lessons, accurate progress %,
- * and last accessed timestamp strictly under their own Firestore enrolment document.
+ * Saves candidate's lessons, module quizzes, final assessment state, and strictly enforces
+ * Learn with ABHI completion rules (all required lessons + required module quizzes + final assessment >= 70%).
  */
 export async function saveCandidateCourseProgress(
   appUserId: string | null | undefined,
@@ -344,6 +441,10 @@ export async function saveCandidateCourseProgress(
     currentLessonId?: string;
     completedLessonIds: string[];
     totalLessons: number;
+    passedModuleQuizIds?: string[];
+    requiredModuleQuizIds?: string[];
+    finalAssessmentPassed?: boolean;
+    bestFinalScorePercent?: number;
   }
 ): Promise<{
   success: boolean;
@@ -362,28 +463,49 @@ export async function saveCandidateCourseProgress(
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || appUserId;
 
-  const sanitizedCompleted = normalizeCompletedIds(params.completedLessonIds);
-  const safeTotal = Math.max(1, params.totalLessons);
-  const progressPercent = Math.max(
-    0,
-    Math.min(100, Math.round((sanitizedCompleted.length / safeTotal) * 100))
-  );
-  const safeCurrentLessonId =
-    params.currentLessonId && params.currentLessonId.trim().length > 0
-      ? params.currentLessonId.trim().slice(0, 128)
-      : undefined;
-
-  const status: CourseProgressStatus =
-    progressPercent >= 100
-      ? 'completed'
-      : sanitizedCompleted.length > 0 || Boolean(safeCurrentLessonId)
-      ? 'in_progress'
-      : 'enrolled';
-
   const existingLocal = readLocalEnrolments(effectiveUid).find(
     (item) => item.courseId === course.id
   );
+
+  const sanitizedCompleted = normalizeStringIdList(params.completedLessonIds, 200);
+  const sanitizedPassedQuizzes = normalizeStringIdList(
+    params.passedModuleQuizIds ?? existingLocal?.passedModuleQuizIds ?? [],
+    50
+  );
+  const requiredQuizIds =
+    params.requiredModuleQuizIds ?? course.modules.map((m) => m.id);
+
+  const finalAssessmentPassed =
+    params.finalAssessmentPassed !== undefined
+      ? Boolean(params.finalAssessmentPassed)
+      : Boolean(existingLocal?.finalAssessmentPassed);
+
+  const bestFinalScorePercent =
+    typeof params.bestFinalScorePercent === 'number'
+      ? Math.max(
+          existingLocal?.bestFinalScorePercent ?? 0,
+          Math.max(0, Math.min(100, Math.round(params.bestFinalScorePercent)))
+        )
+      : existingLocal?.bestFinalScorePercent;
+
+  const safeCurrentLessonId =
+    params.currentLessonId && params.currentLessonId.trim().length > 0
+      ? params.currentLessonId.trim().slice(0, 128)
+      : existingLocal?.currentLessonId;
+
+  const evalResult = evaluateCourseCompletion({
+    completedLessonIds: sanitizedCompleted,
+    totalLessons: params.totalLessons,
+    passedModuleQuizIds: sanitizedPassedQuizzes,
+    requiredModuleQuizIds: requiredQuizIds,
+    finalAssessmentPassed,
+    hasCurrentLesson: Boolean(safeCurrentLessonId),
+  });
+
   const nowIso = new Date().toISOString();
+  const completedAt = evalResult.isCourseCompleted
+    ? existingLocal?.completedAt || nowIso
+    : undefined;
 
   const updatedRecord: CourseEnrolmentRecord = {
     courseId: course.id.slice(0, 128),
@@ -391,12 +513,16 @@ export async function saveCandidateCourseProgress(
     courseTitle: course.title.slice(0, 160),
     categoryId: course.categoryId,
     userId: effectiveUid,
-    status,
-    currentLessonId: safeCurrentLessonId ?? existingLocal?.currentLessonId,
+    status: evalResult.status,
+    currentLessonId: safeCurrentLessonId,
     completedLessonIds: sanitizedCompleted,
-    progressPercent,
+    passedModuleQuizIds: sanitizedPassedQuizzes,
+    finalAssessmentPassed,
+    bestFinalScorePercent,
+    progressPercent: evalResult.progressPercent,
     enrolledAt: existingLocal?.enrolledAt || nowIso,
     lastAccessedAt: nowIso,
+    completedAt,
   };
 
   let savedToCloud = false;
@@ -410,31 +536,46 @@ export async function saveCandidateCourseProgress(
       if (snap.exists()) {
         const updatePayload: Record<string, unknown> = {
           completedLessonIds: sanitizedCompleted,
-          progressPercent,
-          status,
+          passedModuleQuizIds: sanitizedPassedQuizzes,
+          finalAssessmentPassed,
+          progressPercent: evalResult.progressPercent,
+          status: evalResult.status,
           lastAccessedAt: serverTimestamp(),
         };
         if (updatedRecord.currentLessonId) {
           updatePayload.currentLessonId = updatedRecord.currentLessonId;
         }
+        if (typeof bestFinalScorePercent === 'number') {
+          updatePayload.bestFinalScorePercent = bestFinalScorePercent;
+        }
+        if (evalResult.isCourseCompleted && !snap.data()?.completedAt) {
+          updatePayload.completedAt = serverTimestamp();
+        }
         await updateDoc(docRef, updatePayload);
         savedToCloud = true;
       } else {
-        // Ensure enrolment doc exists cleanly if created locally earlier
         const createPayload: Record<string, unknown> = {
           courseId: updatedRecord.courseId,
           courseSlug: updatedRecord.courseSlug,
           courseTitle: updatedRecord.courseTitle,
           categoryId: updatedRecord.categoryId,
           userId: fbUid,
-          status,
+          status: evalResult.status,
           completedLessonIds: sanitizedCompleted,
-          progressPercent,
+          passedModuleQuizIds: sanitizedPassedQuizzes,
+          finalAssessmentPassed,
+          progressPercent: evalResult.progressPercent,
           enrolledAt: serverTimestamp(),
           lastAccessedAt: serverTimestamp(),
         };
         if (updatedRecord.currentLessonId) {
           createPayload.currentLessonId = updatedRecord.currentLessonId;
+        }
+        if (typeof bestFinalScorePercent === 'number') {
+          createPayload.bestFinalScorePercent = bestFinalScorePercent;
+        }
+        if (evalResult.isCourseCompleted) {
+          createPayload.completedAt = serverTimestamp();
         }
         await setDoc(docRef, createPayload);
         savedToCloud = true;

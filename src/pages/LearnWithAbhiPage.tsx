@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Loader2, Lock, LogIn } from 'lucide-react';
+import { ArrowLeft, BookOpen, ClipboardCheck, Loader2, Lock, LogIn } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LearnHeroSection } from '../components/learning/LearnHeroSection';
 import { CareerAssessmentSection } from '../components/learning/CareerAssessmentSection';
@@ -10,14 +10,24 @@ import { ProfileEvaluationTest } from '../components/learning/assessment/Profile
 import { CourseDetailsView } from '../components/learning/CourseDetailsView';
 import { CoursePlayerView } from '../components/learning/CoursePlayerView';
 import { AdminCourseContentManager } from '../components/learning/AdminCourseContentManager';
-import { getCourseBySlug } from '../data/learningCatalog';
+import { AdminAssessmentManager } from '../components/learning/AdminAssessmentManager';
+import { flattenCourseLessons, getCourseBySlug } from '../data/learningCatalog';
 import {
   enrolCandidateInCourse,
   loadCandidateEnrolments,
   saveCandidateCourseProgress,
 } from '../services/courseEnrolmentService';
 import { loadHydratedCourse } from '../services/courseContentService';
-import { CourseEnrolmentRecord, LearningCourseItem } from '../types/learning';
+import {
+  fetchCourseAssessmentOverview,
+  loadCandidateAssessmentAttempts,
+} from '../services/assessmentService';
+import {
+  AssessmentAttemptRecord,
+  CourseAssessmentOverview,
+  CourseEnrolmentRecord,
+  LearningCourseItem,
+} from '../types/learning';
 
 interface LearnWithAbhiPageProps {
   navigate: (route: string) => void;
@@ -37,6 +47,11 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
   const [lastSavedLabel, setLastSavedLabel] = useState<string | null>(null);
   const [hydratedCourse, setHydratedCourse] = useState<LearningCourseItem | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
+
+  const [assessmentOverview, setAssessmentOverview] =
+    useState<CourseAssessmentOverview | null>(null);
+  const [courseAttempts, setCourseAttempts] = useState<AssessmentAttemptRecord[]>([]);
+  const [adminSubTab, setAdminSubTab] = useState<'lessons' | 'assessments'>('lessons');
 
   const isAuthenticated = Boolean(currentUser);
   const isAdmin =
@@ -69,11 +84,13 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
     };
   }, [currentUser?.id, section, courseSlug]);
 
-  // Hydrate course structure with any admin-managed lessons from Firestore/local storage
+  // Hydrate course structure + load backend assessment summary & candidate's own attempts
   useEffect(() => {
     let active = true;
     if (section !== 'course-detail' && section !== 'course-player') {
       setHydratedCourse(null);
+      setAssessmentOverview(null);
+      setCourseAttempts([]);
       return () => {
         active = false;
       };
@@ -82,6 +99,8 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
     const baseCourse = courseSlug ? getCourseBySlug(courseSlug) : undefined;
     if (!baseCourse) {
       setHydratedCourse(null);
+      setAssessmentOverview(null);
+      setCourseAttempts([]);
       return () => {
         active = false;
       };
@@ -89,11 +108,22 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
 
     setHydratedCourse(baseCourse);
     setIsLoadingCourse(true);
-    loadHydratedCourse(baseCourse)
-      .then((loaded) => {
-        if (active) {
-          setHydratedCourse(loaded);
-        }
+
+    Promise.all([
+      loadHydratedCourse(baseCourse),
+      fetchCourseAssessmentOverview(baseCourse.id).catch(() => null),
+      currentUser?.id
+        ? loadCandidateAssessmentAttempts(currentUser.id, baseCourse.id).catch(() => ({
+            attempts: [],
+            syncedFromCloud: false,
+          }))
+        : Promise.resolve({ attempts: [], syncedFromCloud: false }),
+    ])
+      .then(([loadedCourse, overview, attRes]) => {
+        if (!active) return;
+        setHydratedCourse(loadedCourse);
+        setAssessmentOverview(overview);
+        setCourseAttempts(attRes.attempts);
       })
       .finally(() => {
         if (active) {
@@ -104,7 +134,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
     return () => {
       active = false;
     };
-  }, [section, courseSlug]);
+  }, [section, courseSlug, currentUser?.id]);
 
   const scrollToElement = (elementId: string) => {
     const target = document.getElementById(elementId);
@@ -174,6 +204,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
       currentLessonId?: string;
       completedLessonIds: string[];
       totalLessons: number;
+      requiredModuleQuizIds: string[];
     }
   ) => {
     if (!currentUser?.id) return;
@@ -187,6 +218,93 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
           ...prev.filter((item) => item.courseId !== savedRecord.courseId),
         ]);
         setLastSavedLabel('Progress saved');
+      }
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  const handleAssessmentAttemptCompleted = async (
+    course: LearningCourseItem,
+    attempt: AssessmentAttemptRecord
+  ) => {
+    if (!currentUser?.id) return;
+
+    const nextAttempts = [
+      attempt,
+      ...courseAttempts.filter((item) => item.id !== attempt.id),
+    ];
+    setCourseAttempts(nextAttempts);
+
+    const existingEnrolment = enrolments.find((e) => e.courseId === course.id);
+    const totalLessons = flattenCourseLessons(course).length;
+    const requiredModuleQuizIds =
+      assessmentOverview && assessmentOverview.moduleQuizzes.length > 0
+        ? assessmentOverview.moduleQuizzes
+            .filter((q) => q.requiredForCompletion && q.moduleId)
+            .map((q) => q.moduleId as string)
+        : course.modules.map((m) => m.id);
+
+    const passedQuizSet = new Set<string>(existingEnrolment?.passedModuleQuizIds || []);
+    nextAttempts.forEach((a) => {
+      if (a.assessmentType === 'module_quiz' && a.passed && a.moduleId) {
+        passedQuizSet.add(a.moduleId);
+      }
+    });
+
+    const finalPassed =
+      Boolean(existingEnrolment?.finalAssessmentPassed) ||
+      nextAttempts.some((a) => a.assessmentType === 'final_assessment' && a.passed);
+
+    const bestFinal = nextAttempts
+      .filter((a) => a.assessmentType === 'final_assessment')
+      .reduce(
+        (max, a) => Math.max(max, a.scorePercent),
+        existingEnrolment?.bestFinalScorePercent ?? 0
+      );
+
+    setIsSavingProgress(true);
+    try {
+      const res = await saveCandidateCourseProgress(currentUser.id, course, {
+        currentLessonId: existingEnrolment?.currentLessonId,
+        completedLessonIds: existingEnrolment?.completedLessonIds || [],
+        totalLessons,
+        passedModuleQuizIds: Array.from(passedQuizSet),
+        requiredModuleQuizIds,
+        finalAssessmentPassed: finalPassed,
+        bestFinalScorePercent: bestFinal > 0 ? bestFinal : undefined,
+      });
+
+      if (res.success && res.enrolment) {
+        const savedRecord = res.enrolment;
+        const wasAlreadyCompleted = existingEnrolment?.status === 'completed';
+        setEnrolments((prev) => [
+          savedRecord,
+          ...prev.filter((item) => item.courseId !== savedRecord.courseId),
+        ]);
+        setLastSavedLabel('Assessment result saved');
+
+        if (!wasAlreadyCompleted && savedRecord.status === 'completed') {
+          showToast(
+            'success',
+            'Course Completed!',
+            `Congratulations! You completed ${course.title} with a ${savedRecord.bestFinalScorePercent ?? attempt.scorePercent}% final assessment score.`
+          );
+        } else if (attempt.passed) {
+          showToast(
+            'success',
+            attempt.assessmentType === 'final_assessment'
+              ? 'Final Assessment Passed'
+              : 'Module Quiz Passed',
+            `Score: ${attempt.scorePercent}% (${attempt.correctAnswers}/${attempt.totalQuestions} correct).`
+          );
+        } else {
+          showToast(
+            'info',
+            'Attempt Recorded',
+            `You scored ${attempt.scorePercent}%. Review the explanations and retry to reach ${attempt.passPercentage}%.`
+          );
+        }
       }
     } finally {
       setIsSavingProgress(false);
@@ -220,7 +338,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
               Administrator Access Required
             </h1>
             <p className="text-sm text-[#566479]">
-              Only ABHI JOBS administrators can add or edit Learn with ABHI course lessons.
+              Only ABHI JOBS administrators can manage Learn with ABHI course lessons and assessments.
             </p>
             <button
               type="button"
@@ -239,14 +357,59 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
 
     return (
       <div className="min-h-screen bg-[#F6F8FB] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <AdminCourseContentManager
-            adminUserId={currentUser?.id || 'admin'}
-            initialCourseId={initialCourseId}
-            onNotify={showToast}
-            onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
-            onBack={() => navigate('/learning')}
-          />
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/learning')}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#566479] hover:text-[#102B4E] cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Learn with ABHI</span>
+            </button>
+
+            <div className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAdminSubTab('lessons')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  adminSubTab === 'lessons'
+                    ? 'bg-[#102B4E] text-white'
+                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Course Lessons</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdminSubTab('assessments')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  adminSubTab === 'assessments'
+                    ? 'bg-[#102B4E] text-white'
+                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                }`}
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>Quizzes &amp; Assessments</span>
+              </button>
+            </div>
+          </div>
+
+          {adminSubTab === 'lessons' ? (
+            <AdminCourseContentManager
+              adminUserId={currentUser?.id || 'admin'}
+              initialCourseId={initialCourseId}
+              onNotify={showToast}
+              onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
+              onBack={() => navigate('/learning')}
+            />
+          ) : (
+            <AdminAssessmentManager
+              initialCourseId={initialCourseId}
+              onNotify={showToast}
+            />
+          )}
         </div>
       </div>
     );
@@ -288,6 +451,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
         enrolment={matchingEnrolment}
+        assessmentOverview={assessmentOverview}
         isEnrolling={isEnrolling}
         onEnrol={(c) => handleEnrolCourse(c, true)}
         onStartLearning={(c) => navigate(`/learning/courses/${c.slug}/learn`)}
@@ -335,7 +499,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
             <p className="text-sm text-[#566479] leading-relaxed">
               Please sign in with your ABHI JOBS account to study{' '}
               <span className="font-semibold text-[#102B4E]">{selectedCourse.title}</span>{' '}
-              and save your lesson progress automatically.
+              and save your lesson and assessment progress automatically.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
@@ -372,7 +536,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
             <p className="text-sm text-[#566479] leading-relaxed">
               Enrol for free in{' '}
               <span className="font-semibold text-[#102B4E]">{selectedCourse.title}</span>{' '}
-              to start studying lessons, downloading study worksheets, and tracking your progress.
+              to start studying lessons, taking module quizzes, and completing the final assessment.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
@@ -411,6 +575,8 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
       userId: currentUser.id,
       status: 'enrolled',
       completedLessonIds: [],
+      passedModuleQuizIds: [],
+      finalAssessmentPassed: false,
       progressPercent: 0,
       enrolledAt: new Date().toISOString(),
       lastAccessedAt: new Date().toISOString(),
@@ -428,10 +594,18 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
       <CoursePlayerView
         course={selectedCourse}
         enrolment={effectiveEnrolment}
+        assessmentOverview={assessmentOverview}
+        courseAttempts={courseAttempts}
+        candidateId={currentUser.id}
+        candidateName={fullName || currentUser.name || 'ABHI JOBS Candidate'}
+        candidateEmail={currentUser.email || ''}
         isAdmin={isAdmin}
         isSavingProgress={isSavingProgress}
         lastSavedLabel={lastSavedLabel}
         onUpdateProgress={(params) => handleUpdateProgress(selectedCourse, params)}
+        onAssessmentAttemptCompleted={(attempt) =>
+          handleAssessmentAttemptCompleted(selectedCourse, attempt)
+        }
         onBackToCourseDetails={() =>
           navigate(`/learning/courses/${selectedCourse.slug}`)
         }

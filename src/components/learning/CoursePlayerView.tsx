@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
+  Award,
   BookOpen,
   CheckCircle2,
   ChevronDown,
@@ -19,6 +20,9 @@ import {
   X,
 } from 'lucide-react';
 import {
+  AssessmentAttemptRecord,
+  AssessmentSummaryItem,
+  CourseAssessmentOverview,
   CourseEnrolmentRecord,
   CourseLesson,
   LearningCourseItem,
@@ -28,11 +32,18 @@ import {
   downloadLessonResource,
   parseSafeVideoEmbed,
 } from '../../services/courseContentService';
+import { evaluateCourseCompletion } from '../../services/courseEnrolmentService';
+import { CourseAssessmentRunner } from './CourseAssessmentRunner';
 import { EASE_PREMIUM } from '../../lib/motion';
 
 interface CoursePlayerViewProps {
   course: LearningCourseItem;
   enrolment: CourseEnrolmentRecord;
+  assessmentOverview: CourseAssessmentOverview | null;
+  courseAttempts: AssessmentAttemptRecord[];
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
   isAdmin: boolean;
   isSavingProgress: boolean;
   lastSavedLabel: string | null;
@@ -40,25 +51,40 @@ interface CoursePlayerViewProps {
     currentLessonId?: string;
     completedLessonIds: string[];
     totalLessons: number;
+    requiredModuleQuizIds: string[];
   }) => Promise<void>;
+  onAssessmentAttemptCompleted: (attempt: AssessmentAttemptRecord) => Promise<void>;
   onBackToCourseDetails: () => void;
   onOpenAdminContentManager?: () => void;
 }
 
 const INTRO_VIEW_ID = '__course_intro__';
+const FINAL_ASSESSMENT_VIEW_ID = '__final_assessment__';
+const MODULE_QUIZ_PREFIX = '__module_quiz__:';
 
 export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   course,
   enrolment,
+  assessmentOverview,
+  courseAttempts,
+  candidateId,
+  candidateName,
+  candidateEmail,
   isAdmin,
   isSavingProgress,
   lastSavedLabel,
   onUpdateProgress,
+  onAssessmentAttemptCompleted,
   onBackToCourseDetails,
   onOpenAdminContentManager,
 }) => {
   const flatLessons = useMemo(() => flattenCourseLessons(course), [course]);
   const totalLessons = flatLessons.length;
+
+  const sortedModules = useMemo(
+    () => course.modules.slice().sort((a, b) => a.order - b.order),
+    [course.modules]
+  );
 
   const [completedIds, setCompletedIds] = useState<string[]>(() =>
     enrolment.completedLessonIds || []
@@ -87,14 +113,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>({});
   const [lockNotice, setLockNotice] = useState<string | null>(null);
 
-  // Keep local state aligned if enrolment refreshes from cloud
   useEffect(() => {
     if (Array.isArray(enrolment.completedLessonIds)) {
       setCompletedIds(enrolment.completedLessonIds);
     }
   }, [enrolment.courseId, enrolment.completedLessonIds]);
 
-  // Filter completedIds strictly against current lessons in this course for accurate progress %
   const validLessonIdSet = useMemo(
     () => new Set(flatLessons.map((item) => item.lesson.id)),
     [flatLessons]
@@ -108,15 +132,89 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     return s;
   }, [completedIds, validLessonIdSet]);
 
-  const progressPercent =
-    totalLessons > 0
-      ? Math.min(100, Math.round((validCompletedSet.size / totalLessons) * 100))
-      : 0;
+  const moduleQuizByModuleId = useMemo(() => {
+    const map = new Map<string, AssessmentSummaryItem>();
+    (assessmentOverview?.moduleQuizzes || []).forEach((q) => {
+      if (q.moduleId) map.set(q.moduleId, q);
+    });
+    return map;
+  }, [assessmentOverview]);
 
-  // Sequential unlock check:
-  // - Lesson 0 is always unlocked.
-  // - Lesson N is unlocked if sequentialUnlock is false, user is admin, lesson N is already completed,
-  //   or lesson N-1 is completed.
+  const requiredModuleQuizIds = useMemo(() => {
+    if (assessmentOverview && assessmentOverview.moduleQuizzes.length > 0) {
+      return assessmentOverview.moduleQuizzes
+        .filter((q) => q.requiredForCompletion && q.moduleId)
+        .map((q) => q.moduleId as string);
+    }
+    return sortedModules.map((m) => m.id);
+  }, [assessmentOverview, sortedModules]);
+
+  // Combine passed module quizzes from enrolment & loaded attempts
+  const passedModuleQuizSet = useMemo(() => {
+    const set = new Set<string>(enrolment.passedModuleQuizIds || []);
+    courseAttempts.forEach((att) => {
+      if (att.assessmentType === 'module_quiz' && att.passed && att.moduleId) {
+        set.add(att.moduleId);
+      }
+    });
+    return set;
+  }, [enrolment.passedModuleQuizIds, courseAttempts]);
+
+  const finalAssessmentPassed = useMemo(() => {
+    if (enrolment.finalAssessmentPassed) return true;
+    return courseAttempts.some(
+      (att) => att.assessmentType === 'final_assessment' && att.passed
+    );
+  }, [enrolment.finalAssessmentPassed, courseAttempts]);
+
+  const bestFinalScore = useMemo(() => {
+    const fromAttempts = courseAttempts
+      .filter((a) => a.assessmentType === 'final_assessment')
+      .reduce((max, a) => Math.max(max, a.scorePercent), 0);
+    const fromEnrol = enrolment.bestFinalScorePercent ?? 0;
+    const best = Math.max(fromAttempts, fromEnrol);
+    return best > 0 ? best : null;
+  }, [courseAttempts, enrolment.bestFinalScorePercent]);
+
+  const completionState = useMemo(
+    () =>
+      evaluateCourseCompletion({
+        completedLessonIds: Array.from(validCompletedSet),
+        totalLessons,
+        passedModuleQuizIds: Array.from(passedModuleQuizSet),
+        requiredModuleQuizIds,
+        finalAssessmentPassed,
+        hasCurrentLesson: Boolean(enrolment.currentLessonId),
+      }),
+    [
+      validCompletedSet,
+      totalLessons,
+      passedModuleQuizSet,
+      requiredModuleQuizIds,
+      finalAssessmentPassed,
+      enrolment.currentLessonId,
+    ]
+  );
+
+  const progressPercent = completionState.progressPercent;
+
+  // Helper: are all lessons in a specific module completed?
+  const isModuleLessonsComplete = (moduleId: string): boolean => {
+    const mod = sortedModules.find((m) => m.id === moduleId);
+    if (!mod || mod.lessons.length === 0) return true;
+    return mod.lessons.every((l) => validCompletedSet.has(l.id));
+  };
+
+  const isModuleQuizUnlocked = (moduleId: string): boolean => {
+    if (isAdmin || passedModuleQuizSet.has(moduleId)) return true;
+    return isModuleLessonsComplete(moduleId);
+  };
+
+  const isFinalAssessmentUnlocked =
+    isAdmin ||
+    finalAssessmentPassed ||
+    (completionState.allLessonsCompleted && completionState.allRequiredQuizzesPassed);
+
   const isLessonUnlocked = (globalIndex: number): boolean => {
     if (!course.sequentialUnlock || isAdmin || globalIndex <= 0) return true;
     const targetLesson = flatLessons[globalIndex]?.lesson;
@@ -124,6 +222,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     const prevLesson = flatLessons[globalIndex - 1]?.lesson;
     return Boolean(prevLesson && validCompletedSet.has(prevLesson.id));
   };
+
+  const isViewingModuleQuiz = activeId.startsWith(MODULE_QUIZ_PREFIX);
+  const activeModuleQuizId = isViewingModuleQuiz
+    ? activeId.slice(MODULE_QUIZ_PREFIX.length)
+    : null;
+  const activeModuleQuizSummary = activeModuleQuizId
+    ? moduleQuizByModuleId.get(activeModuleQuizId) || null
+    : null;
+  const isViewingFinalAssessment = activeId === FINAL_ASSESSMENT_VIEW_ID;
 
   const activeEntry = useMemo(
     () => flatLessons.find((item) => item.lesson.id === activeId) || null,
@@ -143,6 +250,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     [activeLesson?.videoUrl]
   );
 
+  // Check if the current active lesson is the last lesson in its module (so we can prompt Module Quiz)
+  const isLastLessonOfModule = useMemo(() => {
+    if (!activeLesson || !activeModule) return false;
+    const orderedModLessons = activeModule.lessons
+      .slice()
+      .sort((a, b) => a.order - b.order);
+    return orderedModLessons[orderedModLessons.length - 1]?.id === activeLesson.id;
+  }, [activeLesson, activeModule]);
+
   const selectLesson = async (lessonId: string, globalIndex: number) => {
     if (!isLessonUnlocked(globalIndex)) {
       const prevTitle = flatLessons[globalIndex - 1]?.lesson.title || 'the previous lesson';
@@ -159,12 +275,33 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       currentLessonId: lessonId,
       completedLessonIds: Array.from(validCompletedSet),
       totalLessons,
+      requiredModuleQuizIds,
     });
   };
 
   const selectIntro = () => {
     setLockNotice(null);
     setActiveId(INTRO_VIEW_ID);
+    setMobileDrawerOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const selectModuleQuiz = (moduleId: string, moduleTitle: string) => {
+    if (!isModuleQuizUnlocked(moduleId)) {
+      setLockNotice(
+        `Complete all lessons in "${moduleTitle}" to unlock its Module Quiz.`
+      );
+      return;
+    }
+    setLockNotice(null);
+    setActiveId(`${MODULE_QUIZ_PREFIX}${moduleId}`);
+    setMobileDrawerOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const selectFinalAssessment = () => {
+    setLockNotice(null);
+    setActiveId(FINAL_ASSESSMENT_VIEW_ID);
     setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -186,6 +323,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       currentLessonId: activeLesson.id,
       completedLessonIds: nextList,
       totalLessons,
+      requiredModuleQuizIds,
     });
   };
 
@@ -211,9 +349,28 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       return;
     }
 
+    if (
+      activeModule &&
+      isLastLessonOfModule &&
+      moduleQuizByModuleId.has(activeModule.id) &&
+      !passedModuleQuizSet.has(activeModule.id)
+    ) {
+      if (!isModuleQuizUnlocked(activeModule.id)) {
+        setLockNotice(
+          'Mark this lesson complete first to unlock the Module Quiz.'
+        );
+        return;
+      }
+      selectModuleQuiz(activeModule.id, activeModule.title);
+      return;
+    }
+
     const nextIndex = activeGlobalIndex + 1;
     const next = flatLessons[nextIndex];
-    if (!next) return;
+    if (!next) {
+      selectFinalAssessment();
+      return;
+    }
 
     if (!isLessonUnlocked(nextIndex)) {
       setLockNotice(
@@ -222,6 +379,27 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       return;
     }
     void selectLesson(next.lesson.id, nextIndex);
+  };
+
+  const getContinueActionAfterModuleQuiz = (moduleId: string) => {
+    const modIndex = sortedModules.findIndex((m) => m.id === moduleId);
+    const nextMod = modIndex >= 0 ? sortedModules[modIndex + 1] : null;
+    if (nextMod && nextMod.lessons.length > 0) {
+      const firstNextLesson = nextMod.lessons
+        .slice()
+        .sort((a, b) => a.order - b.order)[0];
+      const flatMatch = flatLessons.find((f) => f.lesson.id === firstNextLesson.id);
+      if (flatMatch) {
+        return {
+          label: `Continue to Module 0${nextMod.order}`,
+          action: () => void selectLesson(flatMatch.lesson.id, flatMatch.globalIndex),
+        };
+      }
+    }
+    return {
+      label: 'Proceed to Final Assessment',
+      action: () => selectFinalAssessment(),
+    };
   };
 
   const hasPrevious = activeId !== INTRO_VIEW_ID;
@@ -236,6 +414,13 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   const toggleModuleExpand = (moduleId: string) => {
     setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
+  };
+
+  const getBestScoreForModuleQuiz = (moduleId: string): number | null => {
+    const scores = courseAttempts
+      .filter((a) => a.assessmentType === 'module_quiz' && a.moduleId === moduleId)
+      .map((a) => a.scorePercent);
+    return scores.length > 0 ? Math.max(...scores) : null;
   };
 
   const renderWrittenParagraphs = (content: string) => {
@@ -286,6 +471,10 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     });
   };
 
+  const passedRequiredCount = requiredModuleQuizIds.filter((id) =>
+    passedModuleQuizSet.has(id)
+  ).length;
+
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Progress Summary Header */}
@@ -305,19 +494,39 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
           aria-label="Course progress"
         >
           <div
-            className="h-full bg-[#F47A24] rounded-full transition-all duration-300"
+            className={`h-full rounded-full transition-all duration-300 ${
+              completionState.isCourseCompleted ? 'bg-emerald-600' : 'bg-[#F47A24]'
+            }`}
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <div className="flex items-center justify-between text-xs text-[#778397] tabular-nums">
-          <span>
-            {validCompletedSet.size} of {totalLessons} lessons completed
-          </span>
-          {course.sequentialUnlock && <span>Sequential</span>}
+        <div className="space-y-1 text-[11px] text-[#778397] tabular-nums">
+          <div className="flex items-center justify-between">
+            <span>
+              Lessons: {validCompletedSet.size}/{totalLessons}
+            </span>
+            <span>
+              Quizzes: {passedRequiredCount}/{requiredModuleQuizIds.length}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>
+              Final Assessment:{' '}
+              <strong
+                className={
+                  finalAssessmentPassed ? 'text-emerald-700' : 'text-[#566479]'
+                }
+              >
+                {finalAssessmentPassed
+                  ? `Passed${bestFinalScore ? ` (${bestFinalScore}%)` : ''}`
+                  : 'Required (70%+)'}
+              </strong>
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Scrollable Module & Lesson List */}
+      {/* Scrollable Module, Lesson, Quiz & Final Assessment List */}
       <div className="flex-1 overflow-y-auto divide-y divide-[#E5EAF0]">
         {/* Course Introduction Link */}
         <div className="p-3">
@@ -345,151 +554,303 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         </div>
 
         {/* Modules */}
-        {course.modules
-          .slice()
-          .sort((a, b) => a.order - b.order)
-          .map((mod) => {
-            const isExpanded = expandedModules[mod.id] !== false;
-            const modCompletedCount = mod.lessons.filter((l) =>
-              validCompletedSet.has(l.id)
-            ).length;
+        {sortedModules.map((mod) => {
+          const isExpanded = expandedModules[mod.id] !== false;
+          const modCompletedCount = mod.lessons.filter((l) =>
+            validCompletedSet.has(l.id)
+          ).length;
+          const modQuiz = moduleQuizByModuleId.get(mod.id);
+          const quizPassed = passedModuleQuizSet.has(mod.id);
+          const quizUnlocked = isModuleQuizUnlocked(mod.id);
+          const quizBestScore = getBestScoreForModuleQuiz(mod.id);
+          const isCurrentQuiz = activeId === `${MODULE_QUIZ_PREFIX}${mod.id}`;
 
-            return (
-              <div key={mod.id} className="p-3 space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => toggleModuleExpand(mod.id)}
-                  className="w-full min-h-[40px] px-2.5 py-2 rounded-lg flex items-start justify-between gap-2 text-left hover:bg-[#F6F8FB] transition-colors cursor-pointer"
-                >
-                  <div className="min-w-0 space-y-0.5">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold text-[#778397] tabular-nums">
-                      <span>Module 0{mod.order}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>
-                        {modCompletedCount}/{mod.lessons.length} done
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-[#102B4E] leading-snug">
-                      {mod.title}
-                    </p>
+          return (
+            <div key={mod.id} className="p-3 space-y-1.5">
+              <button
+                type="button"
+                onClick={() => toggleModuleExpand(mod.id)}
+                className="w-full min-h-[40px] px-2.5 py-2 rounded-lg flex items-start justify-between gap-2 text-left hover:bg-[#F6F8FB] transition-colors cursor-pointer"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold text-[#778397] tabular-nums">
+                    <span>Module 0{mod.order}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {modCompletedCount}/{mod.lessons.length} done
+                    </span>
+                    {quizPassed && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span className="text-emerald-700">Quiz passed</span>
+                      </>
+                    )}
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
-                  )}
-                </button>
+                  <p className="text-xs sm:text-sm font-bold text-[#102B4E] leading-snug">
+                    {mod.title}
+                  </p>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
+                )}
+              </button>
 
-                {isExpanded && (
-                  <div className="space-y-1 pl-1">
-                    {mod.lessons
-                      .slice()
-                      .sort((a, b) => a.order - b.order)
-                      .map((lesson) => {
-                        const flatMatch = flatLessons.find(
-                          (f) => f.lesson.id === lesson.id
-                        );
-                        const gIndex = flatMatch ? flatMatch.globalIndex : 0;
-                        const unlocked = isLessonUnlocked(gIndex);
-                        const completed = validCompletedSet.has(lesson.id);
-                        const isCurrent = activeId === lesson.id;
-                        const hasVideo = Boolean(
-                          lesson.videoUrl &&
-                            parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
-                        );
+              {isExpanded && (
+                <div className="space-y-1 pl-1">
+                  {mod.lessons
+                    .slice()
+                    .sort((a, b) => a.order - b.order)
+                    .map((lesson) => {
+                      const flatMatch = flatLessons.find(
+                        (f) => f.lesson.id === lesson.id
+                      );
+                      const gIndex = flatMatch ? flatMatch.globalIndex : 0;
+                      const unlocked = isLessonUnlocked(gIndex);
+                      const completed = validCompletedSet.has(lesson.id);
+                      const isCurrent = activeId === lesson.id;
+                      const hasVideo = Boolean(
+                        lesson.videoUrl &&
+                          parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+                      );
 
-                        return (
-                          <button
-                            key={lesson.id}
-                            type="button"
-                            onClick={() => void selectLesson(lesson.id, gIndex)}
-                            aria-current={isCurrent ? 'step' : undefined}
-                            className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
-                              isCurrent
-                                ? 'bg-[#102B4E] text-white'
-                                : unlocked
-                                ? 'text-[#253449] hover:bg-[#F6F8FB]'
-                                : 'text-[#8B97A8] hover:bg-[#FAFBFD]'
-                            }`}
-                          >
-                            <span className="mt-0.5 shrink-0" aria-hidden="true">
-                              {completed ? (
-                                <CheckCircle2
-                                  className={`w-4 h-4 ${
-                                    isCurrent ? 'text-emerald-300' : 'text-emerald-600'
-                                  }`}
-                                />
-                              ) : !unlocked ? (
-                                <Lock className="w-4 h-4 text-[#9AA6B8]" />
-                              ) : hasVideo ? (
-                                <PlayCircle
-                                  className={`w-4 h-4 ${
-                                    isCurrent ? 'text-[#F47A24]' : 'text-[#566479]'
-                                  }`}
-                                />
-                              ) : (
-                                <Circle
-                                  className={`w-4 h-4 ${
-                                    isCurrent ? 'text-[#F47A24]' : 'text-[#9AA6B8]'
-                                  }`}
-                                />
+                      return (
+                        <button
+                          key={lesson.id}
+                          type="button"
+                          onClick={() => void selectLesson(lesson.id, gIndex)}
+                          aria-current={isCurrent ? 'step' : undefined}
+                          className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+                            isCurrent
+                              ? 'bg-[#102B4E] text-white'
+                              : unlocked
+                              ? 'text-[#253449] hover:bg-[#F6F8FB]'
+                              : 'text-[#8B97A8] hover:bg-[#FAFBFD]'
+                          }`}
+                        >
+                          <span className="mt-0.5 shrink-0" aria-hidden="true">
+                            {completed ? (
+                              <CheckCircle2
+                                className={`w-4 h-4 ${
+                                  isCurrent ? 'text-emerald-300' : 'text-emerald-600'
+                                }`}
+                              />
+                            ) : !unlocked ? (
+                              <Lock className="w-4 h-4 text-[#9AA6B8]" />
+                            ) : hasVideo ? (
+                              <PlayCircle
+                                className={`w-4 h-4 ${
+                                  isCurrent ? 'text-[#F47A24]' : 'text-[#566479]'
+                                }`}
+                              />
+                            ) : (
+                              <Circle
+                                className={`w-4 h-4 ${
+                                  isCurrent ? 'text-[#F47A24]' : 'text-[#9AA6B8]'
+                                }`}
+                              />
+                            )}
+                          </span>
+
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <p
+                              className={`text-xs sm:text-[13px] font-semibold leading-snug ${
+                                isCurrent
+                                  ? 'text-white'
+                                  : unlocked
+                                  ? 'text-[#102B4E]'
+                                  : 'text-[#778397]'
+                              }`}
+                            >
+                              {lesson.title}
+                            </p>
+                            <div
+                              className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                                isCurrent ? 'text-slate-300' : 'text-[#778397]'
+                              }`}
+                            >
+                              <span>{hasVideo ? 'Video' : 'Written'}</span>
+                              <span aria-hidden="true">·</span>
+                              <span>{lesson.estimatedMinutes} min</span>
+                              {isCurrent && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="font-semibold text-[#F47A24]">Current</span>
+                                </>
                               )}
-                            </span>
-
-                            <div className="min-w-0 flex-1 space-y-0.5">
-                              <p
-                                className={`text-xs sm:text-[13px] font-semibold leading-snug ${
-                                  isCurrent
-                                    ? 'text-white'
-                                    : unlocked
-                                    ? 'text-[#102B4E]'
-                                    : 'text-[#778397]'
-                                }`}
-                              >
-                                {lesson.title}
-                              </p>
-                              <div
-                                className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
-                                  isCurrent ? 'text-slate-300' : 'text-[#778397]'
-                                }`}
-                              >
-                                <span>{hasVideo ? 'Video' : 'Written'}</span>
-                                <span aria-hidden="true">·</span>
-                                <span>{lesson.estimatedMinutes} min</span>
-                                {isCurrent && (
-                                  <>
-                                    <span aria-hidden="true">·</span>
-                                    <span className="font-semibold text-[#F47A24]">Current</span>
-                                  </>
-                                )}
-                                {!isCurrent && completed && (
-                                  <>
-                                    <span aria-hidden="true">·</span>
-                                    <span className="font-semibold text-emerald-700">Done</span>
-                                  </>
-                                )}
-                                {!unlocked && (
-                                  <>
-                                    <span aria-hidden="true">·</span>
-                                    <span>Locked</span>
-                                  </>
-                                )}
-                              </div>
+                              {!isCurrent && completed && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="font-semibold text-emerald-700">Done</span>
+                                </>
+                              )}
+                              {!unlocked && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span>Locked</span>
+                                </>
+                              )}
                             </div>
-                          </button>
-                        );
-                      })}
+                          </div>
+                        </button>
+                      );
+                    })}
 
-                    {/* Reserved Module Quiz Slot (Next Step) */}
-                    <div className="px-3 py-2 flex items-center justify-between gap-2 text-[11px] text-[#8B97A8]">
-                      <span>Module 0{mod.order} Quiz</span>
-                      <span>Planned next</span>
-                    </div>
-                  </div>
+                  {/* Interactive Module Quiz Button */}
+                  {modQuiz && (
+                    <button
+                      type="button"
+                      onClick={() => selectModuleQuiz(mod.id, mod.title)}
+                      aria-current={isCurrentQuiz ? 'step' : undefined}
+                      className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+                        isCurrentQuiz
+                          ? 'bg-[#102B4E] text-white'
+                          : quizUnlocked
+                          ? 'bg-[#FAFBFD] hover:bg-[#F1F5FA] text-[#102B4E] border border-[#E5EAF0]'
+                          : 'text-[#8B97A8] hover:bg-[#FAFBFD]'
+                      }`}
+                    >
+                      <span className="mt-0.5 shrink-0" aria-hidden="true">
+                        {quizPassed ? (
+                          <CheckCircle2
+                            className={`w-4 h-4 ${
+                              isCurrentQuiz ? 'text-emerald-300' : 'text-emerald-600'
+                            }`}
+                          />
+                        ) : !quizUnlocked ? (
+                          <Lock className="w-4 h-4 text-[#9AA6B8]" />
+                        ) : (
+                          <ClipboardCheck
+                            className={`w-4 h-4 ${
+                              isCurrentQuiz ? 'text-[#F47A24]' : 'text-[#F47A24]'
+                            }`}
+                          />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <p
+                          className={`text-xs font-bold leading-snug ${
+                            isCurrentQuiz
+                              ? 'text-white'
+                              : quizUnlocked
+                              ? 'text-[#102B4E]'
+                              : 'text-[#778397]'
+                          }`}
+                        >
+                          Module 0{mod.order} Quiz
+                        </p>
+                        <div
+                          className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                            isCurrentQuiz ? 'text-slate-300' : 'text-[#778397]'
+                          }`}
+                        >
+                          <span>{modQuiz.questionCount} questions</span>
+                          <span aria-hidden="true">·</span>
+                          {quizPassed ? (
+                            <span
+                              className={
+                                isCurrentQuiz
+                                  ? 'font-semibold text-emerald-300'
+                                  : 'font-semibold text-emerald-700'
+                              }
+                            >
+                              Passed{quizBestScore !== null ? ` (${quizBestScore}%)` : ''}
+                            </span>
+                          ) : quizBestScore !== null ? (
+                            <span
+                              className={
+                                isCurrentQuiz
+                                  ? 'font-semibold text-amber-300'
+                                  : 'font-semibold text-amber-700'
+                              }
+                            >
+                              Best {quizBestScore}% · Retry
+                            </span>
+                          ) : quizUnlocked ? (
+                            <span className="font-semibold text-[#F47A24]">Ready</span>
+                          ) : (
+                            <span>Complete module lessons</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Final Course Assessment Entry */}
+        <div className="p-3">
+          <button
+            type="button"
+            onClick={selectFinalAssessment}
+            aria-current={isViewingFinalAssessment ? 'step' : undefined}
+            className={`w-full min-h-[50px] px-3.5 py-3 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+              isViewingFinalAssessment
+                ? 'bg-[#102B4E] text-white'
+                : isFinalAssessmentUnlocked
+                ? 'bg-[#FFF8F2] border border-[#F47A24]/40 hover:border-[#F47A24] text-[#102B4E]'
+                : 'bg-[#FAFBFD] border border-[#E5EAF0] text-[#778397] hover:border-[#CBD5E1]'
+            }`}
+          >
+            <span className="mt-0.5 shrink-0" aria-hidden="true">
+              {finalAssessmentPassed ? (
+                <CheckCircle2
+                  className={`w-4 h-4 ${
+                    isViewingFinalAssessment ? 'text-emerald-300' : 'text-emerald-600'
+                  }`}
+                />
+              ) : !isFinalAssessmentUnlocked ? (
+                <Lock className="w-4 h-4 text-[#9AA6B8]" />
+              ) : (
+                <Award className="w-4 h-4 text-[#F47A24]" />
+              )}
+            </span>
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <p
+                className={`text-xs sm:text-[13px] font-bold leading-snug ${
+                  isViewingFinalAssessment
+                    ? 'text-white'
+                    : isFinalAssessmentUnlocked
+                    ? 'text-[#102B4E]'
+                    : 'text-[#566479]'
+                }`}
+              >
+                Final Course Assessment
+              </p>
+              <div
+                className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                  isViewingFinalAssessment ? 'text-slate-300' : 'text-[#778397]'
+                }`}
+              >
+                <span>
+                  {assessmentOverview?.finalAssessment?.questionCount ?? 12} questions
+                </span>
+                <span aria-hidden="true">·</span>
+                {finalAssessmentPassed ? (
+                  <span
+                    className={
+                      isViewingFinalAssessment
+                        ? 'font-semibold text-emerald-300'
+                        : 'font-semibold text-emerald-700'
+                    }
+                  >
+                    Passed{bestFinalScore ? ` (${bestFinalScore}%)` : ''}
+                  </span>
+                ) : isFinalAssessmentUnlocked ? (
+                  <span className="font-semibold text-[#F47A24]">
+                    Pass {assessmentOverview?.finalAssessment?.passPercentage ?? 70}%+
+                  </span>
+                ) : (
+                  <span>Locked until prerequisites done</span>
                 )}
               </div>
-            );
-          })}
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -516,13 +877,16 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               </p>
               <p className="hidden md:block text-xs text-[#778397] truncate">
                 {course.categoryName} · {course.level} ·{' '}
-                <span className="tabular-nums">{progressPercent}% complete</span>
+                <span className="tabular-nums">
+                  {completionState.isCourseCompleted
+                    ? 'Course Completed (100%)'
+                    : `${progressPercent}% complete`}
+                </span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Auto-save confirmation text */}
             <span className="hidden sm:inline text-xs text-[#778397] whitespace-nowrap">
               {isSavingProgress
                 ? 'Saving progress...'
@@ -538,18 +902,17 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 className="min-h-[40px] px-3.5 py-2 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
               >
                 <Settings2 className="w-3.5 h-3.5 text-[#F47A24]" />
-                <span className="hidden sm:inline">Manage Lessons</span>
+                <span className="hidden sm:inline">Manage Course</span>
               </button>
             )}
 
-            {/* Mobile Curriculum Drawer Toggle */}
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
               className="lg:hidden min-h-[44px] px-3.5 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-semibold inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <List className="w-4 h-4 text-[#F47A24]" />
-              <span className="tabular-nums">Lessons · {progressPercent}%</span>
+              <span className="tabular-nums">Outline · {progressPercent}%</span>
             </button>
           </div>
         </div>
@@ -568,6 +931,31 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
           {/* Main Learning Content Area */}
           <main className="lg:col-span-8 xl:col-span-9 min-w-0 space-y-6">
+            {/* Course Completed Confirmation Banner */}
+            {completionState.isCourseCompleted && (
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-bold text-emerald-900">
+                      Course Completed — All Requirements Met
+                    </p>
+                    <p className="text-xs text-emerald-800">
+                      You completed all {totalLessons} lessons, passed all required module quizzes, and passed the Final Course Assessment
+                      {bestFinalScore ? ` with ${bestFinalScore}%` : ''}.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onBackToCourseDetails}
+                  className="min-h-[40px] px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer hover:bg-emerald-100/50 transition-colors"
+                >
+                  Course Summary
+                </button>
+              </div>
+            )}
+
             {lockNotice && (
               <div
                 role="status"
@@ -588,8 +976,203 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               </div>
             )}
 
-            {activeId === INTRO_VIEW_ID || !activeLesson ? (
-              /* COURSE INTRODUCTION VIEW */
+            {/* VIEW A: MODULE QUIZ */}
+            {isViewingModuleQuiz && activeModuleQuizSummary ? (
+              <CourseAssessmentRunner
+                key={activeModuleQuizSummary.id}
+                assessment={activeModuleQuizSummary}
+                candidateId={candidateId}
+                candidateName={candidateName}
+                candidateEmail={candidateEmail}
+                pastAttempts={courseAttempts.filter(
+                  (a) =>
+                    a.assessmentType === 'module_quiz' &&
+                    a.moduleId === activeModuleQuizSummary.moduleId
+                )}
+                onAttemptCompleted={onAssessmentAttemptCompleted}
+                onContinueAfterPass={
+                  getContinueActionAfterModuleQuiz(
+                    activeModuleQuizSummary.moduleId || ''
+                  ).action
+                }
+                continueLabel={
+                  getContinueActionAfterModuleQuiz(
+                    activeModuleQuizSummary.moduleId || ''
+                  ).label
+                }
+                onBackToLesson={() => {
+                  const mod = sortedModules.find(
+                    (m) => m.id === activeModuleQuizSummary.moduleId
+                  );
+                  const firstModLesson = mod?.lessons
+                    .slice()
+                    .sort((a, b) => a.order - b.order)[0];
+                  const match = firstModLesson
+                    ? flatLessons.find((f) => f.lesson.id === firstModLesson.id)
+                    : null;
+                  if (match) {
+                    void selectLesson(match.lesson.id, match.globalIndex);
+                  } else {
+                    selectIntro();
+                  }
+                }}
+              />
+            ) : isViewingFinalAssessment ? (
+              /* VIEW B: FINAL COURSE ASSESSMENT (LOCKED CHECKLIST OR RUNNER) */
+              !isFinalAssessmentUnlocked ? (
+                <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-6">
+                  <div className="space-y-2 border-b border-[#E5EAF0] pb-5">
+                    <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Prerequisites Required</span>
+                    </p>
+                    <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E]">
+                      Final Course Assessment
+                    </h1>
+                    <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[66ch]">
+                      Complete all required lessons and module quizzes below to unlock the Final Course Assessment. You must score at least{' '}
+                      <strong className="text-[#102B4E]">
+                        {assessmentOverview?.finalAssessment?.passPercentage ?? 70}%
+                      </strong>{' '}
+                      to complete this course.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {completionState.allLessonsCompleted ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-[#9AA6B8] shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#102B4E]">
+                            1. Complete all required lessons
+                          </p>
+                          <p className="text-xs text-[#778397] tabular-nums">
+                            {validCompletedSet.size} of {totalLessons} lessons completed
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold shrink-0 ${
+                          completionState.allLessonsCompleted
+                            ? 'text-emerald-700'
+                            : 'text-[#566479]'
+                        }`}
+                      >
+                        {completionState.allLessonsCompleted ? 'Done' : 'In Progress'}
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {completionState.allRequiredQuizzesPassed ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-[#9AA6B8] shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#102B4E]">
+                            2. Pass all required module quizzes
+                          </p>
+                          <p className="text-xs text-[#778397] tabular-nums">
+                            {passedRequiredCount} of {requiredModuleQuizIds.length} module quizzes passed
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold shrink-0 ${
+                          completionState.allRequiredQuizzesPassed
+                            ? 'text-emerald-700'
+                            : 'text-[#566479]'
+                        }`}
+                      >
+                        {completionState.allRequiredQuizzesPassed ? 'Done' : 'Pending'}
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Award className="w-5 h-5 text-[#F47A24] shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#102B4E]">
+                            3. Pass the Final Course Assessment ({assessmentOverview?.finalAssessment?.passPercentage ?? 70}%+)
+                          </p>
+                          <p className="text-xs text-[#778397]">
+                            Unlocks automatically once steps 1 and 2 are complete.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-[#778397] shrink-0">
+                        Locked
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const firstIncomplete = flatLessons.find(
+                          (f) => !validCompletedSet.has(f.lesson.id)
+                        );
+                        if (firstIncomplete) {
+                          void selectLesson(
+                            firstIncomplete.lesson.id,
+                            firstIncomplete.globalIndex
+                          );
+                          return;
+                        }
+                        const firstUnpassedQuizMod = sortedModules.find(
+                          (m) =>
+                            requiredModuleQuizIds.includes(m.id) &&
+                            !passedModuleQuizSet.has(m.id)
+                        );
+                        if (firstUnpassedQuizMod) {
+                          selectModuleQuiz(
+                            firstUnpassedQuizMod.id,
+                            firstUnpassedQuizMod.title
+                          );
+                        }
+                      }}
+                      className="min-h-[46px] px-6 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <span>Resume Next Required Step</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </section>
+              ) : assessmentOverview?.finalAssessment ? (
+                <CourseAssessmentRunner
+                  key={assessmentOverview.finalAssessment.id}
+                  assessment={assessmentOverview.finalAssessment}
+                  candidateId={candidateId}
+                  candidateName={candidateName}
+                  candidateEmail={candidateEmail}
+                  pastAttempts={courseAttempts.filter(
+                    (a) => a.assessmentType === 'final_assessment'
+                  )}
+                  onAttemptCompleted={onAssessmentAttemptCompleted}
+                  onContinueAfterPass={onBackToCourseDetails}
+                  continueLabel="View Course Summary"
+                  onBackToLesson={() => {
+                    const lastLesson = flatLessons[flatLessons.length - 1];
+                    if (lastLesson) {
+                      void selectLesson(lastLesson.lesson.id, lastLesson.globalIndex);
+                    } else {
+                      selectIntro();
+                    }
+                  }}
+                />
+              ) : (
+                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 text-center text-sm text-[#566479]">
+                  Loading Final Course Assessment...
+                </div>
+              )
+            ) : activeId === INTRO_VIEW_ID || !activeLesson ? (
+              /* VIEW C: COURSE INTRODUCTION */
               <motion.article
                 key="course-intro"
                 initial={{ opacity: 0, y: 10 }}
@@ -605,7 +1188,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     <span aria-hidden="true">·</span>
                     <span className="tabular-nums">{totalLessons} lessons</span>
                     <span aria-hidden="true">·</span>
-                    <span>{course.estimatedDuration}</span>
+                    <span>Module Quizzes &amp; Final Assessment</span>
                   </div>
                   <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
                     {course.courseIntroduction.headline}
@@ -618,18 +1201,21 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
-                      How to Get the Most from This Course
+                      How to Complete This Course
                     </h2>
                     <ul className="space-y-2.5">
-                      {course.courseIntroduction.studyGuidance.map((tip, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
-                          <span>{tip}</span>
-                        </li>
-                      ))}
+                      <li className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
+                        <span>Study and complete all {totalLessons} structured lessons.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
+                        <span>Complete the quiz at the end of each module with instant feedback.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
+                        <span>Pass the Final Course Assessment with at least 70% (retakes allowed).</span>
+                      </li>
                     </ul>
                   </div>
 
@@ -641,7 +1227,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       {course.courseIntroduction.prerequisites}
                     </p>
                     <p className="text-xs text-[#778397] leading-relaxed pt-2">
-                      Your lesson completion and current position save automatically to your ABHI JOBS account so you can resume anytime.
+                      Your lesson completion, quiz scores, and assessment attempts save automatically under your ABHI JOBS account.
                     </p>
                   </div>
                 </div>
@@ -666,7 +1252,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 </div>
               </motion.article>
             ) : (
-              /* ACTIVE LESSON VIEW */
+              /* VIEW D: ACTIVE LESSON */
               <motion.article
                 key={activeLesson.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -674,9 +1260,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 transition={{ duration: 0.25, ease: EASE_PREMIUM }}
                 className="space-y-6"
               >
-                {/* Lesson Header + Optional Embedded Video Player */}
                 <section className="bg-white rounded-2xl border border-[#E5EAF0] overflow-hidden">
-                  {/* Responsive 16:9 Video Player — ONLY rendered when an admin has added a real video URL */}
                   {parsedVideo && parsedVideo.kind !== 'invalid' && (
                     <div className="w-full bg-[#0B1726]">
                       <div className="relative w-full aspect-video">
@@ -701,7 +1285,6 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   )}
 
                   <div className="p-6 sm:p-8 lg:p-10 space-y-6">
-                    {/* Clean Unboxed Metadata */}
                     <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
                         {activeModule && (
@@ -746,7 +1329,6 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       )}
                     </div>
 
-                    {/* Written Learning Material */}
                     <div className="space-y-4 max-w-[68ch]">
                       <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
                         Lesson Explanation
@@ -756,7 +1338,6 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Admin-only subtle helper when lesson currently has no video */}
                     {isAdmin &&
                       (!parsedVideo || parsedVideo.kind === 'invalid') &&
                       onOpenAdminContentManager && (
@@ -776,7 +1357,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </div>
                 </section>
 
-                {/* Practical Exercise / Activity Section */}
+                {/* Practical Exercise */}
                 {activeLesson.exercise && (
                   <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -826,7 +1407,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Downloadable Resources Section */}
+                {/* Downloadable Resources */}
                 {activeLesson.attachments && activeLesson.attachments.length > 0 && (
                   <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
                     <div className="space-y-1">
@@ -873,7 +1454,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Lesson Completion & Previous / Next Lesson Controls */}
+                {/* Lesson Completion & Navigation Controls */}
                 <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-0.5">
@@ -885,9 +1466,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       <p className="text-xs text-[#778397]">
                         {isCurrentLessonCompleted
                           ? 'Your course progress is updated and saved automatically.'
-                          : course.sequentialUnlock && nextEntry
-                          ? 'Mark this lesson complete to update your progress and unlock the next lesson.'
-                          : 'Mark this lesson complete to track your course progress.'}
+                          : isLastLessonOfModule
+                          ? 'Mark this lesson complete to unlock the Module Quiz.'
+                          : 'Mark this lesson complete to update your progress and unlock the next lesson.'}
                       </p>
                     </div>
 
@@ -925,7 +1506,28 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       </span>
                     </button>
 
-                    {nextEntry ? (
+                    {activeModule &&
+                    isLastLessonOfModule &&
+                    moduleQuizByModuleId.has(activeModule.id) ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          selectModuleQuiz(activeModule.id, activeModule.title)
+                        }
+                        className={`min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors ${
+                          isModuleQuizUnlocked(activeModule.id)
+                            ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
+                            : 'bg-[#E8EEF5] text-[#566479] hover:bg-[#DCE5F0]'
+                        }`}
+                      >
+                        {!isModuleQuizUnlocked(activeModule.id) && (
+                          <Lock className="w-4 h-4 shrink-0" />
+                        )}
+                        <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
+                        <span>Take Module 0{activeModule.order} Quiz</span>
+                        <ArrowRight className="w-4 h-4 shrink-0" />
+                      </button>
+                    ) : nextEntry ? (
                       <button
                         type="button"
                         onClick={handleNext}
@@ -942,10 +1544,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     ) : (
                       <button
                         type="button"
-                        onClick={onBackToCourseDetails}
+                        onClick={selectFinalAssessment}
                         className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
                       >
-                        <span>Back to Course Summary</span>
+                        <Award className="w-4 h-4 text-[#F47A24]" />
+                        <span>Go to Final Assessment</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     )}

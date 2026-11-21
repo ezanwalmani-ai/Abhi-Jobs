@@ -130,9 +130,13 @@ service cloud.firestore {
                'status',
                'currentLessonId',
                'completedLessonIds',
+               'passedModuleQuizIds',
+               'finalAssessmentPassed',
+               'bestFinalScorePercent',
                'progressPercent',
                'enrolledAt',
-               'lastAccessedAt'
+               'lastAccessedAt',
+               'completedAt'
              ]) &&
              data.courseId == courseId &&
              isValidId(data.courseId) &&
@@ -145,9 +149,122 @@ service cloud.firestore {
              data.completedLessonIds is list &&
              data.completedLessonIds.size() <= 200 &&
              (data.completedLessonIds.size() == 0 || (data.completedLessonIds[0] is string && data.completedLessonIds[0].size() <= 128)) &&
+             (!('passedModuleQuizIds' in data) || (
+               data.passedModuleQuizIds is list &&
+               data.passedModuleQuizIds.size() <= 40 &&
+               (data.passedModuleQuizIds.size() == 0 || (data.passedModuleQuizIds[0] is string && data.passedModuleQuizIds[0].size() <= 128))
+             )) &&
+             (!('finalAssessmentPassed' in data) || data.finalAssessmentPassed is bool) &&
+             (!('bestFinalScorePercent' in data) || (data.bestFinalScorePercent is number && data.bestFinalScorePercent >= 0 && data.bestFinalScorePercent <= 100)) &&
+             (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 64)) &&
              data.progressPercent is number &&
              data.progressPercent >= 0 &&
              data.progressPercent <= 100;
+    }
+
+    function isValidAssessmentAttempt(data, userId, attemptId) {
+      return data.keys().hasAll([
+               'id',
+               'userId',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'assessmentType',
+               'assessmentTitle',
+               'attemptNumber',
+               'totalQuestions',
+               'correctAnswers',
+               'incorrectAnswers',
+               'scorePercent',
+               'passPercentage',
+               'passed',
+               'answers',
+               'questionResults',
+               'submittedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'userId',
+               'courseId',
+               'courseSlug',
+               'courseTitle',
+               'assessmentType',
+               'moduleId',
+               'assessmentTitle',
+               'attemptNumber',
+               'totalQuestions',
+               'correctAnswers',
+               'incorrectAnswers',
+               'scorePercent',
+               'passPercentage',
+               'passed',
+               'answers',
+               'questionResults',
+               'submittedAt'
+             ]) &&
+             data.id == attemptId &&
+             isValidId(data.id) &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             isValidId(data.courseId) &&
+             data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
+             data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
+             data.assessmentType is string && (data.assessmentType == 'module_quiz' || data.assessmentType == 'final_assessment') &&
+             (!('moduleId' in data) || (data.moduleId is string && data.moduleId.size() <= 128)) &&
+             data.assessmentTitle is string && data.assessmentTitle.size() > 0 && data.assessmentTitle.size() <= 180 &&
+             data.attemptNumber is number && data.attemptNumber >= 1 && data.attemptNumber <= 500 &&
+             data.totalQuestions is number && data.totalQuestions >= 1 && data.totalQuestions <= 30 &&
+             data.correctAnswers is number && data.correctAnswers >= 0 && data.correctAnswers <= data.totalQuestions &&
+             data.incorrectAnswers is number && data.incorrectAnswers >= 0 && data.incorrectAnswers <= data.totalQuestions &&
+             data.scorePercent is number && data.scorePercent >= 0 && data.scorePercent <= 100 &&
+             data.passPercentage is number && data.passPercentage >= 1 && data.passPercentage <= 100 &&
+             data.passed is bool &&
+             data.answers is map && data.answers.size() <= 30 &&
+             data.questionResults is list && data.questionResults.size() <= 30 &&
+             (data.questionResults.size() == 0 || data.questionResults[0] is map);
+    }
+
+    function isValidQuizConfig(data, courseId, quizId) {
+      return data.keys().hasAll([
+               'id',
+               'courseId',
+               'assessmentType',
+               'title',
+               'passPercentage',
+               'questionCount',
+               'randomizeOrder',
+               'requiredForCompletion',
+               'questions',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'courseId',
+               'assessmentType',
+               'moduleId',
+               'title',
+               'passPercentage',
+               'questionCount',
+               'randomizeOrder',
+               'requiredForCompletion',
+               'questions',
+               'updatedBy',
+               'updatedAt'
+             ]) &&
+             data.id == quizId &&
+             isValidId(data.id) &&
+             data.courseId == courseId &&
+             isValidId(data.courseId) &&
+             data.assessmentType is string && (data.assessmentType == 'module_quiz' || data.assessmentType == 'final_assessment') &&
+             (!('moduleId' in data) || (data.moduleId is string && data.moduleId.size() <= 128)) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 180 &&
+             data.passPercentage is number && data.passPercentage >= 1 && data.passPercentage <= 100 &&
+             data.questionCount is number && data.questionCount >= 1 && data.questionCount <= 30 &&
+             data.randomizeOrder is bool &&
+             data.requiredForCompletion is bool &&
+             data.questions is list && data.questions.size() <= 50 &&
+             (data.questions.size() == 0 || data.questions[0] is map) &&
+             data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
     function isValidCourseLesson(data, courseId, lessonId) {
@@ -304,8 +421,8 @@ service cloud.firestore {
                          incoming().enrolledAt == request.time &&
                          incoming().lastAccessedAt == request.time;
 
-        // Action-based progress update: only currentLessonId, completedLessonIds,
-        // progressPercent, status, and lastAccessedAt may change.
+        // Action-based progress update: only learning & assessment progress fields may change.
+        // Course status may transition to 'completed' only when finalAssessmentPassed is true.
         allow update: if isVerifiedUser() &&
                          isOwner(userId) &&
                          isValidId(userId) &&
@@ -318,15 +435,38 @@ service cloud.firestore {
                          incoming().userId == existing().userId &&
                          incoming().enrolledAt == existing().enrolledAt &&
                          incoming().lastAccessedAt == request.time &&
+                         (incoming().status != 'completed' || ('finalAssessmentPassed' in incoming() && incoming().finalAssessmentPassed == true)) &&
                          incoming().diff(existing()).affectedKeys().hasOnly([
                            'currentLessonId',
                            'completedLessonIds',
+                           'passedModuleQuizIds',
+                           'finalAssessmentPassed',
+                           'bestFinalScorePercent',
                            'progressPercent',
                            'status',
+                           'completedAt',
                            'lastAccessedAt'
                          ]);
 
         allow delete: if false;
+      }
+
+      // Private per-candidate Quiz & Final Assessment Attempts
+      // Candidates can only read their own results and create immutable graded attempts.
+      // Admins may read or remove attempts for management.
+      match /assessment_attempts/{attemptId} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(attemptId);
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(attemptId) &&
+                         isValidAssessmentAttempt(incoming(), userId, attemptId) &&
+                         incoming().submittedAt == request.time;
+
+        allow update: if false;
+        allow delete: if isAdmin() && isValidId(userId) && isValidId(attemptId);
       }
     }
 
@@ -365,6 +505,28 @@ service cloud.firestore {
                        ]);
 
       allow delete: if isAdmin() && isValidId(courseId) && isValidId(lessonId);
+    }
+
+    // Admin-Only Quiz & Final Assessment Configurations (Answer keys strictly hidden from candidates)
+    match /learning_courses/{courseId}/quiz_configs/{quizId} {
+      allow get: if isAdmin() && isValidId(courseId) && isValidId(quizId);
+      allow list: if isAdmin() && resource.data.courseId == courseId;
+
+      allow create: if isAdmin() &&
+                       isValidId(courseId) &&
+                       isValidId(quizId) &&
+                       isValidQuizConfig(incoming(), courseId, quizId) &&
+                       incoming().updatedAt == request.time;
+
+      allow update: if isAdmin() &&
+                       isValidId(courseId) &&
+                       isValidId(quizId) &&
+                       isValidQuizConfig(incoming(), courseId, quizId) &&
+                       incoming().id == existing().id &&
+                       incoming().courseId == existing().courseId &&
+                       incoming().updatedAt == request.time;
+
+      allow delete: if isAdmin() && isValidId(courseId) && isValidId(quizId);
     }
 
     match /test/connection {

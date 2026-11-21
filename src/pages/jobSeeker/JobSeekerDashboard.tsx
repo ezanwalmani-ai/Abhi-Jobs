@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { JobCard } from '../../components/JobCard';
 import { Button } from '../../components/ui/Button';
 import { ApplyModal } from '../../components/ApplyModal';
+import { CandidateLearningProgressCard } from '../../components/learning/CandidateLearningProgressCard';
 import { Job, Application } from '../../types';
 import {
   Briefcase,
@@ -1039,85 +1040,11 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
               </div>
             </div>
 
-            {/* SECTION: MY LEARNING (Requirement 8) */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-purple-700" />
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900">My Learning</h2>
-                </div>
-
-                <button
-                  onClick={() => navigate('/learning')}
-                  className="text-xs font-bold text-purple-700 hover:text-purple-800 transition-colors cursor-pointer"
-                >
-                  Explore Learning &rarr;
-                </button>
-              </div>
-
-              {enrolledCourses.length > 0 ? (
-                <div className="space-y-3">
-                  {enrolledCourses.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                            {item.title}
-                          </h3>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            Status: <span className="font-semibold text-purple-700">{item.enrollment.status}</span>
-                          </div>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-bold shrink-0">
-                          {item.enrollment.progressPercentage}%
-                        </span>
-                      </div>
-
-                      {/* Course progress bar */}
-                      <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-purple-600 h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: `${item.enrollment.progressPercentage}%` }}
-                        />
-                      </div>
-
-                      <button
-                        onClick={() => navigate('/learning')}
-                        className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-purple-300 text-purple-900 text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <span>Continue Learning</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* Strict requested empty state */
-                <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center space-y-3 bg-slate-50/50">
-                  <div className="w-10 h-10 mx-auto rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700">
-                    <GraduationCap className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-xs sm:text-sm font-bold text-slate-800">
-                      Your learning journey starts here.
-                    </div>
-                    <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                      Build job-relevant skills, improve career readiness, and prepare for interviews.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => navigate('/learning')}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[40px]"
-                  >
-                    <span>Explore Learning</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* SECTION: MY LEARNING — Courses, Quiz Results & Final Assessment Scores */}
+            <CandidateLearningProgressCard
+              userId={currentUser?.id || ''}
+              navigate={navigate}
+            />
           </div>
         </div>
 
