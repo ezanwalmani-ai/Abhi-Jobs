@@ -22,14 +22,17 @@ export const EXCEL_M01_LESSON_ID = 'excel_m01_lesson_01';
 export const EXCEL_M02_ID = 'excel_m02_data_entry_formatting';
 export const EXCEL_M02_LESSON_ID = 'excel_m02_lesson_01';
 
-export const EXCEL_M03_ID = 'excel_m03_upcoming';
+export const EXCEL_M03_ID = 'excel_m03_formulas_references';
+export const EXCEL_M03_LESSON_ID = 'excel_m03_lesson_01';
+
+export const EXCEL_M04_ID = 'excel_m04_upcoming';
 
 export const EXCEL_COURSE_DEFINITION: Omit<PersistedCourseDefinition, 'updatedAt'> = {
   courseId: EXCEL_COURSE_ID,
   courseSlug: EXCEL_COURSE_SLUG,
   courseTitle: EXCEL_COURSE_TITLE,
-  orderedModuleIds: [EXCEL_M01_ID, EXCEL_M02_ID, EXCEL_M03_ID],
-  requiredLessonIds: [EXCEL_M01_LESSON_ID, EXCEL_M02_LESSON_ID],
+  orderedModuleIds: [EXCEL_M01_ID, EXCEL_M02_ID, EXCEL_M03_ID, EXCEL_M04_ID],
+  requiredLessonIds: [EXCEL_M01_LESSON_ID, EXCEL_M02_LESSON_ID, EXCEL_M03_LESSON_ID],
   passPercentage: 70,
   certificateTemplateId: 'default_abhi_certificate',
 };
@@ -41,6 +44,7 @@ export const EXCEL_COURSE_DEFINITION: Omit<PersistedCourseDefinition, 'updatedAt
 export const MODULE_REQUIRED_LESSONS: Record<string, string[]> = {
   [EXCEL_M01_ID]: [EXCEL_M01_LESSON_ID],
   [EXCEL_M02_ID]: [EXCEL_M02_LESSON_ID],
+  [EXCEL_M03_ID]: [EXCEL_M03_LESSON_ID],
 };
 
 export const EXCEL_M01_QUIZ_CONFIG: PersistedAssessmentConfig = {
@@ -285,4 +289,125 @@ export const EXCEL_M02_QUIZ_CONFIG: PersistedAssessmentConfig = {
     },
   ],
 };
+
+export const EXCEL_M03_QUIZ_CONFIG: PersistedAssessmentConfig = {
+  id: `quiz_${EXCEL_M03_ID}`,
+  courseId: EXCEL_COURSE_ID,
+  courseSlug: EXCEL_COURSE_SLUG,
+  courseTitle: EXCEL_COURSE_TITLE,
+  assessmentType: 'module_quiz',
+  moduleId: EXCEL_M03_ID,
+  moduleOrder: 3,
+  title: 'Module 03 Quiz: Formula Fundamentals & Cell References',
+  description:
+    'Test your understanding of Excel formulas, mathematical operators, operator precedence, relative, absolute, and mixed cell references, formula copying, and common formula errors. Score at least 70% (7 out of 10) to pass Module 3 and unlock Module 4.',
+  passPercentage: 70,
+  questionCount: 10,
+  randomizeOrder: false,
+  requiredForCompletion: true,
+  questions: [
+    {
+      id: 'excel_m03_q01',
+      prompt: 'What symbol must normally be used at the beginning of an Excel formula?',
+      options: ['#', '=', '@', '%'],
+      correctOptionIndex: 1,
+      explanation:
+        'Every Excel formula begins with an equals sign (=). Without it, Excel treats your entry as plain text instead of calculating a result.',
+    },
+    {
+      id: 'excel_m03_q02',
+      prompt: 'Which formula correctly adds cells A1 and B1?',
+      options: ['A1+B1', 'ADD(A1,B1)', '=A1+B1', 'A1=B1'],
+      correctOptionIndex: 2,
+      explanation:
+        '=A1+B1 starts with = and uses the + addition operator to add the values stored in cells A1 and B1.',
+    },
+    {
+      id: 'excel_m03_q03',
+      prompt: 'Which operator is used for multiplication in Excel?',
+      options: ['x', '/', '+', '*'],
+      correctOptionIndex: 3,
+      explanation:
+        'Excel uses the asterisk (*) symbol for multiplication (for example, =B2*C2), not the letter x.',
+    },
+    {
+      id: 'excel_m03_q04',
+      prompt: 'What is the result of =10+5*2?',
+      options: ['30', '20', '25', '15'],
+      correctOptionIndex: 1,
+      explanation:
+        'By operator precedence, Excel multiplies 5*2 first (10) and then adds 10, producing 20. To get 30, use parentheses: =(10+5)*2.',
+    },
+    {
+      id: 'excel_m03_q05',
+      prompt: 'What does =B2*C2 calculate?',
+      options: [
+        'Adds B2 and C2',
+        'Divides B2 by C2',
+        'Multiplies the values in B2 and C2',
+        'Deletes both cells',
+      ],
+      correctOptionIndex: 2,
+      explanation:
+        'The * operator multiplies the numeric value stored in cell B2 by the numeric value stored in cell C2.',
+    },
+    {
+      id: 'excel_m03_q06',
+      prompt: 'What is a relative cell reference?',
+      options: [
+        'A reference that automatically adjusts when a formula is copied',
+        'A reference that cannot change',
+        'A reference to another worksheet only',
+        'A reference that deletes cell contents',
+      ],
+      correctOptionIndex: 0,
+      explanation:
+        'A relative reference (like B2) changes automatically relative to its new position when you copy a formula across rows or columns.',
+    },
+    {
+      id: 'excel_m03_q07',
+      prompt: 'What does $A$1 represent?',
+      options: [
+        'A completely relative reference',
+        'A reference that locks both the column and row',
+        'A reference that locks only the row',
+        'A reference that locks only the column',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        'The dollar sign before A locks column A and the dollar sign before 1 locks row 1, making $A$1 a fully absolute reference.',
+    },
+    {
+      id: 'excel_m03_q08',
+      prompt: 'What will =B2+C2 normally become when copied one row down?',
+      options: ['=B2+C2', '=$B$2+$C$2', '=B3+C3', '=B1+C1'],
+      correctOptionIndex: 2,
+      explanation:
+        'Because both B2 and C2 are relative references, copying the formula one row down increases each row number by 1 to produce =B3+C3.',
+    },
+    {
+      id: 'excel_m03_q09',
+      prompt: 'What does the error #DIV/0! generally mean?',
+      options: [
+        'The worksheet is deleted',
+        'Excel cannot find a font',
+        'The formula is too long',
+        'The formula is dividing by zero',
+      ],
+      correctOptionIndex: 3,
+      explanation:
+        '#DIV/0! appears when a formula tries to divide a number by 0 or by an empty cell treated as zero.',
+    },
+    {
+      id: 'excel_m03_q10',
+      prompt:
+        'Employee Basic Salary is in B2, Allowance in C2, and Deduction in D2. Which formula calculates Net Salary correctly?',
+      options: ['=B2+C2-D2', '=B2-C2+D2', '=B2*C2*D2', '=B2/C2+D2'],
+      correctOptionIndex: 0,
+      explanation:
+        'Net Salary equals Basic Salary plus Allowance minus Deduction, written in Excel as =B2+C2-D2.',
+    },
+  ],
+};
+
 

@@ -41,6 +41,7 @@ import {
 } from './server/learningStore';
 import { MODULE_REQUIRED_LESSONS } from './server/excelCurriculumSeed';
 import { getModule02PracticeWorkbookBuffer } from './server/module02WorkbookGenerator';
+import { getModule03PracticeWorkbookBuffer } from './server/module03WorkbookGenerator';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -468,6 +469,28 @@ async function startServer() {
         res.setHeader(
           'Content-Disposition',
           'attachment; filename="ABHI-Excel-Module-02-Practice-Workbook.xlsx"'
+        );
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(buffer);
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    }
+  );
+
+  // 0b. Downloadable Practice Excel Workbook for Module 03 (Instructions + Practice + Answer Reference)
+  app.get(
+    '/api/learning/resources/excel-module-03-practice-workbook.xlsx',
+    (_req: Request, res: Response) => {
+      try {
+        const buffer = getModule03PracticeWorkbookBuffer();
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="ABHI-Excel-Module-03-Practice-Workbook.xlsx"'
         );
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.send(buffer);

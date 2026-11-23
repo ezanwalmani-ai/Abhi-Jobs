@@ -21,6 +21,7 @@ import {
   EXCEL_COURSE_DEFINITION,
   EXCEL_M01_QUIZ_CONFIG,
   EXCEL_M02_QUIZ_CONFIG,
+  EXCEL_M03_QUIZ_CONFIG,
 } from './excelCurriculumSeed';
 
 export type AssessmentType = 'module_quiz' | 'final_assessment';
@@ -333,6 +334,14 @@ export async function seedDefaultExcelModule1IfNeeded(): Promise<void> {
   if (!existingM02Quiz) {
     await store.upsertAssessmentConfig({
       ...EXCEL_M02_QUIZ_CONFIG,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  const existingM03Quiz = await store.getAssessmentConfigById(EXCEL_M03_QUIZ_CONFIG.id);
+  if (!existingM03Quiz) {
+    await store.upsertAssessmentConfig({
+      ...EXCEL_M03_QUIZ_CONFIG,
       updatedAt: new Date().toISOString(),
     });
   }

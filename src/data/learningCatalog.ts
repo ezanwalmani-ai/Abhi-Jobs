@@ -600,12 +600,360 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
         ],
       },
       {
-        id: 'excel_m03_upcoming',
+        id: 'excel_m03_formulas_references',
         order: 3,
-        title: 'Module 03: Next Module in Curriculum',
+        title: 'Formula Fundamentals & Cell References',
         level: 'Beginner',
         summary:
-          'Locked until you complete Module 02 and pass the Module 02 Quiz with 70% or higher.',
+          'Learn to create Excel formulas, perform calculations, use mathematical operators, and master relative, absolute, and mixed cell references.',
+        learningObjectives: [
+          'Understand what an Excel formula is.',
+          'Start a formula using the equals sign.',
+          'Perform addition, subtraction, multiplication, and division.',
+          'Understand operator precedence.',
+          'Use parentheses in formulas.',
+          'Calculate using cell references.',
+          'Understand relative references.',
+          'Understand absolute references using $.',
+          'Understand mixed references.',
+          'Copy formulas across rows and columns.',
+          'Identify and correct basic formula errors.',
+        ],
+        quizPlanned: true,
+        quizRequired: true,
+        passPercentage: 70,
+        lessons: [
+          {
+            id: 'excel_m03_lesson_01',
+            courseId: 'excel_for_job_seekers',
+            moduleId: 'excel_m03_formulas_references',
+            order: 1,
+            title: 'Module 03: Formula Fundamentals & Cell References',
+            description:
+              'Build accurate workplace formulas using operators, parentheses, relative/absolute/mixed cell references, formula copying, and error troubleshooting.',
+            estimatedMinutes: 45,
+            videoUrl: 'https://www.youtube.com/watch?v=V6YJ2kYq8qQ',
+            videos: [
+              {
+                id: 'excel_m03_video_01',
+                title: 'Excel Formulas and Functions for Beginners',
+                youtubeVideoId: 'V6YJ2kYq8qQ',
+                embedUrl: 'https://www.youtube.com/embed/V6YJ2kYq8qQ',
+                durationSeconds: 900,
+                description:
+                  'Learn how to write Excel formulas with operators, parentheses, and relative, absolute, and mixed cell references.',
+                order: 1,
+              },
+            ],
+            writtenContent:
+              'Excel formulas turn static tables into automatic calculators. Master the equals sign, operators, parentheses, relative/absolute/mixed cell references, formula copying, and common formula errors.',
+            studyGuide: {
+              title: 'Module 03 Study Guide: Formula Fundamentals & Cell References',
+              subtitle:
+                'Complete beginner-friendly guide covering Excel formulas, operators, precedence, cell reference types, formula copying, and troubleshooting errors.',
+              sections: [
+                {
+                  heading: 'Lesson 1 — What Is an Excel Formula?',
+                  body: 'A formula is an instruction you type into a cell so Excel calculates a result automatically. Every Excel formula normally begins with an equals sign (=). Without the equals sign, Excel treats your typing as plain text instead of running a calculation.',
+                  bullets: [
+                    '=10+20 calculates 30 (Addition)',
+                    '=50-10 calculates 40 (Subtraction)',
+                    '=5*4 calculates 20 (Multiplication)',
+                    '=100/5 calculates 20 (Division)',
+                    'The worksheet cell displays the calculated answer, while the Formula Bar shows the underlying formula you wrote.',
+                  ],
+                  steps: [
+                    'Click an empty cell where you want the calculated answer to appear.',
+                    'Type the equals sign (=) first so Excel knows a formula is starting.',
+                    'Enter numbers or cell references with mathematical operators (for example, =10+20).',
+                    'Press Enter to calculate and display the result.',
+                  ],
+                  example:
+                    'A petty-cash coordinator types =250+175 into cell B8 to verify two quick office receipts. Cell B8 displays 425 while the Formula Bar retains =250+175.',
+                  commonMistake:
+                    'Forgetting the leading equals sign (=) — typing 10+20 without = simply displays the text "10+20" and never calculates 30.',
+                  shortcuts: [
+                    { keys: 'Enter', action: 'Confirm formula and move down' },
+                    { keys: 'Esc', action: 'Cancel formula edit safely' },
+                    { keys: 'F2', action: 'Edit active formula in cell' },
+                  ],
+                },
+                {
+                  heading: 'Lesson 2 — Mathematical Operators',
+                  body: 'Excel uses five standard mathematical operators to perform everyday business calculations. Notice that multiplication uses the asterisk (*) and division uses the forward slash (/) rather than the symbols written on paper.',
+                  bullets: [
+                    '+ (Addition): Adds two or more values — Example: =A1+B1',
+                    '- (Subtraction): Subtracts one value from another — Example: =A1-B1',
+                    '* (Multiplication): Multiplies values — Example: =A1*B1',
+                    '/ (Division): Divides the first value by the second — Example: =A1/B1',
+                    '^ (Power / Exponent): Raises a number to a power — Example: =A1^2 (squares the value in A1)',
+                  ],
+                  steps: [
+                    'Select the result cell and type =.',
+                    'Click or type the first cell reference (such as A1).',
+                    'Type the mathematical operator (+, -, *, /, or ^).',
+                    'Click or type the second cell reference (such as B1) and press Enter.',
+                  ],
+                  example:
+                    'Sales & Payroll: Add Basic Salary and Allowance with =B2+C2, subtract Deductions with =E2-D2, calculate line totals with =B2*C2, compute unit cost with =D2/B2, or square a side length for area with =A2^2.',
+                  commonMistake:
+                    'Typing the letter "x" for multiplication (such as =5x4) instead of the asterisk (*), which causes Excel to show a formula error.',
+                },
+                {
+                  heading: 'Lesson 3 — Using Cell References',
+                  body: 'Instead of typing fixed numbers directly into formulas (hardcoding), reference the cells that hold those numbers. When a price, quantity, or salary changes later, Excel updates every dependent formula automatically without manual retyping.',
+                  bullets: [
+                    'Suppose Row 2 holds: A2 = Laptop, B2 = 2 (Quantity), C2 = 40000 (Price).',
+                    'Typing =B2*C2 in cell D2 multiplies the value in B2 (2) by the value in C2 (40000) to produce 80000.',
+                    'If the Laptop quantity in B2 changes from 2 to 3, D2 automatically updates from 80000 to 120000.',
+                    'Cell references reduce typing mistakes and keep workplace reports auditable.',
+                  ],
+                  steps: [
+                    'Enter clean numeric data in separate columns (Quantity in B2, Price in C2).',
+                    'Click cell D2 and type =.',
+                    'Click cell B2 (or type B2), type *, then click cell C2 (or type C2).',
+                    'Press Enter and test updating B2 to confirm D2 recalculates automatically.',
+                  ],
+                  example:
+                    'Procurement Order Sheet: If Laptop quantity is in B2 (2) and unit price is in C2 (40000), entering =B2*C2 in D2 calculates the line total (80000) dynamically whenever quantities or vendor quotes change.',
+                  commonMistake:
+                    'Typing =2*40000 instead of =B2*C2. If the quantity changes to 5 next week, a hardcoded formula stays stuck at 80000 and silently produces an inaccurate invoice.',
+                },
+                {
+                  heading: 'Lesson 4 — Operator Precedence & Parentheses',
+                  body: 'Excel follows standard mathematical calculation order (operator precedence): Parentheses first, then Powers (^), then Multiplication (*) and Division (/) from left to right, and finally Addition (+) and Subtraction (-) from left to right.',
+                  bullets: [
+                    'Without parentheses: =10+5*2 calculates 5*2 first (10), then adds 10 -> Result is 20 (NOT 30).',
+                    'With parentheses: =(10+5)*2 calculates 10+5 first (15), then multiplies by 2 -> Result is 30.',
+                    'Use parentheses whenever you want addition or subtraction to run before multiplication or division.',
+                    'Clear parentheses also make complex workplace formulas much easier for colleagues to verify.',
+                  ],
+                  steps: [
+                    'Identify which part of your calculation must happen first (for example, adding Basic Salary + Bonus before applying a tax rate).',
+                    'Wrap that inner calculation inside parentheses: =(B2+C2)*0.10.',
+                    'Check that every opening parenthesis "(" has a matching closing parenthesis ")".',
+                    'Press Enter and sanity-check the result against a quick mental estimate.',
+                  ],
+                  example:
+                    'Bonus Tax Calculation: To compute a 10% deduction on combined Basic Salary (B2) and Allowance (C2), write =(B2+C2)*0.10. Writing =B2+C2*0.10 without parentheses would only apply 10% to C2 and add full B2.',
+                  commonMistake:
+                    'Assuming Excel calculates strictly left to right. Always wrap sums or differences in parentheses before multiplying or dividing.',
+                },
+                {
+                  heading: 'Lesson 5 — Relative Cell References',
+                  body: 'By default, every cell reference in Excel (like B2 or C2) is a relative reference. That means Excel remembers the position relative to the formula cell — so when you copy a formula to another row or column, the references adjust automatically.',
+                  bullets: [
+                    'If cell D2 contains =B2*C2 and you copy it one row down into D3, Excel automatically changes it to =B3*C3.',
+                    'Copying it down to D4 becomes =B4*C4, D5 becomes =B5*C5, and so on.',
+                    'Copying =B2+C2 one column to the right updates it to =C2+D2.',
+                    'Relative references let you write one accurate formula and apply it across hundreds or thousands of rows in seconds.',
+                  ],
+                  steps: [
+                    'Write your first row formula cleanly in D2 (for example, =B2*C2).',
+                    'Select D2 and copy it down to D3:D10 using the fill handle.',
+                    'Click D3 and inspect the Formula Bar to confirm it now reads =B3*C3.',
+                  ],
+                  example:
+                    'Payroll & Sales Tables: An HR executive with 250 employees writes =B2+C2-D2 once in E2 and copies it down to E251. Relative references automatically match each employee’s own row.',
+                  commonMistake:
+                    'Retyping formulas manually row by row (E2, E3, E4...) instead of letting relative references adjust automatically when copied.',
+                },
+                {
+                  heading: 'Lesson 6 — Absolute Cell References ($)',
+                  body: 'Sometimes a formula needs to point to one fixed cell — such as a single tax rate, commission percentage, or exchange rate stored at the top of a sheet. Placing dollar signs ($) before both the column letter and row number (for example, $B$1) locks that reference so it never shifts when copied.',
+                  bullets: [
+                    '$B$1 locks BOTH column B and row 1 (fully absolute reference).',
+                    'Example: =$B$1*C2 — when copied down to row 3, it becomes =$B$1*C3; row 4 becomes =$B$1*C4.',
+                    'Cell B1 stays pinned while C2 adjusts cleanly for every item row.',
+                    'Press the F4 key while your cursor is on a cell reference in the Formula Bar to cycle through A1 -> $A$1 -> A$1 -> $A1.',
+                  ],
+                  steps: [
+                    'Store the shared constant (such as Tax Rate 5% or Currency Rate) in a clearly labelled cell like B1.',
+                    'Click the first result cell and type =B1*C2.',
+                    'Place your cursor on B1 and press F4 (or type dollar signs manually) so it reads =$B$1*C2.',
+                    'Copy the formula downward and verify every row still references $B$1.',
+                  ],
+                  example:
+                    'VAT / Tax Rate Calculation: Cell B1 stores the 5% tax rate (0.05) and Column C lists item subtotals (C2:C50). Entering =$B$1*C2 in D2 and copying down calculates 5% tax accurately for all 50 items.',
+                  commonMistake:
+                    'Writing =B1*C2 without $ signs and copying down — Row 3 becomes =B2*C3 and Row 4 becomes =B3*C4, pulling blank cells or wrong numbers from column B!',
+                  shortcuts: [
+                    { keys: 'F4', action: 'Cycle reference type (A1 / $A$1 / A$1 / $A1)' },
+                  ],
+                },
+                {
+                  heading: 'Lesson 7 — Mixed Cell References',
+                  body: 'A mixed cell reference locks ONLY the column OR ONLY the row — leaving the other part free to adjust when copied. Mixed references are ideal for two-way pricing grids, discount matrices, and multi-month budget tables.',
+                  bullets: [
+                    'A1 — Fully relative (both column and row adjust when copied).',
+                    '$A$1 — Fully absolute (neither column nor row changes when copied).',
+                    '$A1 — Mixed: Locked column A, flexible row (column A stays fixed when copied right; row changes when copied down).',
+                    'A$1 — Mixed: Flexible column, locked row 1 (row 1 stays fixed when copied down; column changes when copied right).',
+                  ],
+                  steps: [
+                    'Decide which direction must stay locked when copying: lock the column with $ before the letter ($A2) or lock the row with $ before the number (B$1).',
+                    'In a pricing grid where item base prices sit in Column A ($A2) and discount percentages sit across Row 1 (B$1), enter =$A2*(1-B$1) in cell B2.',
+                    'Copy B2 both across columns and down rows — one single formula fills the entire table.',
+                  ],
+                  example:
+                    'Multi-Tier Discount Table: Base prices are listed down Column A (A2:A10) and discount rates (5%, 10%, 15%) sit across Row 1 (B1:D1). Formula =$A2*B$1 calculates every product’s discount across all tiers with a single copy-paste.',
+                  commonMistake:
+                    'Placing the $ sign on the wrong side (writing A$1 when you needed $A1). Read the $ sign as "lock the piece immediately after me": $A locks column A; $1 locks row 1.',
+                },
+                {
+                  heading: 'Lesson 8 — Copying Formulas Safely',
+                  body: 'Once you verify your first formula works, Excel gives you fast, accurate ways to copy it across rows or columns. Always inspect a few copied cells afterward to make sure references adjusted as intended.',
+                  bullets: [
+                    'Drag the fill handle: Click the small green square at the bottom-right corner of the active cell and drag down or right.',
+                    'Double-click the fill handle: When adjacent columns already contain contiguous data, double-clicking the fill handle fills down automatically to the last populated row.',
+                    'Copy and paste: Press Ctrl + C on the source formula cell, highlight the target range, and press Ctrl + V.',
+                    'Check formulas after copying: Click a couple of copied cells (such as the second row and final row) and check the Formula Bar.',
+                  ],
+                  steps: [
+                    'Select the verified formula cell (for example, E2 containing =B2+C2-D2).',
+                    'Hover over the bottom-right corner until the pointer turns into a thin black plus sign (+).',
+                    'Drag down to E6 (or double-click the fill handle to auto-fill down adjacent employee rows).',
+                    'Click E3 and E6 to verify they read =B3+C3-D3 and =B6+C6-D6, then verify the numbers look reasonable.',
+                  ],
+                  example:
+                    'Monthly Payroll Run: Instead of typing 50 separate formulas, an HR assistant writes =B2+C2-D2 in E2, double-clicks the fill handle to populate E2:E51 instantly, and spot-checks Row 2, Row 25, and Row 51.',
+                  commonMistake:
+                    'Dragging from the cell border (four-way arrow) instead of the fill handle (thin +), which MOVES the cell instead of copying the formula.',
+                  shortcuts: [
+                    { keys: 'Ctrl + C', action: 'Copy formula cell' },
+                    { keys: 'Ctrl + V', action: 'Paste formula into selected cells' },
+                    { keys: 'Ctrl + D', action: 'Fill formula down from top selected cell' },
+                    { keys: 'Ctrl + `', action: 'Toggle Show Formulas view across sheet' },
+                  ],
+                },
+                {
+                  heading: 'Lesson 9 — Common Formula Errors & Troubleshooting',
+                  body: 'Formula errors begin with a hash symbol (#) and tell you exactly what went wrong. Learning the four most common beginner errors helps you fix broken spreadsheets quickly and confidently.',
+                  bullets: [
+                    '#DIV/0! — Dividing by zero or an empty cell (for example, =B2/C2 when C2 is 0 or blank). Fix: Check the divisor cell and enter a valid non-zero number.',
+                    '#VALUE! — Wrong data type used in a calculation (for example, adding a number to a text word like =25000+"Five"). Fix: Ensure all referenced cells contain clean numbers, not text.',
+                    '#NAME? — Excel does not recognize a function name or misspelled reference (for example, typing =SMU(B2:B6) instead of =SUM(B2:B6)). Fix: Check spelling of functions and cell addresses.',
+                    '#REF! — Invalid cell reference, usually caused by deleting a row, column, or sheet that a formula depended on. Fix: Undo immediately (Ctrl + Z) or rebuild the reference to the correct cell.',
+                  ],
+                  steps: [
+                    'Click the cell showing the error (such as #DIV/0! or #VALUE!).',
+                    'Look at the Formula Bar to inspect every cell reference and function name highlighted in color.',
+                    'Trace each referenced cell on the grid to see if it is blank, zero, text, or deleted (#REF!).',
+                    'Correct the cell data or formula spelling and press Enter to confirm the error disappears.',
+                  ],
+                  example:
+                    'Expense Per Head Report: Cell D4 shows #DIV/0! because team headcount in C4 was left blank. Entering the headcount (12) immediately resolves the error and displays the accurate cost per employee.',
+                  commonMistake:
+                    'Deleting a formula cell instead of reading the error code, or typing commas/currency words like "Rs 25000" inside a numeric cell (which triggers #VALUE!).',
+                },
+              ],
+              examples: [
+                {
+                  title: 'Example 1: Mathematical Operators Quick Reference',
+                  subtitle:
+                    'Core Excel arithmetic operators assuming A1 = 10 and B1 = 2.',
+                  columns: ['Operator', 'Meaning', 'Formula Example', 'Calculated Result'],
+                  rows: [
+                    ['+', 'Addition', '=A1+B1', '12'],
+                    ['-', 'Subtraction', '=A1-B1', '8'],
+                    ['*', 'Multiplication', '=A1*B1', '20'],
+                    ['/', 'Division', '=A1/B1', '5'],
+                    ['^', 'Power (Exponent)', '=A1^2', '100'],
+                  ],
+                },
+                {
+                  title: 'Example 2: Using Cell References & Relative Copying (Item Order Sheet)',
+                  subtitle:
+                    'Entering =B2*C2 in D2 and copying downward adjusts row references automatically for every line item.',
+                  columns: ['A (Item)', 'B (Quantity)', 'C (Price)', 'D (Formula)', 'D (Result)'],
+                  rows: [
+                    ['Laptop', '2', '40000', '=B2*C2', '80000'],
+                    ['Monitor', '4', '12000', '=B3*C3', '48000'],
+                    ['Keyboard', '6', '1500', '=B4*C4', '9000'],
+                  ],
+                },
+                {
+                  title: 'Example 3: Relative, Absolute & Mixed Reference Comparison',
+                  subtitle:
+                    'How the $ symbol controls which part of a reference stays locked when copied across rows or columns.',
+                  columns: ['Reference', 'Type', 'Column Locked?', 'Row Locked?', 'Common Use'],
+                  rows: [
+                    ['A1', 'Relative', 'No', 'No', 'Row-by-row totals (=B2*C2)'],
+                    ['$A$1', 'Absolute', 'Yes', 'Yes', 'Fixed tax or discount cell (=$B$1*C2)'],
+                    ['$A1', 'Mixed', 'Yes', 'No', 'Locked price column copied right'],
+                    ['A$1', 'Mixed', 'No', 'Yes', 'Locked rate header row copied down'],
+                  ],
+                },
+                {
+                  title: 'Example 4: Practical Activity Target Preview — Employee Salary Sheet',
+                  subtitle:
+                    'Net Salary uses =B2+C2-D2 copied down through Row 6, followed by a Total Net Salary formula in Row 7.',
+                  columns: ['Employee Name', 'Basic Salary', 'Allowance', 'Deduction', 'Net Salary Formula'],
+                  rows: [
+                    ['Rahul', '25,000', '5,000', '2,000', '=B2+C2-D2  (28,000)'],
+                    ['Priya', '30,000', '6,000', '2,500', '=B3+C3-D3  (33,500)'],
+                    ['Ahmed', '22,000', '4,000', '1,500', '=B4+C4-D4  (24,500)'],
+                    ['Sneha', '28,000', '5,000', '2,000', '=B5+C5-D5  (31,000)'],
+                    ['Arjun', '35,000', '7,000', '3,000', '=B6+C6-D6  (39,000)'],
+                    ['Total', '140,000', '27,000', '11,000', '=SUM(E2:E6)  (156,000)'],
+                  ],
+                },
+              ],
+            },
+            exercise: {
+              title: 'Calculate Employee Salaries and Monthly Expenses',
+              instructions:
+                'Download the free Module 03 Practice Workbook below (works in Microsoft Excel, Excel for the Web, Google Sheets, or LibreOffice Calc). Open the "Employee Salary" worksheet containing Rahul, Priya, Ahmed, Sneha, and Arjun.\n\nColumns: Employee Name (A) | Basic Salary (B) | Allowance (C) | Deduction (D) | Net Salary (E)\n• Rahul: Basic 25000, Allowance 5000, Deduction 2000\n• Priya: Basic 30000, Allowance 6000, Deduction 2500\n• Ahmed: Basic 22000, Allowance 4000, Deduction 1500\n• Sneha: Basic 28000, Allowance 5000, Deduction 2000\n• Arjun: Basic 35000, Allowance 7000, Deduction 3000\n\nComplete these 6 steps:\n1. Verify all 5 employee records are entered cleanly on the Employee Salary sheet.\n2. Calculate Net Salary for Rahul in cell E2 using the formula: =B2+C2-D2 (Basic Salary + Allowance - Deduction).\n3. Copy the formula from E2 down to E6 for the remaining employees using the fill handle.\n4. Calculate Total Net Salary in cell E7 using a formula such as =E2+E3+E4+E5+E6 or =SUM(E2:E6).\n5. Format all salary columns (B2:E7) clearly as Currency or Number with thousand separators.\n6. Check every calculation and compare your finished sheet against the separated "Answer Reference" worksheet in the workbook.',
+              deliverable:
+                'A completed Employee Salary worksheet with live formulas for every employee’s Net Salary (=B2+C2-D2 through =B6+C6-D6), Total Net Salary (156,000), and clean number/currency formatting.',
+            },
+            attachments: [
+              {
+                id: 'excel_m03_practice_workbook',
+                title: 'ABHI-Excel-Module-03-Practice-Workbook.xlsx',
+                url: '/api/learning/resources/excel-module-03-practice-workbook.xlsx',
+                fileType: 'Workbook',
+                sizeLabel: '3 Sheets (Instructions + Blank Practice + Answer Reference) · .xlsx',
+              },
+              {
+                id: 'excel_m03_instruction_sheet',
+                title: 'Module 03 Practical Activity — Instruction Sheet',
+                url: '',
+                fileType: 'PDF',
+                sizeLabel: 'Printable Checklist · PDF',
+                worksheetContent: [
+                  'PRACTICAL ACTIVITY: CALCULATE EMPLOYEE SALARIES AND MONTHLY EXPENSES',
+                  '',
+                  'Free Tools Supported: Microsoft Excel, Excel for the Web (free), Google Sheets, or LibreOffice Calc.',
+                  '',
+                  'EMPLOYEE SALARY TABLE (Columns A–E):',
+                  'Employee Name | Basic Salary | Allowance | Deduction | Net Salary',
+                  'Rahul         | 25000        | 5000      | 2000      | (Enter =B2+C2-D2)',
+                  'Priya         | 30000        | 6000      | 2500      | (Copy formula down)',
+                  'Ahmed         | 22000        | 4000      | 1500      | (Copy formula down)',
+                  'Sneha         | 28000        | 5000      | 2000      | (Copy formula down)',
+                  'Arjun         | 35000        | 7000      | 3000      | (Copy formula down)',
+                  '',
+                  'STEP-BY-STEP COMPLETION CHECKLIST:',
+                  '1. Download ABHI-Excel-Module-03-Practice-Workbook.xlsx and open the "Employee Salary" sheet.',
+                  '2. In cell E2, enter the Net Salary formula: =B2+C2-D2 (Basic Salary + Allowance - Deduction).',
+                  '3. Copy E2 down to E6 using the fill handle (drag or double-click) and verify relative row adjustment.',
+                  '4. In cell E7, calculate Total Net Salary using =E2+E3+E4+E5+E6 or =SUM(E2:E6).',
+                  '5. Format columns B through E as Currency or Number with thousand separators.',
+                  '6. Verify every calculation and check your answers against the separated "Answer Reference" tab.',
+                ].join('\n'),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'excel_m04_upcoming',
+        order: 4,
+        title: 'Module 04: Next Module in Curriculum',
+        level: 'Beginner',
+        summary:
+          'Locked until you complete Module 03 and pass the Module 03 Quiz with 70% or higher.',
         lessons: [],
         quizPlanned: true,
         quizRequired: false,

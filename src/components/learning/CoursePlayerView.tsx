@@ -643,6 +643,134 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     passedModuleQuizSet.has(id)
   ).length;
 
+  const renderActiveModuleQuizCard = () => {
+    if (!activeModule || !moduleQuizByModuleId.has(activeModule.id)) {
+      return null;
+    }
+
+    const activeModOrder = activeModule.order;
+    const nextModOrder = activeModOrder + 1;
+    const nextModObj = sortedModules.find((m) => m.order === nextModOrder);
+    const nextModFirstLesson =
+      nextModObj && !nextModObj.isUpcomingPlaceholder && nextModObj.lessons.length > 0
+        ? nextModObj.lessons.slice().sort((a, b) => a.order - b.order)[0]
+        : null;
+    const nextModFlatMatch = nextModFirstLesson
+      ? flatLessons.find((f) => f.lesson.id === nextModFirstLesson.id)
+      : null;
+    const modPassed = passedModuleQuizSet.has(activeModule.id);
+    const modQuizUnlocked = isModuleQuizUnlocked(activeModule.id);
+    const bestScore = getBestScoreForModuleQuiz(activeModule.id);
+    const hasFailedAttempt = !modPassed && bestScore !== null;
+    const quizMeta = moduleQuizByModuleId.get(activeModule.id);
+    const qCount = quizMeta?.questionCount ?? 10;
+    const passPct = quizMeta?.passPercentage ?? 70;
+    const passNeeded = Math.ceil((qCount * passPct) / 100);
+
+    return (
+      <section
+        className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
+          modPassed
+            ? 'bg-emerald-50/50 border-emerald-200'
+            : hasFailedAttempt
+            ? 'bg-amber-50/60 border-amber-200'
+            : modQuizUnlocked
+            ? 'bg-[#FFF8F2] border-[#F47A24]/40'
+            : 'bg-white border-[#E5EAF0]'
+        }`}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+              {modPassed ? (
+                <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    Module 0{activeModOrder} Passed · Module 0{nextModOrder} Unlocked
+                  </span>
+                </span>
+              ) : hasFailedAttempt ? (
+                <span className="inline-flex items-center gap-1.5 text-amber-800">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>
+                    Not Yet Passed (Best {bestScore}%) — Unlimited Retakes Available
+                  </span>
+                </span>
+              ) : modQuizUnlocked ? (
+                <span className="inline-flex items-center gap-1.5 text-[#F47A24]">
+                  <Unlock className="w-4 h-4" />
+                  <span>Video Completed — Quiz Unlocked</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-slate-600">
+                  <Lock className="w-4 h-4" />
+                  <span>Locked Until Video Reaches 90%</span>
+                </span>
+              )}
+            </div>
+
+            <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+              Module 0{activeModOrder} Quiz: {qCount} Questions (Pass {passPct}%+)
+            </h2>
+
+            <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
+              {modPassed
+                ? `Best score: ${bestScore ?? passPct}%. Module 0${nextModOrder} is now unlocked for your account. You may retake the quiz anytime to review.`
+                : hasFailedAttempt
+                ? `Your best attempt so far is ${bestScore}%. Score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Review the study material and try again.`
+                : modQuizUnlocked
+                ? `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Unlimited retakes allowed.`
+                : `Watch at least 90% of the embedded video above to automatically unlock the ${qCount}-question Module 0${activeModOrder} Quiz.`}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {modPassed && nextModFlatMatch && (
+              <button
+                type="button"
+                onClick={() =>
+                  void selectLesson(
+                    nextModFlatMatch.lesson.id,
+                    nextModFlatMatch.globalIndex
+                  )
+                }
+                className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
+              >
+                <span>Continue to Module 0{nextModOrder}</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() =>
+                selectModuleQuiz(activeModule.id, activeModule.title)
+              }
+              className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                modQuizUnlocked
+                  ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
+                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+              }`}
+            >
+              {!modQuizUnlocked && <Lock className="w-4 h-4 shrink-0" />}
+              <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
+              <span>
+                {modPassed
+                  ? `Retake Module 0${activeModOrder} Quiz`
+                  : bestScore !== null
+                  ? `Retake Quiz (Best ${bestScore}%)`
+                  : modQuizUnlocked
+                  ? `Start Module 0${activeModOrder} Quiz`
+                  : 'Quiz Locked'}
+              </span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Progress Summary Header */}
@@ -1641,117 +1769,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         </section>
                       )}
 
-                    {/* Primary Progression Card: Module Quiz & Next Module Unlock */}
-                    {activeModule && moduleQuizByModuleId.has(activeModule.id) && (() => {
-                      const activeModOrder = activeModule.order;
-                      const nextModOrder = activeModOrder + 1;
-                      const nextModObj = sortedModules.find((m) => m.order === nextModOrder);
-                      const nextModFirstLesson =
-                        nextModObj && !nextModObj.isUpcomingPlaceholder && nextModObj.lessons.length > 0
-                          ? nextModObj.lessons.slice().sort((a, b) => a.order - b.order)[0]
-                          : null;
-                      const nextModFlatMatch = nextModFirstLesson
-                        ? flatLessons.find((f) => f.lesson.id === nextModFirstLesson.id)
-                        : null;
-                      const modPassed = passedModuleQuizSet.has(activeModule.id);
-                      const modQuizUnlocked = isModuleQuizUnlocked(activeModule.id);
-                      const quizMeta = moduleQuizByModuleId.get(activeModule.id);
-                      const qCount = quizMeta?.questionCount ?? 10;
-                      const passPct = quizMeta?.passPercentage ?? 70;
-                      const passNeeded = Math.ceil((qCount * passPct) / 100);
-
-                      return (
-                        <section
-                          className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
-                            modPassed
-                              ? 'bg-emerald-50/50 border-emerald-200'
-                              : modQuizUnlocked
-                              ? 'bg-[#FFF8F2] border-[#F47A24]/40'
-                              : 'bg-white border-[#E5EAF0]'
-                          }`}
-                        >
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-1.5 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                                {modPassed ? (
-                                  <span className="inline-flex items-center gap-1.5 text-emerald-700">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>
-                                      Module 0{activeModOrder} Passed · Module 0{nextModOrder} Unlocked
-                                    </span>
-                                  </span>
-                                ) : modQuizUnlocked ? (
-                                  <span className="inline-flex items-center gap-1.5 text-[#F47A24]">
-                                    <Unlock className="w-4 h-4" />
-                                    <span>Video Completed — Quiz Unlocked</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 text-slate-600">
-                                    <Lock className="w-4 h-4" />
-                                    <span>Locked Until Video Reaches 90%</span>
-                                  </span>
-                                )}
-                              </div>
-
-                              <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-                                Module 0{activeModOrder} Quiz: {qCount} Questions (Pass {passPct}%+)
-                              </h2>
-
-                              <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
-                                {modPassed
-                                  ? `Best score: ${getBestScoreForModuleQuiz(activeModule.id) ?? passPct}%. Module 0${nextModOrder} is now unlocked for your account. You may retake the quiz anytime to review.`
-                                  : modQuizUnlocked
-                                  ? `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Unlimited retakes allowed.`
-                                  : `Watch at least 90% of the embedded video above to automatically unlock the ${qCount}-question Module 0${activeModOrder} Quiz.`}
-                              </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                              {modPassed && nextModFlatMatch && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void selectLesson(
-                                      nextModFlatMatch.lesson.id,
-                                      nextModFlatMatch.globalIndex
-                                    )
-                                  }
-                                  className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
-                                >
-                                  <span>Continue to Module 0{nextModOrder}</span>
-                                  <ArrowRight className="w-4 h-4 shrink-0" />
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  selectModuleQuiz(activeModule.id, activeModule.title)
-                                }
-                                className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                                  modQuizUnlocked
-                                    ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
-                                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                                }`}
-                              >
-                                {!modQuizUnlocked && <Lock className="w-4 h-4 shrink-0" />}
-                                <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
-                                <span>
-                                  {modPassed
-                                    ? `Retake Module 0${activeModOrder} Quiz`
-                                    : getBestScoreForModuleQuiz(activeModule.id) !== null
-                                    ? `Retake Quiz (Best ${getBestScoreForModuleQuiz(activeModule.id)}%)`
-                                    : modQuizUnlocked
-                                    ? `Start Module 0${activeModOrder} Quiz`
-                                    : 'Quiz Locked'}
-                                </span>
-                                <ArrowRight className="w-4 h-4 shrink-0" />
-                              </button>
-                            </div>
-                          </div>
-                        </section>
-                      );
-                    })()}
+                    {/* Primary Progression Card: Shown above study material for Modules 1 & 2 */}
+                    {activeModule && activeModule.order < 3 && renderActiveModuleQuizCard()}
 
                     {/* 2. Supporting Study Material (Secondary to Video + Quiz) */}
                     {activeLesson.studyGuide ? (() => {
@@ -2121,7 +2140,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       <div className="pt-4 border-t border-[#E5EAF0] space-y-3">
                         <div className="flex flex-wrap items-center gap-2.5">
                           {activeLesson.attachments.map((att) => {
-                            const isWorkbook = att.fileType.toLowerCase().includes('xlsx');
+                            const isWorkbook =
+                              att.fileType.toLowerCase().includes('xlsx') ||
+                              Boolean(att.url?.toLowerCase().endsWith('.xlsx'));
                             return (
                               <button
                                 key={att.id}
@@ -2203,6 +2224,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     </div>
                   </section>
                 )}
+
+                {/* Module Quiz Card at the end (below study material & practical activity) for Module 3+ */}
+                {activeModule && activeModule.order >= 3 && renderActiveModuleQuizCard()}
 
                 {/* Lesson Completion Status & Navigation Controls */}
                 <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
