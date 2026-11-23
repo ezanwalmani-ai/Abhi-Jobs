@@ -183,9 +183,9 @@ export async function startAssessmentSession(params: {
 }
 
 /**
- * Submits candidate answers to the Express backend for authoritative grading,
- * then persists the verified attempt strictly under the candidate's own Firestore subcollection
- * (/users/{uid}/assessment_attempts/{attemptId}) and user-scoped local cache.
+ * Submits candidate answers to the Express backend for authoritative grading & HMAC signing.
+ * Student browsers NEVER write directly to /users/{uid}/assessment_attempts (denied in firestore.rules)
+ * to eliminate client-side score or signature forgery.
  */
 export async function submitAssessmentSession(params: {
   sessionId: string;
@@ -218,66 +218,20 @@ export async function submitAssessmentSession(params: {
     userId: effectiveUid,
   };
 
-  let savedToCloud = false;
-
-  if (fbUid) {
-    const docPath = `users/${fbUid}/assessment_attempts/${normalizedAttempt.id}`;
-    const docRef = doc(db, 'users', fbUid, 'assessment_attempts', normalizedAttempt.id);
-    try {
-      const sanitizedAnswers: Record<string, number> = {};
-      for (const [qId, opt] of Object.entries(normalizedAttempt.answers || params.answers || {})) {
-        if (typeof opt === 'number' && Number.isInteger(opt) && opt >= 0 && opt <= 3) {
-          sanitizedAnswers[String(qId).slice(0, 100)] = opt;
-        }
-      }
-
-      const payload: Record<string, unknown> = {
-        id: normalizedAttempt.id,
-        userId: fbUid,
-        courseId: normalizedAttempt.courseId,
-        courseSlug: normalizedAttempt.courseSlug || normalizedAttempt.courseId,
-        courseTitle: normalizedAttempt.courseTitle,
-        assessmentType: normalizedAttempt.assessmentType,
-        assessmentTitle: normalizedAttempt.assessmentTitle,
-        attemptNumber: normalizedAttempt.attemptNumber,
-        totalQuestions: normalizedAttempt.totalQuestions,
-        correctAnswers: normalizedAttempt.correctAnswers,
-        incorrectAnswers: normalizedAttempt.incorrectAnswers,
-        scorePercent: normalizedAttempt.scorePercent,
-        passPercentage: normalizedAttempt.passPercentage,
-        passed: normalizedAttempt.passed,
-        answers: sanitizedAnswers,
-        questionResults: (normalizedAttempt.questionResults || []).slice(0, 30),
-        verificationSignature: normalizedAttempt.verificationSignature || '',
-        submittedAt: serverTimestamp(),
-      };
-      if (normalizedAttempt.moduleId) {
-        payload.moduleId = normalizedAttempt.moduleId;
-      }
-      await setDoc(docRef, payload);
-      savedToCloud = true;
-    } catch (error) {
-      try {
-        handleFirestoreError(error, OperationType.CREATE, docPath);
-      } catch {
-        // Logged via structured helper
-      }
-    }
-  }
-
+  // Update non-authoritative client display cache only (authoritative state lives on backend)
   const nextLocal = [normalizedAttempt, ...readLocalAttempts(effectiveUid)];
   writeLocalAttempts(effectiveUid, nextLocal);
   if (params.appUserId !== effectiveUid) {
     writeLocalAttempts(params.appUserId, nextLocal);
   }
 
-  return { attempt: normalizedAttempt, savedToCloud };
+  return { attempt: normalizedAttempt, savedToCloud: false };
 }
 
 /**
  * Loads assessment attempts strictly owned by the signed-in candidate.
- * When a verified Firebase user is active, Firestore is the authoritative source of truth
- * so manipulated browser localStorage cannot inject forged passes or altered scores.
+ * When a verified Firebase user is active, authoritative backend + read-only Firestore records
+ * are the source of truth so manipulated browser localStorage cannot inject forged passes.
  */
 export async function loadCandidateAssessmentAttempts(
   appUserId: string | null | undefined,
@@ -293,10 +247,35 @@ export async function loadCandidateAssessmentAttempts(
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || appUserId;
 
+  let syncedFromServer = false;
   let syncedFromCloud = false;
-  const cloudById = new Map<string, AssessmentAttemptRecord>();
+  const authoritativeById = new Map<string, AssessmentAttemptRecord>();
 
   if (fbUid) {
+    // 1. Load server-graded attempts for the authenticated UID
+    try {
+      const authHeaders = await getFirebaseIdTokenHeader();
+      const qs = courseId ? `?courseId=${encodeURIComponent(courseId)}` : '';
+      const res = await fetch(`/api/learning/assessments/mine${qs}`, {
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.attempts)) {
+          data.attempts.forEach((item: any) => {
+            const norm = normalizeAttempt({ ...item, userId: fbUid }, fbUid);
+            if (norm) {
+              authoritativeById.set(norm.id, norm);
+            }
+          });
+          syncedFromServer = true;
+        }
+      }
+    } catch {
+      // Non-fatal; continue to read-only Firestore check
+    }
+
+    // 2. Load admin/server-written Firestore attempts (read-only for students)
     const path = `users/${fbUid}/assessment_attempts`;
     try {
       const colRef = collection(db, 'users', fbUid, 'assessment_attempts');
@@ -306,7 +285,7 @@ export async function loadCandidateAssessmentAttempts(
         const data = docSnap.data();
         const norm = normalizeAttempt({ ...data, id: docSnap.id, userId: fbUid }, fbUid);
         if (norm) {
-          cloudById.set(norm.id, norm);
+          authoritativeById.set(norm.id, norm);
         }
       });
       syncedFromCloud = true;
@@ -320,15 +299,18 @@ export async function loadCandidateAssessmentAttempts(
   }
 
   let authoritativeList: AssessmentAttemptRecord[];
-  if (fbUid && syncedFromCloud) {
-    // Strictly replace local cache with authoritative Firestore records
-    authoritativeList = Array.from(cloudById.values()).sort(
+  if (fbUid && (syncedFromServer || syncedFromCloud)) {
+    // Strictly replace local cache with authoritative backend/Firestore records
+    authoritativeList = Array.from(authoritativeById.values()).sort(
       (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     );
     writeLocalAttempts(effectiveUid, authoritativeList);
     if (appUserId !== effectiveUid) {
       writeLocalAttempts(appUserId, authoritativeList);
     }
+  } else if (fbUid) {
+    // Signed-in user but unable to reach backend/Firestore: never trust localStorage for passes
+    authoritativeList = [];
   } else {
     const byId = new Map<string, AssessmentAttemptRecord>();
     readLocalAttempts(effectiveUid).forEach((a) => byId.set(a.id, a));
@@ -341,7 +323,7 @@ export async function loadCandidateAssessmentAttempts(
     ? authoritativeList.filter((a) => a.courseId === courseId)
     : authoritativeList;
 
-  return { attempts: filtered, syncedFromCloud };
+  return { attempts: filtered, syncedFromCloud: syncedFromCloud || syncedFromServer };
 }
 
 // ============================================================================

@@ -336,8 +336,40 @@ export async function loadCandidateEnrolments(
 
   let authoritativeList: CourseEnrolmentRecord[];
   if (fbUid && syncedFromCloud) {
-    // Strictly replace local cache with authoritative Firestore records
-    authoritativeList = Array.from(cloudByCourseId.values()).sort(
+    // Hydrate authoritative quiz passes, module unlocks, and final assessment status from backend
+    const cloudRecords = Array.from(cloudByCourseId.values());
+    const hydrated = await Promise.all(
+      cloudRecords.map(async (rec) => {
+        const serverStatus = await fetchServerCourseProgressStatus(rec.courseId);
+        if (!serverStatus) return rec;
+        const mergedPassed = Array.from(
+          new Set([...rec.passedModuleQuizIds, ...serverStatus.passedModuleQuizIds])
+        );
+        const mergedCompletedLessons = Array.from(
+          new Set([...rec.completedLessonIds, ...serverStatus.completedLessonIds])
+        );
+        const unlockedOrder = Math.max(rec.unlockedModuleOrder, serverStatus.unlockedModuleOrder);
+        const finalPassed = rec.finalAssessmentPassed || serverStatus.finalAssessmentPassed;
+        const bestFinal =
+          typeof serverStatus.bestFinalScorePercent === 'number'
+            ? Math.max(rec.bestFinalScorePercent ?? 0, serverStatus.bestFinalScorePercent)
+            : rec.bestFinalScorePercent;
+        return {
+          ...rec,
+          completedLessonIds: mergedCompletedLessons,
+          passedModuleQuizIds: mergedPassed,
+          completedModuleIds: Array.from(new Set([...rec.completedModuleIds, ...mergedPassed])),
+          unlockedModuleOrder: unlockedOrder,
+          finalAssessmentPassed: finalPassed,
+          bestFinalScorePercent: bestFinal,
+          lastVerifiedAttemptId: serverStatus.lastVerifiedAttemptId || rec.lastVerifiedAttemptId,
+          lastVerifiedFinalAttemptId:
+            serverStatus.lastVerifiedFinalAttemptId || rec.lastVerifiedFinalAttemptId,
+        };
+      })
+    );
+
+    authoritativeList = hydrated.sort(
       (a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime()
     );
     writeLocalEnrolments(effectiveUid, authoritativeList);
@@ -666,48 +698,13 @@ export async function saveCandidateCourseProgress(
       const freshSnap = snap.exists() ? snap : await getDoc(docRef);
       const existingData = freshSnap.data() || {};
 
-      // Respect terminal state lock: completed enrolments are immutable for students
+      // Respect hardened firestore.rules: students may ONLY update non-authoritative
+      // lesson resume/completion bookmarks. Quiz passes, module unlocks, final assessment
+      // scores, progressPercent, and 'completed' status are strictly server/admin-controlled.
       if (existingData.status !== 'completed') {
-        if (params.verifiedFinalAttemptId && finalAssessmentPassed) {
-          // Action 3: Verified Final Assessment Pass / Course Completion
-          const finalPayload: Record<string, unknown> = {
-            finalAssessmentPassed: true,
-            lastVerifiedFinalAttemptId: params.verifiedFinalAttemptId,
-            progressPercent: evalResult.progressPercent,
-            status: evalResult.isCourseCompleted ? 'completed' : 'in_progress',
-            lastAccessedAt: serverTimestamp(),
-          };
-          if (typeof bestFinalScorePercent === 'number') {
-            finalPayload.bestFinalScorePercent = bestFinalScorePercent;
-          }
-          if (evalResult.isCourseCompleted && !existingData.completedAt) {
-            finalPayload.completedAt = nowIso;
-          }
-          await updateDoc(docRef, finalPayload);
-          savedToCloud = true;
-        } else if (params.verifiedAttemptId) {
-          // Action 2: Verified Module Quiz Pass & Sequential Unlock Progression (+1 max per verified pass)
-          const existingUnlocked =
-            typeof existingData.unlockedModuleOrder === 'number'
-              ? existingData.unlockedModuleOrder
-              : 1;
-          const nextUnlocked = Math.min(existingUnlocked + 1, computedUnlocked);
-          const quizPayload: Record<string, unknown> = {
-            passedModuleQuizIds: sanitizedPassedQuizzes,
-            completedModuleIds: sanitizedCompletedModules,
-            unlockedModuleOrder: Math.max(existingUnlocked, nextUnlocked),
-            lastVerifiedAttemptId: params.verifiedAttemptId,
-            progressPercent: Math.min(99, evalResult.progressPercent),
-            status: 'in_progress',
-            lastAccessedAt: serverTimestamp(),
-          };
-          await updateDoc(docRef, quizPayload);
-          savedToCloud = true;
-        } else {
-          // Action 1: Lesson Navigation & Lesson Completion ONLY (cannot alter quiz passes or final status)
+        if (!params.verifiedAttemptId && !params.verifiedFinalAttemptId) {
           const lessonPayload: Record<string, unknown> = {
             completedLessonIds: sanitizedCompleted,
-            progressPercent: Math.min(99, evalResult.progressPercent),
             status: sanitizedCompleted.length > 0 || safeCurrentLessonId ? 'in_progress' : 'enrolled',
             lastAccessedAt: serverTimestamp(),
           };

@@ -1,29 +1,19 @@
 /**
- * SERVER-ONLY Durable Learning Data Store & Cryptographic Signing Module.
+ * SERVER-ONLY Learning Data Store Interface & Cryptographic Signing Module.
  *
  * SECURITY & PERSISTENCE BOUNDARY:
  * - Never import this file from client-side `src/` code.
- * - Eliminates reliance on volatile in-memory-only storage for quiz configs,
- *   server-graded assessment attempts, course requirement definitions, lesson
- *   progress receipts, and issued certificates by atomically persisting state
- *   to disk (`.learning-data/learning-store.json`).
- * - Generates and verifies HMAC-SHA256 receipts for graded assessment attempts
- *   and issued certificates using `process.env.LEARNING_SIGNING_SECRET` /
- *   `process.env.CERTIFICATE_SIGNING_SECRET` (with a server-private auto-generated
- *   key fallback in `.learning-data/` so signatures remain valid across restarts).
+ * - Permanent production storage is backed exclusively by Supabase PostgreSQL
+ *   (`server/supabaseLearningStore.ts`, `public.learning_*` tables).
+ * - Ephemeral in-memory storage has been REMOVED from the runtime learning workflow.
+ * - Signing secret (`LEARNING_SIGNING_SECRET` or `CERTIFICATE_SIGNING_SECRET`) is
+ *   read strictly from `process.env` — NEVER written to container disk.
+ *   - In production (`NODE_ENV === 'production'`), fails closed (`SIGNING_SECRET_NOT_CONFIGURED`)
+ *     unless a strong (32+ char) environment secret is configured across all instances.
  */
 
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, '..', '.learning-data');
-const STORE_FILE = path.join(DATA_DIR, 'learning-store.json');
-const RUNTIME_KEY_FILE = path.join(DATA_DIR, '.signing-key');
+import { SupabaseLearningStoreRepository } from './supabaseLearningStore';
 
 export type AssessmentType = 'module_quiz' | 'final_assessment';
 export type CertificateValidityStatus = 'valid' | 'revoked';
@@ -52,6 +42,21 @@ export interface PersistedAssessmentConfig {
   requiredForCompletion: boolean;
   questions: PersistedQuizQuestion[];
   updatedAt?: string;
+}
+
+export interface PersistedAssessmentSession {
+  sessionId: string;
+  configId: string;
+  courseId: string;
+  assessmentType: AssessmentType;
+  moduleId?: string;
+  userId: string;
+  candidateName: string;
+  candidateEmail: string;
+  servedQuestionIds: string[];
+  createdAt: string;
+  expiresAt: string;
+  submitted: boolean;
 }
 
 export interface PersistedAttemptRecord {
@@ -87,6 +92,18 @@ export interface PersistedCourseDefinition {
   updatedAt: string;
 }
 
+export interface PersistedModuleUnlockRecord {
+  userId: string;
+  courseId: string;
+  passedModuleQuizIds: string[];
+  unlockedModuleOrder: number;
+  finalAssessmentPassed: boolean;
+  bestFinalScorePercent: number | null;
+  lastVerifiedAttemptId: string | null;
+  lastVerifiedFinalAttemptId: string | null;
+  updatedAt: string;
+}
+
 export interface PersistedCertificateRecord {
   certificateId: string;
   userId: string;
@@ -103,66 +120,158 @@ export interface PersistedCertificateRecord {
   templateId: string;
 }
 
-export interface DurableLearningStoreSnapshot {
-  version: 1;
+export interface LearningStoreDiagnostics {
+  backend: string;
+  isProductionDurable: boolean;
+  supabaseConfigured: boolean;
+  signingSecretConfigured: boolean;
+  connected: boolean;
+  connectionError?: string;
+  courseDefinitionsCount: number;
+  quizConfigsCount: number;
+  attemptsCount: number;
+  lessonProgressEntriesCount: number;
+  moduleUnlocksCount: number;
+  certificatesCount: number;
   updatedAt: string;
-  courseDefinitions: Record<string, PersistedCourseDefinition>;
-  quizConfigs: Record<string, PersistedAssessmentConfig>;
-  attempts: PersistedAttemptRecord[];
-  lessonProgress: Record<string, string[]>;
-  certificatesByUserCourse: Record<string, PersistedCertificateRecord>;
 }
 
-function createEmptySnapshot(): DurableLearningStoreSnapshot {
-  return {
-    version: 1,
-    updatedAt: new Date().toISOString(),
-    courseDefinitions: {},
-    quizConfigs: {},
-    attempts: [],
-    lessonProgress: {},
-    certificatesByUserCourse: {},
-  };
+export interface LearningStoreRepository {
+  readonly backendName: string;
+  readonly isProductionDurable: boolean;
+
+  // Courses
+  getCourseDefinition(courseId: string): Promise<PersistedCourseDefinition | undefined>;
+  upsertCourseDefinition(record: PersistedCourseDefinition): Promise<PersistedCourseDefinition>;
+
+  // Assessment configs
+  getAssessmentConfigById(id: string): Promise<PersistedAssessmentConfig | undefined>;
+  listCourseAssessments(courseId: string): Promise<PersistedAssessmentConfig[]>;
+  upsertAssessmentConfig(config: PersistedAssessmentConfig): Promise<PersistedAssessmentConfig>;
+
+  // Multi-instance assessment sessions
+  createAssessmentSession(session: PersistedAssessmentSession): Promise<PersistedAssessmentSession>;
+  getAssessmentSession(sessionId: string): Promise<PersistedAssessmentSession | undefined>;
+  markAssessmentSessionSubmitted(sessionId: string, userId: string): Promise<boolean>;
+  pruneExpiredSessions(nowIso: string): Promise<number>;
+
+  // Lesson progress
+  getLessonProgress(userId: string, courseId: string): Promise<string[]>;
+  upsertLessonProgress(
+    userId: string,
+    courseId: string,
+    completedLessonIds: string[]
+  ): Promise<string[]>;
+
+  // Quiz & Final Assessment attempts
+  insertAttempt(attempt: PersistedAttemptRecord): Promise<PersistedAttemptRecord>;
+  countCandidateAttempts(
+    userId: string,
+    courseId: string,
+    assessmentType: AssessmentType,
+    moduleId?: string
+  ): Promise<number>;
+  listAttempts(filters?: {
+    courseId?: string;
+    assessmentType?: string;
+    userId?: string;
+  }): Promise<PersistedAttemptRecord[]>;
+  deleteAttemptById(attemptId: string): Promise<boolean>;
+
+  // Module unlocks
+  getModuleUnlock(
+    userId: string,
+    courseId: string
+  ): Promise<PersistedModuleUnlockRecord | undefined>;
+  upsertModuleUnlock(record: PersistedModuleUnlockRecord): Promise<PersistedModuleUnlockRecord>;
+
+  // Certificates
+  getCertificateByUserCourse(
+    userId: string,
+    courseId: string
+  ): Promise<PersistedCertificateRecord | undefined>;
+  getCertificateById(certificateId: string): Promise<PersistedCertificateRecord | undefined>;
+  listCertificatesByUser(userId: string): Promise<PersistedCertificateRecord[]>;
+  insertCertificate(cert: PersistedCertificateRecord): Promise<PersistedCertificateRecord>;
+
+  // Admin maintenance & diagnostics
+  resetAllLearningData(): Promise<{
+    clearedConfigs: number;
+    clearedAttempts: number;
+    clearedProgressEntries: number;
+    clearedCertificates: number;
+    clearedCourseDefinitions: number;
+    clearedSessions: number;
+    clearedModuleUnlocks: number;
+  }>;
+  getDiagnostics(): Promise<LearningStoreDiagnostics>;
 }
 
-function ensureDataDir(): void {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+// ============================================================================
+// ACTIVE REPOSITORY (PRODUCTION SUPABASE POSTGRESQL BY DEFAULT)
+// ============================================================================
+
+let activeRepository: LearningStoreRepository | null = null;
+
+export function getLearningStore(): LearningStoreRepository {
+  if (!activeRepository) {
+    activeRepository = new SupabaseLearningStoreRepository();
   }
+  return activeRepository;
 }
 
-let cachedSigningSecret: string | null = null;
+/**
+ * Allows automated test harnesses to inject a mock/isolated repository without
+ * modifying production behavior (never called in production runtime).
+ */
+export function setLearningStoreRepository(repo: LearningStoreRepository | null): void {
+  activeRepository = repo;
+}
 
-function resolveSigningSecret(): string {
-  if (cachedSigningSecret) return cachedSigningSecret;
+// ============================================================================
+// SIGNING SECRET RESOLUTION (ENV-ONLY IN PRODUCTION, CONSISTENT ACROSS INSTANCES)
+// ============================================================================
 
+let devFallbackSigningSecret: string | null = null;
+let loggedDevSecretWarning = false;
+
+export function isSigningSecretConfigured(): boolean {
   const envSecret =
     (process.env.LEARNING_SIGNING_SECRET || '').trim() ||
     (process.env.CERTIFICATE_SIGNING_SECRET || '').trim();
-  if (envSecret.length >= 16) {
-    cachedSigningSecret = envSecret;
-    return cachedSigningSecret;
+  return envSecret.length >= 32;
+}
+
+function resolveSigningSecret(): string {
+  const envSecret =
+    (process.env.LEARNING_SIGNING_SECRET || '').trim() ||
+    (process.env.CERTIFICATE_SIGNING_SECRET || '').trim();
+
+  if (envSecret.length >= 32) {
+    return envSecret;
   }
 
-  // Persist a server-private random key inside `.learning-data/` so HMAC receipts
-  // remain verifiable across server restarts even when env secrets are not yet configured.
-  try {
-    ensureDataDir();
-    if (fs.existsSync(RUNTIME_KEY_FILE)) {
-      const stored = fs.readFileSync(RUNTIME_KEY_FILE, 'utf8').trim();
-      if (stored.length >= 32) {
-        cachedSigningSecret = stored;
-        return cachedSigningSecret;
-      }
-    }
-    const generated = crypto.randomBytes(32).toString('hex');
-    fs.writeFileSync(RUNTIME_KEY_FILE, generated, { encoding: 'utf8', mode: 0o600 });
-    cachedSigningSecret = generated;
-    return cachedSigningSecret;
-  } catch {
-    cachedSigningSecret = crypto.randomBytes(32).toString('hex');
-    return cachedSigningSecret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'SIGNING_SECRET_NOT_CONFIGURED: Set LEARNING_SIGNING_SECRET (minimum 32 random characters) in production environment variables so HMAC signatures remain stable across restarts and Cloud Run instances.'
+    );
   }
+
+  // Non-production dev fallback (strictly in memory, never persisted to disk)
+  if (envSecret.length >= 16) {
+    return envSecret;
+  }
+
+  if (!devFallbackSigningSecret) {
+    devFallbackSigningSecret = crypto.randomBytes(32).toString('hex');
+  }
+  if (!loggedDevSecretWarning) {
+    loggedDevSecretWarning = true;
+    console.warn(
+      '[learningStore] LEARNING_SIGNING_SECRET (32+ chars) is not set. Using a temporary dev-only key. Configure LEARNING_SIGNING_SECRET in your server environment so signatures stay valid across restarts and instances.'
+    );
+  }
+  return devFallbackSigningSecret;
 }
 
 export function signAssessmentAttemptReceipt(fields: {
@@ -211,11 +320,15 @@ export function verifyAssessmentAttemptReceipt(fields: {
   if (!fields.verificationSignature || fields.verificationSignature.length < 32) {
     return false;
   }
-  const expected = signAssessmentAttemptReceipt(fields);
-  const a = Buffer.from(fields.verificationSignature, 'utf8');
-  const b = Buffer.from(expected, 'utf8');
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  try {
+    const expected = signAssessmentAttemptReceipt(fields);
+    const a = Buffer.from(fields.verificationSignature, 'utf8');
+    const b = Buffer.from(expected, 'utf8');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
 export function signCertificateReceipt(fields: {
@@ -255,89 +368,30 @@ export function verifyCertificateReceipt(fields: {
   if (!fields.verificationSignature || fields.verificationSignature.length < 32) {
     return false;
   }
-  const expected = signCertificateReceipt(fields);
-  const a = Buffer.from(fields.verificationSignature, 'utf8');
-  const b = Buffer.from(expected, 'utf8');
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-}
-
-let inMemorySnapshot: DurableLearningStoreSnapshot | null = null;
-
-export function loadDurableLearningStore(): DurableLearningStoreSnapshot {
-  if (inMemorySnapshot) return inMemorySnapshot;
-
   try {
-    ensureDataDir();
-    if (fs.existsSync(STORE_FILE)) {
-      const raw = fs.readFileSync(STORE_FILE, 'utf8');
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        inMemorySnapshot = {
-          version: 1,
-          updatedAt:
-            typeof parsed.updatedAt === 'string'
-              ? parsed.updatedAt
-              : new Date().toISOString(),
-          courseDefinitions:
-            parsed.courseDefinitions && typeof parsed.courseDefinitions === 'object'
-              ? parsed.courseDefinitions
-              : {},
-          quizConfigs:
-            parsed.quizConfigs && typeof parsed.quizConfigs === 'object'
-              ? parsed.quizConfigs
-              : {},
-          attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
-          lessonProgress:
-            parsed.lessonProgress && typeof parsed.lessonProgress === 'object'
-              ? parsed.lessonProgress
-              : {},
-          certificatesByUserCourse:
-            parsed.certificatesByUserCourse &&
-            typeof parsed.certificatesByUserCourse === 'object'
-              ? parsed.certificatesByUserCourse
-              : {},
-        };
-        return inMemorySnapshot;
-      }
-    }
-  } catch (err) {
-    console.warn('[learningStore] Failed to load durable store; initializing clean store:', err);
-  }
-
-  inMemorySnapshot = createEmptySnapshot();
-  persistDurableLearningStore(inMemorySnapshot);
-  return inMemorySnapshot;
-}
-
-export function persistDurableLearningStore(snapshot: DurableLearningStoreSnapshot): void {
-  snapshot.updatedAt = new Date().toISOString();
-  inMemorySnapshot = snapshot;
-
-  try {
-    ensureDataDir();
-    const tmpFile = `${STORE_FILE}.${process.pid}.${Date.now()}.tmp`;
-    fs.writeFileSync(tmpFile, JSON.stringify(snapshot, null, 2), {
-      encoding: 'utf8',
-      mode: 0o600,
-    });
-    fs.renameSync(tmpFile, STORE_FILE);
-  } catch (err) {
-    console.error('[learningStore] Failed to persist durable learning store to disk:', err);
+    const expected = signCertificateReceipt(fields);
+    const a = Buffer.from(fields.verificationSignature, 'utf8');
+    const b = Buffer.from(expected, 'utf8');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
   }
 }
 
-export function getRegisteredCourseDefinition(
+// ============================================================================
+// HIGH-LEVEL COURSE DEFINITION & DIAGNOSTICS HELPERS
+// ============================================================================
+
+export async function getRegisteredCourseDefinition(
   courseId: string
-): PersistedCourseDefinition | undefined {
-  const store = loadDurableLearningStore();
-  return store.courseDefinitions[courseId];
+): Promise<PersistedCourseDefinition | undefined> {
+  return getLearningStore().getCourseDefinition(courseId);
 }
 
-export function upsertRegisteredCourseDefinition(
+export async function upsertRegisteredCourseDefinition(
   input: Omit<PersistedCourseDefinition, 'updatedAt'>
-): PersistedCourseDefinition {
-  const store = loadDurableLearningStore();
+): Promise<PersistedCourseDefinition> {
   const safeCourseId = input.courseId.trim().replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
   const record: PersistedCourseDefinition = {
     courseId: safeCourseId,
@@ -363,28 +417,9 @@ export function upsertRegisteredCourseDefinition(
     updatedAt: new Date().toISOString(),
   };
 
-  store.courseDefinitions[safeCourseId] = record;
-  persistDurableLearningStore(store);
-  return record;
+  return getLearningStore().upsertCourseDefinition(record);
 }
 
-export function getDurableStoreDiagnostics(): {
-  storePath: string;
-  courseDefinitionsCount: number;
-  quizConfigsCount: number;
-  attemptsCount: number;
-  lessonProgressEntriesCount: number;
-  certificatesCount: number;
-  updatedAt: string;
-} {
-  const store = loadDurableLearningStore();
-  return {
-    storePath: STORE_FILE,
-    courseDefinitionsCount: Object.keys(store.courseDefinitions).length,
-    quizConfigsCount: Object.keys(store.quizConfigs).length,
-    attemptsCount: store.attempts.length,
-    lessonProgressEntriesCount: Object.keys(store.lessonProgress).length,
-    certificatesCount: Object.keys(store.certificatesByUserCourse).length,
-    updatedAt: store.updatedAt,
-  };
+export async function getDurableStoreDiagnostics(): Promise<LearningStoreDiagnostics> {
+  return getLearningStore().getDiagnostics();
 }

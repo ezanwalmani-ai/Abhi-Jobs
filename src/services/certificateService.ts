@@ -4,10 +4,8 @@ import {
   getDoc,
   getDocs,
   query,
-  serverTimestamp,
   Timestamp,
   where,
-  writeBatch,
 } from 'firebase/firestore';
 import {
   auth as firebaseAuth,
@@ -22,7 +20,6 @@ import {
 } from '../types/learning';
 
 const LOCAL_CERTS_PREFIX = 'abhijobs_certificates_v1_';
-const PUBLIC_CERT_CACHE_KEY = 'abhijobs_public_cert_index_v1';
 
 function getUserCertStorageKey(userId: string): string {
   return `${LOCAL_CERTS_PREFIX}${userId}`;
@@ -138,47 +135,9 @@ function writeLocalCertificates(userId: string, certs: CourseCertificateRecord[]
   }
 }
 
-/**
- * Stores strictly ONLY the 5 non-PII public verification fields in a local fallback index
- * so QR/ID verification remains responsive during local preview restarts.
- */
-function savePublicVerificationProjection(cert: CourseCertificateRecord): void {
-  try {
-    const raw = localStorage.getItem(PUBLIC_CERT_CACHE_KEY);
-    const parsed: Record<string, PublicCertificateVerification> = raw ? JSON.parse(raw) : {};
-    parsed[cert.certificateId] = {
-      certificateId: cert.certificateId,
-      candidateName: cert.candidateName,
-      courseTitle: cert.courseTitle,
-      issueDate: cert.completionDate,
-      status: cert.status,
-    };
-    localStorage.setItem(PUBLIC_CERT_CACHE_KEY, JSON.stringify(parsed));
-  } catch {
-    // Safe fallback
-  }
-}
-
-function readPublicVerificationProjection(
-  certificateId: string
-): PublicCertificateVerification | null {
-  try {
-    const raw = localStorage.getItem(PUBLIC_CERT_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const entry = parsed?.[certificateId];
-    if (!entry || typeof entry !== 'object') return null;
-    return {
-      certificateId: String(entry.certificateId),
-      candidateName: String(entry.candidateName),
-      courseTitle: String(entry.courseTitle),
-      issueDate: String(entry.issueDate),
-      status: entry.status === 'revoked' ? 'revoked' : 'valid',
-    };
-  } catch {
-    return null;
-  }
-}
+// Public certificate verification NEVER falls back to browser localStorage.
+// Authoritative lookups run strictly against the backend HMAC-verified registry
+// and admin/server-written Firestore /public_certificates/{certId} records.
 
 /**
  * Synchronizes completed lesson IDs to the authoritative backend progress store
@@ -223,8 +182,9 @@ export interface IssueCertificateResponse {
 
 /**
  * Requests backend-validated issuance of a Course Completion Certificate.
- * Persists to Firestore atomically (private candidate certificate + public verification record)
- * when a verified Firebase user is active, without allowing duplicates for (userId, courseId).
+ * Student browsers NEVER write directly to /users/{uid}/certificates or /public_certificates
+ * (strictly denied in firestore.rules) and never pass self-reported completedLessonIds
+ * in the issuance payload.
  */
 export async function issueCourseCertificate(params: {
   appUserId: string | null | undefined;
@@ -242,7 +202,7 @@ export async function issueCourseCertificate(params: {
   const fbUid = getVerifiedFirebaseUid();
   const effectiveUid = fbUid || params.appUserId;
 
-  // Check if already issued in Firestore first (prevents duplicate issuance across server restarts)
+  // Read-only check if already issued in Firestore
   if (fbUid) {
     try {
       const existingRef = doc(db, 'users', fbUid, 'certificates', params.courseId);
@@ -261,7 +221,6 @@ export async function issueCourseCertificate(params: {
           if (params.appUserId !== effectiveUid) {
             writeLocalCertificates(params.appUserId, nextLocal);
           }
-          savePublicVerificationProjection(cloudCert);
           return {
             success: true,
             alreadyIssued: true,
@@ -274,7 +233,7 @@ export async function issueCourseCertificate(params: {
     }
   }
 
-  // Call authoritative backend endpoint to validate all 3 completion rules
+  // Call authoritative backend endpoint to validate all 3 completion rules strictly from server state
   const headers = await buildAuthHeaders();
   let response: Response;
   try {
@@ -285,7 +244,6 @@ export async function issueCourseCertificate(params: {
         courseId: params.courseId,
         candidateId: effectiveUid,
         candidateName: params.candidateName.trim() || 'ABHI JOBS Candidate',
-        completedLessonIds: params.completedLessonIds || [],
       }),
     });
   } catch {
@@ -314,54 +272,6 @@ export async function issueCourseCertificate(params: {
     };
   }
 
-  // Atomically persist private certificate + non-PII public verification record to Firestore
-  if (fbUid) {
-    const privateRef = doc(db, 'users', fbUid, 'certificates', issuedCert.courseId);
-    const publicRef = doc(db, 'public_certificates', issuedCert.certificateId);
-    const privatePath = `users/${fbUid}/certificates/${issuedCert.courseId}`;
-
-    try {
-      const existingSnap = await getDoc(privateRef);
-      if (!existingSnap.exists()) {
-        const batch = writeBatch(db);
-        const privatePayload: Record<string, unknown> = {
-          certificateId: issuedCert.certificateId,
-          userId: fbUid,
-          candidateName: issuedCert.candidateName,
-          courseId: issuedCert.courseId,
-          courseSlug: issuedCert.courseSlug,
-          courseTitle: issuedCert.courseTitle,
-          completionDate: issuedCert.completionDate,
-          finalAssessmentScore: issuedCert.finalAssessmentScore,
-          status: 'valid',
-          verificationSignature: issuedCert.verificationSignature,
-          templateId: issuedCert.templateId || 'default_abhi_certificate',
-          issuedAt: serverTimestamp(),
-        };
-        if (issuedCert.finalAttemptId) {
-          privatePayload.finalAttemptId = issuedCert.finalAttemptId;
-        }
-        batch.set(privateRef, privatePayload);
-        batch.set(publicRef, {
-          certificateId: issuedCert.certificateId,
-          candidateName: issuedCert.candidateName,
-          courseId: issuedCert.courseId,
-          courseTitle: issuedCert.courseTitle,
-          issueDate: issuedCert.completionDate,
-          status: 'valid',
-          issuedAt: serverTimestamp(),
-        });
-        await batch.commit();
-      }
-    } catch (error) {
-      try {
-        handleFirestoreError(error, OperationType.CREATE, privatePath);
-      } catch {
-        // Logged via structured helper; backend-issued certificate remains available
-      }
-    }
-  }
-
   const nextLocal = [
     issuedCert,
     ...readLocalCertificates(effectiveUid).filter((c) => c.courseId !== issuedCert.courseId),
@@ -370,7 +280,6 @@ export async function issueCourseCertificate(params: {
   if (params.appUserId !== effectiveUid) {
     writeLocalCertificates(params.appUserId, nextLocal);
   }
-  savePublicVerificationProjection(issuedCert);
 
   return {
     success: true,
@@ -453,16 +362,17 @@ export async function loadCandidateCertificates(
     merged = Array.from(authoritativeByCourse.values()).sort(
       (a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()
     );
-    merged.forEach((cert) => savePublicVerificationProjection(cert));
     writeLocalCertificates(effectiveUid, merged);
     if (appUserId !== effectiveUid) {
       writeLocalCertificates(appUserId, merged);
     }
+  } else if (fbUid) {
+    merged = [];
   } else {
     merged = readLocalCertificates(effectiveUid);
   }
 
-  return { certificates: merged, syncedFromCloud };
+  return { certificates: merged, syncedFromCloud: syncedFromCloud || syncedFromServer };
 }
 
 /**
@@ -510,6 +420,7 @@ export async function verifyCertificatePublic(
   }
 
   // 2. Check Firestore single-document public verification registry (/public_certificates/{certId})
+  // Strictly admin/server-written in firestore.rules (students cannot write here).
   try {
     const publicDocRef = doc(db, 'public_certificates', normalizedId);
     const snap = await getDoc(publicDocRef);
@@ -530,18 +441,7 @@ export async function verifyCertificatePublic(
       };
     }
   } catch {
-    // Fall through to local preview projection
-  }
-
-  // 3. Same-browser preview fallback (strictly non-PII projection only)
-  const localPub = readPublicVerificationProjection(normalizedId);
-  if (localPub) {
-    return {
-      found: true,
-      valid: localPub.status === 'valid',
-      status: localPub.status,
-      certificate: localPub,
-    };
+    // Do NOT fall back to localStorage; unverified browser state cannot vouch for certificates
   }
 
   return {

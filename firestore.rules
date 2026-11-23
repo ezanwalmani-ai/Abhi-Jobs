@@ -499,7 +499,7 @@ service cloud.firestore {
              ]) &&
              data.id == attemptId &&
              isValidId(data.id) &&
-             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             data.userId is string && data.userId == userId &&
              isValidId(data.courseId) &&
              data.courseSlug is string && data.courseSlug.size() > 0 && data.courseSlug.size() <= 128 &&
              data.courseTitle is string && data.courseTitle.size() > 0 && data.courseTitle.size() <= 160 &&
@@ -641,31 +641,6 @@ service cloud.firestore {
              data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
     }
 
-    // Relational helpers verifying server-graded attempt integrity before allowing unlocks or certificates
-    function hasPassingModuleQuizAttempt(userId, courseId, attemptId) {
-      let attempt = get(/databases/$(database)/documents/users/$(userId)/assessment_attempts/$(attemptId)).data;
-      return isValidId(attemptId) &&
-             attempt.userId == userId &&
-             attempt.courseId == courseId &&
-             attempt.assessmentType == 'module_quiz' &&
-             attempt.passed == true &&
-             attempt.scorePercent >= attempt.passPercentage &&
-             isValidHexSignature(attempt.verificationSignature);
-    }
-
-    function hasPassingFinalAssessmentAttempt(userId, courseId, attemptId, expectedScore) {
-      let attempt = get(/databases/$(database)/documents/users/$(userId)/assessment_attempts/$(attemptId)).data;
-      return isValidId(attemptId) &&
-             attempt.userId == userId &&
-             attempt.courseId == courseId &&
-             attempt.assessmentType == 'final_assessment' &&
-             attempt.passed == true &&
-             attempt.scorePercent >= 70 &&
-             attempt.scorePercent >= attempt.passPercentage &&
-             attempt.scorePercent == expectedScore &&
-             isValidHexSignature(attempt.verificationSignature);
-    }
-
     // =========================================================================
     // ADMINS REGISTRY (Console/Server-managed only; prevents privilege escalation)
     // =========================================================================
@@ -758,10 +733,11 @@ service cloud.firestore {
                          existing().status == 'in_progress';
       }
 
-      // HARDENED: Private per-candidate Learn with ABHI Course Enrolments & Progress
-      // Keyed by courseId to prevent duplicate enrolments structurally.
-      // Enforces initial-state creation, Terminal State Locking, and relational verification
-      // against assessment_attempts before module unlocks or course completion can be recorded.
+      // HARDENED (ZERO STUDENT SCORE/UNLOCK/COMPLETION WRITES):
+      // Students may create a clean initial enrolment and update ONLY non-authoritative
+      // lesson resume/completion bookmarks. Quiz passes, module unlocks, final assessment
+      // scores, and 'completed' status CANNOT be written by students — only Admins or
+      // server-side privileged Admin SDK may modify them.
       match /course_enrolments/{courseId} {
         allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(courseId);
         allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
@@ -774,12 +750,15 @@ service cloud.firestore {
                          incoming().userId == request.auth.uid &&
                          incoming().status == 'enrolled' &&
                          incoming().completedLessonIds.size() == 0 &&
+                         (!('completedModuleIds' in incoming()) || incoming().completedModuleIds.size() == 0) &&
                          incoming().passedModuleQuizIds.size() == 0 &&
                          incoming().unlockedModuleOrder == 1 &&
                          incoming().finalAssessmentPassed == false &&
                          incoming().progressPercent == 0 &&
                          !('completedAt' in incoming()) &&
                          !('bestFinalScorePercent' in incoming()) &&
+                         !('lastVerifiedAttemptId' in incoming()) &&
+                         !('lastVerifiedFinalAttemptId' in incoming()) &&
                          incoming().enrolledAt == request.time &&
                          incoming().lastAccessedAt == request.time;
 
@@ -796,75 +775,33 @@ service cloud.firestore {
                          (
                            isAdmin() ||
                            (
+                             // Strict Student-Only Action: Lesson resume & completion bookmarks ONLY.
+                             // Students CANNOT alter passedModuleQuizIds, completedModuleIds, unlockedModuleOrder,
+                             // finalAssessmentPassed, bestFinalScorePercent, lastVerified*AttemptId, progressPercent,
+                             // completedAt, or transition status to 'completed'.
                              isVerifiedUser() &&
                              isOwner(userId) &&
                              existing().status != 'completed' &&
-                             (
-                               // Action 1: Lesson navigation & lesson completion only (cannot alter quiz passes, unlocks, or final status)
-                               (
-                                 incoming().status != 'completed' &&
-                                 incoming().progressPercent < 100 &&
-                                 incoming().passedModuleQuizIds == existing().passedModuleQuizIds &&
-                                 incoming().unlockedModuleOrder == existing().unlockedModuleOrder &&
-                                 incoming().finalAssessmentPassed == existing().finalAssessmentPassed &&
-                                 incoming().diff(existing()).affectedKeys().hasOnly([
-                                   'currentModuleId',
-                                   'currentLessonId',
-                                   'completedLessonIds',
-                                   'progressPercent',
-                                   'status',
-                                   'lastAccessedAt'
-                                 ])
-                               ) ||
-                               // Action 2: Verified module quiz pass & sequential unlock (+1 max per verified passing attempt)
-                               (
-                                 incoming().status != 'completed' &&
-                                 incoming().progressPercent < 100 &&
-                                 incoming().finalAssessmentPassed == existing().finalAssessmentPassed &&
-                                 incoming().unlockedModuleOrder >= existing().unlockedModuleOrder &&
-                                 incoming().unlockedModuleOrder <= existing().unlockedModuleOrder + 1 &&
-                                 'lastVerifiedAttemptId' in incoming() &&
-                                 hasPassingModuleQuizAttempt(userId, courseId, incoming().lastVerifiedAttemptId) &&
-                                 incoming().diff(existing()).affectedKeys().hasOnly([
-                                   'passedModuleQuizIds',
-                                   'completedModuleIds',
-                                   'unlockedModuleOrder',
-                                   'lastVerifiedAttemptId',
-                                   'progressPercent',
-                                   'status',
-                                   'lastAccessedAt'
-                                 ])
-                               ) ||
-                               // Action 3: Verified final assessment pass (>= 70%) & course completion transition
-                               (
-                                 incoming().finalAssessmentPassed == true &&
-                                 'bestFinalScorePercent' in incoming() &&
-                                 incoming().bestFinalScorePercent >= 70 &&
-                                 'lastVerifiedFinalAttemptId' in incoming() &&
-                                 hasPassingFinalAssessmentAttempt(
-                                   userId,
-                                   courseId,
-                                   incoming().lastVerifiedFinalAttemptId,
-                                   incoming().bestFinalScorePercent
-                                 ) &&
-                                 incoming().diff(existing()).affectedKeys().hasOnly([
-                                   'finalAssessmentPassed',
-                                   'bestFinalScorePercent',
-                                   'lastVerifiedFinalAttemptId',
-                                   'progressPercent',
-                                   'status',
-                                   'completedAt',
-                                   'lastAccessedAt'
-                                 ])
-                               )
-                             )
+                             (incoming().status == 'enrolled' || incoming().status == 'in_progress') &&
+                             incoming().passedModuleQuizIds == existing().passedModuleQuizIds &&
+                             incoming().unlockedModuleOrder == existing().unlockedModuleOrder &&
+                             incoming().finalAssessmentPassed == existing().finalAssessmentPassed &&
+                             incoming().progressPercent == existing().progressPercent &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'currentModuleId',
+                               'currentLessonId',
+                               'completedLessonIds',
+                               'status',
+                               'lastAccessedAt'
+                             ])
                            )
                          );
 
         allow delete: if isAdmin() && isValidId(userId) && isValidId(courseId);
       }
 
-      // NEW: Private per-candidate YouTube Video Playback Progress
+      // Private per-candidate YouTube Video Playback Telemetry (informational playback state only;
+      // cannot unlock modules, pass quizzes, or grant certificates).
       match /video_progress/{progressKey} {
         allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(progressKey);
         allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
@@ -902,14 +839,15 @@ service cloud.firestore {
         allow delete: if isAdmin() && isValidId(userId) && isValidId(progressKey);
       }
 
-      // HARDENED: Private per-candidate Immutable Quiz & Final Assessment Attempts
-      // Enforces score/pass consistency and backend HMAC receipt structure; strictly immutable & admin-only delete.
+      // HARDENED (ZERO STUDENT WRITES): Private per-candidate Quiz & Final Assessment Attempts
+      // Students can ONLY read their own attempts. Creating, modifying, or deleting attempts
+      // directly from a student client is strictly forbidden — completely blocking fake attempts
+      // with arbitrary hex signatures.
       match /assessment_attempts/{attemptId} {
         allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(attemptId);
         allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
 
-        allow create: if isVerifiedUser() &&
-                         isOwner(userId) &&
+        allow create: if isAdmin() &&
                          isValidId(userId) &&
                          isValidId(attemptId) &&
                          isValidAssessmentAttempt(incoming(), userId, attemptId) &&
@@ -919,29 +857,19 @@ service cloud.firestore {
         allow delete: if isAdmin() && isValidId(userId) && isValidId(attemptId);
       }
 
-      // HARDENED: Private per-candidate Immutable Course Completion Certificates
-      // Keyed by courseId to prevent duplicates. Requires completed enrolment, verified passing final
-      // assessment attempt matching the printed score, and atomic public verification doc via getAfter.
+      // HARDENED (ZERO STUDENT WRITES): Private per-candidate Immutable Course Completion Certificates
+      // Students can ONLY read their own certificates. Direct client creation or modification
+      // is strictly denied — preventing certificate forgery from browser SDKs.
       match /certificates/{courseId} {
         allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(courseId);
         allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isAdmin();
 
-        allow create: if isVerifiedUser() &&
-                         isOwner(userId) &&
+        allow create: if isAdmin() &&
                          isValidId(userId) &&
                          isValidId(courseId) &&
                          isValidCandidateCertificate(incoming(), userId, courseId) &&
-                         incoming().userId == request.auth.uid &&
                          incoming().status == 'valid' &&
                          incoming().issuedAt == request.time &&
-                         get(/databases/$(database)/documents/users/$(userId)/course_enrolments/$(courseId)).data.status == 'completed' &&
-                         get(/databases/$(database)/documents/users/$(userId)/course_enrolments/$(courseId)).data.finalAssessmentPassed == true &&
-                         hasPassingFinalAssessmentAttempt(
-                           userId,
-                           courseId,
-                           incoming().finalAttemptId,
-                           incoming().finalAssessmentScore
-                         ) &&
                          getAfter(/databases/$(database)/documents/public_certificates/$(incoming().certificateId)).data.courseId == courseId &&
                          getAfter(/databases/$(database)/documents/public_certificates/$(incoming().certificateId)).data.status == 'valid';
 
@@ -961,20 +889,18 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // PUBLIC CERTIFICATE VERIFICATION REGISTRY (Single-Doc Lookup, Zero PII)
+    // PUBLIC CERTIFICATE VERIFICATION REGISTRY (Single-Doc Lookup, Zero Student Writes)
     // =========================================================================
 
     match /public_certificates/{certificateId} {
       allow get: if isValidCertificateId(certificateId);
       allow list: if isAdmin();
 
-      allow create: if isVerifiedUser() &&
+      allow create: if isAdmin() &&
                        isValidCertificateId(certificateId) &&
                        isValidPublicCertificate(incoming(), certificateId) &&
                        incoming().status == 'valid' &&
-                       incoming().issuedAt == request.time &&
-                       getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/certificates/$(incoming().courseId)).data.certificateId == certificateId &&
-                       getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/certificates/$(incoming().courseId)).data.status == 'valid';
+                       incoming().issuedAt == request.time;
 
       allow update: if isAdmin() &&
                        isValidCertificateId(certificateId) &&
