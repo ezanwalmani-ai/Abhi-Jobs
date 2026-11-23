@@ -40,6 +40,7 @@ import {
   upsertRegisteredCourseDefinition,
 } from './server/learningStore';
 import { MODULE_REQUIRED_LESSONS } from './server/excelCurriculumSeed';
+import { getModule02PracticeWorkbookBuffer } from './server/module02WorkbookGenerator';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -453,6 +454,28 @@ async function startServer() {
   // --------------------------------------------------------------------------
   // CANDIDATE ASSESSMENT APIs (Strictly Firebase UID Authenticated)
   // --------------------------------------------------------------------------
+
+  // 0. Downloadable Practice Excel Workbook for Module 02 (no Excel purchase required)
+  app.get(
+    '/api/learning/resources/excel-module-02-practice-workbook.xlsx',
+    (_req: Request, res: Response) => {
+      try {
+        const buffer = getModule02PracticeWorkbookBuffer();
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="ABHI-Excel-Module-02-Practice-Workbook.xlsx"'
+        );
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(buffer);
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    }
+  );
 
   // 1. Course assessments summary (NO questions, NO correctOptionIndex, NO explanations)
   app.get('/api/learning/assessments/course/:courseId/summary', async (req: Request, res: Response) => {

@@ -396,7 +396,7 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
         } else {
           showToast(
             'info',
-            'Attempt Recorded — Module 2 Remains Locked',
+            'Attempt Recorded — Next Module Remains Locked',
             `You scored ${attempt.scorePercent}%. Review the explanations and retake to reach ${attempt.passPercentage}%.`
           );
         }

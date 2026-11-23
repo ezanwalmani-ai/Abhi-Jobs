@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Award,
@@ -13,7 +14,10 @@ import {
   Clock,
   Download,
   Eye,
+  FileSpreadsheet,
   FileText,
+  Keyboard,
+  Lightbulb,
   List,
   Loader2,
   Lock,
@@ -333,8 +337,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   const selectLesson = async (lessonId: string, globalIndex: number) => {
     if (!isLessonUnlocked(globalIndex)) {
-      const prevTitle = flatLessons[globalIndex - 1]?.lesson.title || 'the previous lesson';
-      setLockNotice(`Complete "${prevTitle}" first to unlock this lesson.`);
+      const targetEntry = flatLessons[globalIndex];
+      if (targetEntry && targetEntry.module.order > effectiveUnlockedModuleOrder) {
+        setLockNotice(
+          `Pass the Module 0${targetEntry.module.order - 1} Quiz (70%+) first to unlock Module 0${targetEntry.module.order}.`
+        );
+      } else {
+        const prevTitle = flatLessons[globalIndex - 1]?.lesson.title || 'the previous lesson';
+        setLockNotice(`Complete "${prevTitle}" first to unlock this lesson.`);
+      }
       return;
     }
 
@@ -360,9 +371,20 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   const selectModuleQuiz = (moduleId: string, moduleTitle: string) => {
     if (!isModuleQuizUnlocked(moduleId)) {
-      setLockNotice(
-        `Complete all lessons in "${moduleTitle}" to unlock its Module Quiz.`
-      );
+      const mod = sortedModules.find((m) => m.id === moduleId);
+      if (mod && mod.order > effectiveUnlockedModuleOrder) {
+        setLockNotice(
+          `Pass the Module 0${mod.order - 1} Quiz (70%+) first to unlock Module 0${mod.order}.`
+        );
+      } else if (mod) {
+        setLockNotice(
+          `Watch at least 90% of the Module 0${mod.order} video first to unlock the Module 0${mod.order} Quiz.`
+        );
+      } else {
+        setLockNotice(
+          `Complete all lessons in "${moduleTitle}" to unlock its Module Quiz.`
+        );
+      }
       return;
     }
     setLockNotice(null);
@@ -504,6 +526,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   const getContinueActionAfterModuleQuiz = (moduleId: string) => {
     const modIndex = sortedModules.findIndex((m) => m.id === moduleId);
+    const currentMod = modIndex >= 0 ? sortedModules[modIndex] : null;
     const nextMod = modIndex >= 0 ? sortedModules[modIndex + 1] : null;
     if (nextMod && !nextMod.isUpcomingPlaceholder && nextMod.lessons.length > 0) {
       const firstNextLesson = nextMod.lessons
@@ -518,12 +541,17 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       }
     }
     if (nextMod?.isUpcomingPlaceholder) {
+      const currentFirstLesson = currentMod?.lessons
+        .slice()
+        .sort((a, b) => a.order - b.order)[0];
+      const currentMatch = currentFirstLesson
+        ? flatLessons.find((f) => f.lesson.id === currentFirstLesson.id)
+        : flatLessons[0];
       return {
-        label: `Back to Module 01 (Module 0${nextMod.order} Unlocked)`,
+        label: `Back to Module 0${currentMod?.order ?? 1} (Module 0${nextMod.order} Unlocked)`,
         action: () => {
-          const first = flatLessons[0];
-          if (first) {
-            void selectLesson(first.lesson.id, 0);
+          if (currentMatch) {
+            void selectLesson(currentMatch.lesson.id, currentMatch.globalIndex);
           } else {
             onBackToCourseDetails();
           }
@@ -664,20 +692,30 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 </strong>
               </span>
             </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span>
-                Module 02 Status:{' '}
-                <strong
-                  className={
-                    effectiveUnlockedModuleOrder >= 2 ? 'text-emerald-700' : 'text-[#566479]'
-                  }
-                >
-                  {effectiveUnlockedModuleOrder >= 2 ? 'Unlocked' : 'Locked (Pass M01 70%+)'}
-                </strong>
-              </span>
-            </div>
-          )}
+          ) : (() => {
+            const nextLockedMod = sortedModules.find(
+              (m) => m.order > effectiveUnlockedModuleOrder
+            );
+            const highestPlaceholder = sortedModules.find((m) => m.isUpcomingPlaceholder);
+            const targetModOrder = nextLockedMod?.order ?? highestPlaceholder?.order ?? 2;
+            const targetUnlocked = effectiveUnlockedModuleOrder >= targetModOrder;
+            return (
+              <div className="flex items-center justify-between">
+                <span>
+                  Module 0{targetModOrder} Status:{' '}
+                  <strong
+                    className={
+                      targetUnlocked ? 'text-emerald-700' : 'text-[#566479]'
+                    }
+                  >
+                    {targetUnlocked
+                      ? 'Unlocked'
+                      : `Locked (Pass M0${targetModOrder - 1} 70%+)`}
+                  </strong>
+                </span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -712,6 +750,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         {sortedModules.map((mod) => {
           if (mod.isUpcomingPlaceholder) {
             const isPlaceholderUnlocked = effectiveUnlockedModuleOrder >= mod.order;
+            const prevModOrder = Math.max(1, mod.order - 1);
             return (
               <div key={mod.id} className="p-3">
                 <button
@@ -719,8 +758,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   onClick={() => {
                     setLockNotice(
                       isPlaceholderUnlocked
-                        ? `Module 0${mod.order} is unlocked! Module 01 has been completed and passed.`
-                        : `Module 0${mod.order} is locked. Watch the Module 01 video (90%+) and score at least 70% on the Module 01 Quiz to unlock it.`
+                        ? `Module 0${mod.order} is unlocked! Module 0${prevModOrder} has been completed and passed.`
+                        : `Module 0${mod.order} is locked. Watch the Module 0${prevModOrder} video (90%+) and score at least 70% on the Module 0${prevModOrder} Quiz to unlock it.`
                     );
                     setMobileDrawerOpen(false);
                   }}
@@ -746,8 +785,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     </p>
                     <p className="text-[11px]">
                       {isPlaceholderUnlocked
-                        ? 'Module 01 passed (70%+)'
-                        : 'Pass Module 01 Quiz (70%+) to unlock'}
+                        ? `Module 0${prevModOrder} passed (70%+)`
+                        : `Pass Module 0${prevModOrder} Quiz (70%+) to unlock`}
                     </p>
                   </div>
                 </button>
@@ -1567,6 +1606,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       <YouTubeTrackedPlayer
                         key={vid.id}
                         video={vid}
+                        moduleLabel={
+                          activeModule ? `Module 0${activeModule.order} Quiz` : 'Module Quiz'
+                        }
                         savedProgress={videoProgressById[vid.id]}
                         isSaving={isSavingVideo || isSavingProgress}
                         onSaveProgress={(payload, triggerUnlock) =>
@@ -1599,137 +1641,287 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         </section>
                       )}
 
-                    {/* Primary Progression Card: Module Quiz & Module 02 Unlock */}
-                    {activeModule && moduleQuizByModuleId.has(activeModule.id) && (
-                      <section
-                        className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
-                          passedModuleQuizSet.has(activeModule.id)
-                            ? 'bg-emerald-50/50 border-emerald-200'
-                            : isModuleQuizUnlocked(activeModule.id)
-                            ? 'bg-[#FFF8F2] border-[#F47A24]/40'
-                            : 'bg-white border-[#E5EAF0]'
-                        }`}
-                      >
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="space-y-1.5 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                              {passedModuleQuizSet.has(activeModule.id) ? (
-                                <span className="inline-flex items-center gap-1.5 text-emerald-700">
-                                  <CheckCircle2 className="w-4 h-4" />
-                                  <span>
-                                    Module 0{activeModule.order} Passed · Module 0
-                                    {activeModule.order + 1} Unlocked
+                    {/* Primary Progression Card: Module Quiz & Next Module Unlock */}
+                    {activeModule && moduleQuizByModuleId.has(activeModule.id) && (() => {
+                      const activeModOrder = activeModule.order;
+                      const nextModOrder = activeModOrder + 1;
+                      const nextModObj = sortedModules.find((m) => m.order === nextModOrder);
+                      const nextModFirstLesson =
+                        nextModObj && !nextModObj.isUpcomingPlaceholder && nextModObj.lessons.length > 0
+                          ? nextModObj.lessons.slice().sort((a, b) => a.order - b.order)[0]
+                          : null;
+                      const nextModFlatMatch = nextModFirstLesson
+                        ? flatLessons.find((f) => f.lesson.id === nextModFirstLesson.id)
+                        : null;
+                      const modPassed = passedModuleQuizSet.has(activeModule.id);
+                      const modQuizUnlocked = isModuleQuizUnlocked(activeModule.id);
+                      const quizMeta = moduleQuizByModuleId.get(activeModule.id);
+                      const qCount = quizMeta?.questionCount ?? 10;
+                      const passPct = quizMeta?.passPercentage ?? 70;
+                      const passNeeded = Math.ceil((qCount * passPct) / 100);
+
+                      return (
+                        <section
+                          className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
+                            modPassed
+                              ? 'bg-emerald-50/50 border-emerald-200'
+                              : modQuizUnlocked
+                              ? 'bg-[#FFF8F2] border-[#F47A24]/40'
+                              : 'bg-white border-[#E5EAF0]'
+                          }`}
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1.5 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                                {modPassed ? (
+                                  <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span>
+                                      Module 0{activeModOrder} Passed · Module 0{nextModOrder} Unlocked
+                                    </span>
                                   </span>
-                                </span>
-                              ) : isModuleQuizUnlocked(activeModule.id) ? (
-                                <span className="inline-flex items-center gap-1.5 text-[#F47A24]">
-                                  <Unlock className="w-4 h-4" />
-                                  <span>Video Completed — Quiz Unlocked</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-slate-600">
-                                  <Lock className="w-4 h-4" />
-                                  <span>Locked Until Video Reaches 90%</span>
-                                </span>
-                              )}
+                                ) : modQuizUnlocked ? (
+                                  <span className="inline-flex items-center gap-1.5 text-[#F47A24]">
+                                    <Unlock className="w-4 h-4" />
+                                    <span>Video Completed — Quiz Unlocked</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 text-slate-600">
+                                    <Lock className="w-4 h-4" />
+                                    <span>Locked Until Video Reaches 90%</span>
+                                  </span>
+                                )}
+                              </div>
+
+                              <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+                                Module 0{activeModOrder} Quiz: {qCount} Questions (Pass {passPct}%+)
+                              </h2>
+
+                              <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
+                                {modPassed
+                                  ? `Best score: ${getBestScoreForModuleQuiz(activeModule.id) ?? passPct}%. Module 0${nextModOrder} is now unlocked for your account. You may retake the quiz anytime to review.`
+                                  : modQuizUnlocked
+                                  ? `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Unlimited retakes allowed.`
+                                  : `Watch at least 90% of the embedded video above to automatically unlock the ${qCount}-question Module 0${activeModOrder} Quiz.`}
+                              </p>
                             </div>
 
-                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-                              Module 0{activeModule.order} Quiz:{' '}
-                              {moduleQuizByModuleId.get(activeModule.id)?.questionCount ?? 10}{' '}
-                              Questions (Pass{' '}
-                              {moduleQuizByModuleId.get(activeModule.id)?.passPercentage ?? 70}%+)
-                            </h2>
+                            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                              {modPassed && nextModFlatMatch && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void selectLesson(
+                                      nextModFlatMatch.lesson.id,
+                                      nextModFlatMatch.globalIndex
+                                    )
+                                  }
+                                  className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
+                                >
+                                  <span>Continue to Module 0{nextModOrder}</span>
+                                  <ArrowRight className="w-4 h-4 shrink-0" />
+                                </button>
+                              )}
 
-                            <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
-                              {passedModuleQuizSet.has(activeModule.id)
-                                ? `Best score: ${getBestScoreForModuleQuiz(activeModule.id) ?? 70}%. Module 0${activeModule.order + 1} is now unlocked for your account. You may retake the quiz anytime to review.`
-                                : isModuleQuizUnlocked(activeModule.id)
-                                ? 'Complete all 10 multiple-choice questions and score at least 70% (7/10) to pass Module 01 and unlock Module 02. Unlimited retakes allowed.'
-                                : 'Watch at least 90% of the embedded video above to automatically unlock the 10-question Module 01 Quiz.'}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  selectModuleQuiz(activeModule.id, activeModule.title)
+                                }
+                                className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                                  modQuizUnlocked
+                                    ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
+                                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                }`}
+                              >
+                                {!modQuizUnlocked && <Lock className="w-4 h-4 shrink-0" />}
+                                <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
+                                <span>
+                                  {modPassed
+                                    ? `Retake Module 0${activeModOrder} Quiz`
+                                    : getBestScoreForModuleQuiz(activeModule.id) !== null
+                                    ? `Retake Quiz (Best ${getBestScoreForModuleQuiz(activeModule.id)}%)`
+                                    : modQuizUnlocked
+                                    ? `Start Module 0${activeModOrder} Quiz`
+                                    : 'Quiz Locked'}
+                                </span>
+                                <ArrowRight className="w-4 h-4 shrink-0" />
+                              </button>
+                            </div>
+                          </div>
+                        </section>
+                      );
+                    })()}
+
+                    {/* 2. Supporting Study Material (Secondary to Video + Quiz) */}
+                    {activeLesson.studyGuide ? (() => {
+                      const hasRichTopics = activeLesson.studyGuide.sections.some((sec) =>
+                        Boolean(
+                          (sec.steps && sec.steps.length > 0) ||
+                            sec.example ||
+                            sec.commonMistake ||
+                            (sec.shortcuts && sec.shortcuts.length > 0)
+                        )
+                      );
+
+                      return (
+                        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-8 space-y-6">
+                          <div className="space-y-1 border-b border-[#E5EAF0] pb-4">
+                            <p className="text-xs font-semibold text-teal-700 inline-flex items-center gap-1.5">
+                              <BookOpen className="w-3.5 h-3.5" />
+                              <span>Supporting Study Material</span>
+                            </p>
+                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+                              {activeLesson.studyGuide.title ||
+                                'Concise Excel Fundamentals Study Guide'}
+                            </h2>
+                            <p className="text-xs sm:text-sm text-[#566479]">
+                              {activeLesson.studyGuide.subtitle ||
+                                'Quick written reference covering key concepts, interface tools, and workplace spreadsheet examples to reinforce the video lesson.'}
                             </p>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              selectModuleQuiz(activeModule.id, activeModule.title)
-                            }
-                            className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                              isModuleQuizUnlocked(activeModule.id)
-                                ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
-                                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                            }`}
-                          >
-                            {!isModuleQuizUnlocked(activeModule.id) && (
-                              <Lock className="w-4 h-4 shrink-0" />
-                            )}
-                            <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
-                            <span>
-                              {passedModuleQuizSet.has(activeModule.id)
-                                ? 'Retake Module 01 Quiz'
-                                : getBestScoreForModuleQuiz(activeModule.id) !== null
-                                ? `Retake Quiz (Best ${getBestScoreForModuleQuiz(activeModule.id)}%)`
-                                : isModuleQuizUnlocked(activeModule.id)
-                                ? 'Start Module 01 Quiz'
-                                : 'Quiz Locked'}
-                            </span>
-                            <ArrowRight className="w-4 h-4 shrink-0" />
-                          </button>
-                        </div>
-                      </section>
-                    )}
+                          {/* Study Guide Concept / Topic Blocks */}
+                          {hasRichTopics ? (
+                            <div className="space-y-5">
+                              {activeLesson.studyGuide.sections.map((sec, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-4 sm:p-6 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-4"
+                                >
+                                  <div className="space-y-1.5">
+                                    <h3 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+                                      {sec.heading}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
+                                      {sec.body}
+                                    </p>
+                                  </div>
 
-                    {/* 2. Supporting Study Material (Secondary to Video + Quiz) */}
-                    {activeLesson.studyGuide ? (
-                      <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-8 space-y-6">
-                        <div className="space-y-1 border-b border-[#E5EAF0] pb-4">
-                          <p className="text-xs font-semibold text-teal-700 inline-flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5" />
-                            <span>Supporting Study Material</span>
-                          </p>
-                          <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-                            Concise Excel Fundamentals Study Guide
-                          </h2>
-                          <p className="text-xs sm:text-sm text-[#566479]">
-                            Quick written reference covering key concepts, interface tools, and workplace spreadsheet examples to reinforce the video lesson.
-                          </p>
-                        </div>
+                                  {sec.bullets && sec.bullets.length > 0 && (
+                                    <ul className="space-y-1.5">
+                                      {sec.bullets.map((b, bIdx) => (
+                                        <li
+                                          key={bIdx}
+                                          className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
+                                        >
+                                          <span
+                                            aria-hidden="true"
+                                            className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
+                                          />
+                                          <span>{b}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
 
-                        {/* 7 Concise Concept Blocks */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {activeLesson.studyGuide.sections.map((sec, idx) => (
-                            <div
-                              key={idx}
-                              className={`p-4 sm:p-5 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-2 ${
-                                sec.bullets && sec.bullets.length >= 4 ? 'md:col-span-2' : ''
-                              }`}
-                            >
-                              <h3 className="font-display text-sm sm:text-[15px] font-bold text-[#102B4E]">
-                                {sec.heading}
-                              </h3>
-                              <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
-                                {sec.body}
-                              </p>
-                              {sec.bullets && sec.bullets.length > 0 && (
-                                <ul className="space-y-1.5 pt-1">
-                                  {sec.bullets.map((b, bIdx) => (
-                                    <li
-                                      key={bIdx}
-                                      className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
-                                    >
-                                      <span
-                                        aria-hidden="true"
-                                        className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
-                                      />
-                                      <span>{b}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
+                                  {sec.steps && sec.steps.length > 0 && (
+                                    <div className="bg-white rounded-xl border border-[#E5EAF0] p-4 space-y-2.5">
+                                      <p className="text-xs font-bold uppercase tracking-wide text-[#102B4E]">
+                                        Step-by-Step Instructions
+                                      </p>
+                                      <ol className="space-y-2">
+                                        {sec.steps.map((step, sIdx) => (
+                                          <li
+                                            key={sIdx}
+                                            className="flex items-start gap-2.5 text-xs sm:text-sm text-[#253449] leading-relaxed"
+                                          >
+                                            <span className="w-5 h-5 rounded-md bg-[#102B4E] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
+                                              {sIdx + 1}
+                                            </span>
+                                            <span>{step}</span>
+                                          </li>
+                                        ))}
+                                      </ol>
+                                    </div>
+                                  )}
+
+                                  {(sec.example || sec.commonMistake) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      {sec.example && (
+                                        <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 space-y-1">
+                                          <p className="text-xs font-bold text-teal-900 inline-flex items-center gap-1.5">
+                                            <Lightbulb className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                                            <span>Workplace Example</span>
+                                          </p>
+                                          <p className="text-xs sm:text-[13px] text-teal-950 leading-relaxed">
+                                            {sec.example}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {sec.commonMistake && (
+                                        <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/90 space-y-1">
+                                          <p className="text-xs font-bold text-amber-900 inline-flex items-center gap-1.5">
+                                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                            <span>Common Beginner Mistake</span>
+                                          </p>
+                                          <p className="text-xs sm:text-[13px] text-amber-950 leading-relaxed">
+                                            {sec.commonMistake}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {sec.shortcuts && sec.shortcuts.length > 0 && (
+                                    <div className="pt-1 space-y-2">
+                                      <p className="text-xs font-bold text-[#102B4E] inline-flex items-center gap-1.5">
+                                        <Keyboard className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
+                                        <span>Useful Keyboard Shortcuts</span>
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {sec.shortcuts.map((sc, scIdx) => (
+                                          <div
+                                            key={scIdx}
+                                            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-[#D4DCE6] text-xs text-[#253449]"
+                                          >
+                                            <kbd className="font-mono text-[11px] font-bold text-[#102B4E] bg-[#F1F5FA] px-1.5 py-0.5 rounded border border-[#D4DCE6]">
+                                              {sc.keys}
+                                            </kbd>
+                                            <span>{sc.action}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {activeLesson.studyGuide.sections.map((sec, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`p-4 sm:p-5 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-2 ${
+                                    sec.bullets && sec.bullets.length >= 4 ? 'md:col-span-2' : ''
+                                  }`}
+                                >
+                                  <h3 className="font-display text-sm sm:text-[15px] font-bold text-[#102B4E]">
+                                    {sec.heading}
+                                  </h3>
+                                  <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
+                                    {sec.body}
+                                  </p>
+                                  {sec.bullets && sec.bullets.length > 0 && (
+                                    <ul className="space-y-1.5 pt-1">
+                                      {sec.bullets.map((b, bIdx) => (
+                                        <li
+                                          key={bIdx}
+                                          className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
+                                        >
+                                          <span
+                                            aria-hidden="true"
+                                            className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
+                                          />
+                                          <span>{b}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                         {/* Real-World Spreadsheet Examples (Employee Spreadsheet & Supplier List) */}
                         {activeLesson.studyGuide.examples.length > 0 && (
@@ -1796,7 +1988,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                           </div>
                         )}
                       </section>
-                    ) : (
+                      );
+                    })() : (
                       <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
                         <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
                           Lesson Notes
@@ -1920,6 +2113,45 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       <div className="pt-3 border-t border-[#E5EAF0] text-xs sm:text-sm text-[#566479]">
                         <span className="font-semibold text-[#102B4E]">Target Output: </span>
                         <span>{activeLesson.exercise.deliverable}</span>
+                      </div>
+                    )}
+
+                    {/* Quick Practice Workbook / Instruction Sheet Downloads inside Practical Activity */}
+                    {activeLesson.attachments && activeLesson.attachments.length > 0 && (
+                      <div className="pt-4 border-t border-[#E5EAF0] space-y-3">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          {activeLesson.attachments.map((att) => {
+                            const isWorkbook = att.fileType.toLowerCase().includes('xlsx');
+                            return (
+                              <button
+                                key={att.id}
+                                type="button"
+                                onClick={() =>
+                                  downloadLessonResource(course.title, activeLesson.title, att)
+                                }
+                                className={`min-h-[44px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors ${
+                                  isWorkbook
+                                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                                    : 'bg-[#FAFBFD] hover:bg-[#102B4E] text-[#102B4E] hover:text-white border border-[#D4DCE6]'
+                                }`}
+                              >
+                                {isWorkbook ? (
+                                  <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                                ) : (
+                                  <Download className="w-4 h-4 shrink-0" />
+                                )}
+                                <span>
+                                  {isWorkbook
+                                    ? 'Download Practice Workbook (.xlsx)'
+                                    : `Download ${att.title}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-[#566479]">
+                          No paid software required — open and practice free in Microsoft Excel, Excel for the Web, Google Sheets, or LibreOffice Calc.
+                        </p>
                       </div>
                     )}
                   </section>

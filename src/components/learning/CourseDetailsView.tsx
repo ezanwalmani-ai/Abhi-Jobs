@@ -95,6 +95,24 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
     [enrolment?.passedModuleQuizIds]
   );
 
+  const sortedModules = useMemo(
+    () => course.modules.slice().sort((a, b) => a.order - b.order),
+    [course.modules]
+  );
+
+  const unlockedOrder = useMemo(() => {
+    let computed = 1;
+    for (const mod of sortedModules) {
+      if (mod.isUpcomingPlaceholder) break;
+      if (passedQuizSet.has(mod.id)) {
+        computed = mod.order + 1;
+      } else {
+        break;
+      }
+    }
+    return Math.max(enrolment?.unlockedModuleOrder ?? 1, computed);
+  }, [sortedModules, passedQuizSet, enrolment?.unlockedModuleOrder]);
+
   const completionEval = useMemo(
     () =>
       evaluateCourseCompletion({
@@ -449,19 +467,15 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           </div>
 
           <div className="divide-y divide-[#E5EAF0] border-y border-[#E5EAF0]">
-            {course.modules
-              .slice()
-              .sort((a, b) => a.order - b.order)
-              .map((mod) => {
+            {sortedModules.map((mod) => {
                 const modQuizMeta = assessmentOverview?.moduleQuizzes.find(
                   (q) => q.moduleId === mod.id
                 );
                 const quizPassed = passedQuizSet.has(mod.id);
-                const unlockedOrder = Math.max(
-                  enrolment?.unlockedModuleOrder ?? 1,
-                  passedQuizSet.size + 1
-                );
+                const prevModOrder = Math.max(1, mod.order - 1);
                 const isPlaceholderUnlocked = mod.isUpcomingPlaceholder && unlockedOrder >= mod.order;
+                const isActiveModuleLocked =
+                  isEnrolled && !mod.isUpcomingPlaceholder && mod.order > unlockedOrder;
 
                 if (mod.isUpcomingPlaceholder) {
                   return (
@@ -476,7 +490,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                           </h3>
                           <p className="text-sm text-[#566479] leading-relaxed">
                             {isPlaceholderUnlocked
-                              ? 'Module 01 Quiz passed! Module 02 is now unlocked for your account.'
+                              ? `Module 0${prevModOrder} Quiz passed! Module 0${mod.order} is now unlocked for your account.`
                               : mod.summary}
                           </p>
                         </div>
@@ -496,7 +510,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         ) : (
                           <>
                             <Lock className="w-3.5 h-3.5" />
-                            <span>Locked (Pass Module 01 Quiz)</span>
+                            <span>Locked (Pass Module 0{prevModOrder} Quiz)</span>
                           </>
                         )}
                       </span>
@@ -518,6 +532,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                           {mod.level && (
                             <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
                               {mod.level}
+                            </span>
+                          )}
+                          {isActiveModuleLocked && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                              <Lock className="w-3 h-3" />
+                              <span>Locked (Pass Module 0{prevModOrder} Quiz)</span>
                             </span>
                           )}
                         </div>

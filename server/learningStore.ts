@@ -17,7 +17,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SupabaseLearningStoreRepository } from './supabaseLearningStore';
 import { FileLearningStoreRepository } from './fileLearningStore';
-import { EXCEL_COURSE_DEFINITION, EXCEL_M01_QUIZ_CONFIG } from './excelCurriculumSeed';
+import {
+  EXCEL_COURSE_DEFINITION,
+  EXCEL_M01_QUIZ_CONFIG,
+  EXCEL_M02_QUIZ_CONFIG,
+} from './excelCurriculumSeed';
 
 export type AssessmentType = 'module_quiz' | 'final_assessment';
 export type CertificateValidityStatus = 'valid' | 'revoked';
@@ -279,8 +283,10 @@ export async function initializeLearningStore(): Promise<void> {
 }
 
 /**
- * Idempotently registers the "Excel for Job Seekers" course definition and
- * Module 1 ("Excel Fundamentals") 10-question quiz bank if not already present.
+ * Idempotently registers/updates the "Excel for Job Seekers" course definition
+ * (Modules 1 & 2 + Module 3 placeholder) and seeds Module 1 & Module 2 quiz banks
+ * if not already present. Never overwrites existing student progress, attempts,
+ * or Module 1 quiz records.
  */
 export async function seedDefaultExcelModule1IfNeeded(): Promise<void> {
   const store = getLearningStore();
@@ -291,12 +297,42 @@ export async function seedDefaultExcelModule1IfNeeded(): Promise<void> {
       ...EXCEL_COURSE_DEFINITION,
       updatedAt: new Date().toISOString(),
     });
+  } else {
+    // Ensure newly added modules (e.g. Module 2 & Module 3 placeholder) are registered
+    // without touching student progress, attempts, or existing Module 1 records
+    const desiredOrder = EXCEL_COURSE_DEFINITION.orderedModuleIds;
+    const desiredLessons = EXCEL_COURSE_DEFINITION.requiredLessonIds;
+    const orderChanged =
+      existingCourse.orderedModuleIds.length !== desiredOrder.length ||
+      desiredOrder.some((id, idx) => existingCourse.orderedModuleIds[idx] !== id);
+    const lessonsChanged = desiredLessons.some(
+      (id) => !existingCourse.requiredLessonIds.includes(id)
+    );
+
+    if (orderChanged || lessonsChanged) {
+      await store.upsertCourseDefinition({
+        ...existingCourse,
+        orderedModuleIds: desiredOrder,
+        requiredLessonIds: Array.from(
+          new Set([...existingCourse.requiredLessonIds, ...desiredLessons])
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    }
   }
 
-  const existingQuiz = await store.getAssessmentConfigById(EXCEL_M01_QUIZ_CONFIG.id);
-  if (!existingQuiz) {
+  const existingM01Quiz = await store.getAssessmentConfigById(EXCEL_M01_QUIZ_CONFIG.id);
+  if (!existingM01Quiz) {
     await store.upsertAssessmentConfig({
       ...EXCEL_M01_QUIZ_CONFIG,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  const existingM02Quiz = await store.getAssessmentConfigById(EXCEL_M02_QUIZ_CONFIG.id);
+  if (!existingM02Quiz) {
+    await store.upsertAssessmentConfig({
+      ...EXCEL_M02_QUIZ_CONFIG,
       updatedAt: new Date().toISOString(),
     });
   }

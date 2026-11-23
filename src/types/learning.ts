@@ -34,12 +34,17 @@ export interface LessonExercise {
   deliverable?: string;
 }
 
+export interface VideoSectionCue {
+  timestamp: string;
+  label: string;
+}
+
 export interface LessonVideoItem {
   id: string;
   title: string;
-  /** Video publisher/channel attribution (e.g. Microsoft Mechanics) */
+  /** Video publisher/channel attribution (e.g. Microsoft Mechanics, Teacher's Tech) */
   publisher?: string;
-  /** Valid 11-character YouTube video ID (e.g. QiSCaEHQ7Yo) */
+  /** Valid 11-character YouTube video ID (e.g. QiSCaEHQ7Yo, k1VUZEVuDJ8) */
   youtubeVideoId: string;
   /** Explicit embed base URL when required (e.g. https://www.youtube.com/embed/QiSCaEHQ7Yo) */
   embedUrl?: string;
@@ -47,12 +52,25 @@ export interface LessonVideoItem {
   durationSeconds: number;
   durationLabel?: string;
   order: number;
+  /** Highlighted relevant video sections/timestamps for student guidance */
+  sections?: VideoSectionCue[];
+  /** Explanatory note shown alongside highlighted sections */
+  sectionsNote?: string;
+}
+
+export interface StudyGuideShortcut {
+  keys: string;
+  action: string;
 }
 
 export interface StudyGuideSection {
   heading: string;
   body: string;
   bullets?: string[];
+  steps?: string[];
+  example?: string;
+  commonMistake?: string;
+  shortcuts?: StudyGuideShortcut[];
 }
 
 export interface StudyGuideTableExample {
@@ -63,6 +81,8 @@ export interface StudyGuideTableExample {
 }
 
 export interface LessonStudyGuide {
+  title?: string;
+  subtitle?: string;
   sections: StudyGuideSection[];
   examples: StudyGuideTableExample[];
 }

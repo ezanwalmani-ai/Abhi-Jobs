@@ -575,12 +575,20 @@ export function downloadLessonResource(
   lessonTitle: string,
   attachment: LessonAttachment
 ): void {
-  if (attachment.url && isSafeExternalResourceUrl(attachment.url)) {
+  const isSafeLocalResource =
+    typeof attachment.url === 'string' &&
+    attachment.url.startsWith('/api/learning/resources/') &&
+    !attachment.url.includes('..');
+
+  if (attachment.url && (isSafeLocalResource || isSafeExternalResourceUrl(attachment.url))) {
     const link = document.createElement('a');
     link.href = attachment.url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.download = `${attachment.title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim() || 'resource'}`;
+    if (!isSafeLocalResource) {
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+    const fallbackName = attachment.title.replace(/[^a-zA-Z0-9_\-. ]/g, '').trim() || 'resource';
+    link.download = fallbackName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

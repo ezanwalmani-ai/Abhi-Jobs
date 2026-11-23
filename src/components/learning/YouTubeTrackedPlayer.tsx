@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  Clock,
   ExternalLink,
   PlayCircle,
   ShieldCheck,
@@ -112,6 +113,7 @@ export interface VideoProgressUpdatePayload {
 
 interface YouTubeTrackedPlayerProps {
   video: LessonVideoItem;
+  moduleLabel?: string;
   savedProgress?: VideoProgressRecord;
   isSaving?: boolean;
   onSaveProgress: (payload: VideoProgressUpdatePayload, triggerLessonUnlock?: boolean) => Promise<void> | void;
@@ -119,6 +121,7 @@ interface YouTubeTrackedPlayerProps {
 
 export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
   video,
+  moduleLabel = 'Module Quiz',
   savedProgress,
   isSaving = false,
   onSaveProgress,
@@ -450,15 +453,15 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
           <div className="flex items-center gap-2 text-slate-700 font-medium min-w-0">
             {completedViaPlayer ? (
               <span className="text-emerald-700 font-semibold">
-                Video completion verified ({Math.max(COMPLETION_THRESHOLD_PERCENT, maxPercent)}% watched). The Module 01 Quiz is now unlocked below.
+                Video completion verified ({Math.max(COMPLETION_THRESHOLD_PERCENT, maxPercent)}% watched). The {moduleLabel} is now unlocked below.
               </span>
             ) : manualCompleted ? (
               <span className="text-amber-800 font-semibold">
-                Manual completion fallback recorded because automatic playback tracking was unavailable. The Module 01 Quiz is unlocked below.
+                Manual completion fallback recorded because automatic playback tracking was unavailable. The {moduleLabel} is unlocked below.
               </span>
             ) : isPlaying ? (
               <span>
-                Playback tracking active — watch to at least <strong>90%</strong> to unlock the Module 01 Quiz.
+                Playback tracking active — watch to at least <strong>90%</strong> to unlock the {moduleLabel}.
               </span>
             ) : hasPlayed ? (
               <span>
@@ -466,7 +469,7 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
               </span>
             ) : (
               <span>
-                Press Play above to watch the lesson. Watching at least <strong>90%</strong> automatically unlocks the Module 01 Quiz.
+                Press Play above to watch the lesson. Watching at least <strong>90%</strong> automatically unlocks the {moduleLabel}.
               </span>
             )}
           </div>
@@ -516,6 +519,34 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
           </div>
         </div>
 
+        {/* Relevant Video Sections Guide (Reference Timestamps) */}
+        {video.sections && video.sections.length > 0 && (
+          <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <p className="text-xs font-bold text-[#102B4E] inline-flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
+                <span>Relevant Video Sections</span>
+              </p>
+              {video.sectionsNote && (
+                <p className="text-[11px] text-slate-600">{video.sectionsNote}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {video.sections.map((sec, idx) => (
+                <div
+                  key={`${sec.timestamp}-${idx}`}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[#253449]"
+                >
+                  <span className="font-mono text-[11px] font-bold text-[#102B4E] bg-slate-100 px-1.5 py-0.5 rounded shrink-0 tabular-nums">
+                    {sec.timestamp}
+                  </span>
+                  <span className="truncate font-medium">{sec.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Manual Completion Fallback — Shown ONLY if YouTube IFrame API tracking fails */}
         {trackingState === 'unavailable' && !isVideoSatisfied && (
           <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -524,7 +555,7 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
               <div className="text-xs text-amber-900">
                 <p className="font-bold">Automatic playback tracking is unavailable</p>
                 <p className="mt-0.5 text-amber-800 leading-relaxed">
-                  Your browser or network prevented YouTube playback tracking. After finishing the video above, use this manual fallback to unlock the Module 01 Quiz. Your record will accurately note manual fallback rather than automated playback tracking.
+                  Your browser or network prevented YouTube playback tracking. After finishing the video above, use this manual fallback to unlock the {moduleLabel}. Your record will accurately note manual fallback rather than automated playback tracking.
                 </p>
               </div>
             </div>

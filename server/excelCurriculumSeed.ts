@@ -18,14 +18,18 @@ export const EXCEL_COURSE_TITLE = 'Excel for Job Seekers';
 
 export const EXCEL_M01_ID = 'excel_m01_fundamentals';
 export const EXCEL_M01_LESSON_ID = 'excel_m01_lesson_01';
-export const EXCEL_M02_ID = 'excel_m02_upcoming';
+
+export const EXCEL_M02_ID = 'excel_m02_data_entry_formatting';
+export const EXCEL_M02_LESSON_ID = 'excel_m02_lesson_01';
+
+export const EXCEL_M03_ID = 'excel_m03_upcoming';
 
 export const EXCEL_COURSE_DEFINITION: Omit<PersistedCourseDefinition, 'updatedAt'> = {
   courseId: EXCEL_COURSE_ID,
   courseSlug: EXCEL_COURSE_SLUG,
   courseTitle: EXCEL_COURSE_TITLE,
-  orderedModuleIds: [EXCEL_M01_ID, EXCEL_M02_ID],
-  requiredLessonIds: [EXCEL_M01_LESSON_ID],
+  orderedModuleIds: [EXCEL_M01_ID, EXCEL_M02_ID, EXCEL_M03_ID],
+  requiredLessonIds: [EXCEL_M01_LESSON_ID, EXCEL_M02_LESSON_ID],
   passPercentage: 70,
   certificateTemplateId: 'default_abhi_certificate',
 };
@@ -36,6 +40,7 @@ export const EXCEL_COURSE_DEFINITION: Omit<PersistedCourseDefinition, 'updatedAt
  */
 export const MODULE_REQUIRED_LESSONS: Record<string, string[]> = {
   [EXCEL_M01_ID]: [EXCEL_M01_LESSON_ID],
+  [EXCEL_M02_ID]: [EXCEL_M02_LESSON_ID],
 };
 
 export const EXCEL_M01_QUIZ_CONFIG: PersistedAssessmentConfig = {
@@ -166,3 +171,118 @@ export const EXCEL_M01_QUIZ_CONFIG: PersistedAssessmentConfig = {
     },
   ],
 };
+
+export const EXCEL_M02_QUIZ_CONFIG: PersistedAssessmentConfig = {
+  id: `quiz_${EXCEL_M02_ID}`,
+  courseId: EXCEL_COURSE_ID,
+  courseSlug: EXCEL_COURSE_SLUG,
+  courseTitle: EXCEL_COURSE_TITLE,
+  assessmentType: 'module_quiz',
+  moduleId: EXCEL_M02_ID,
+  moduleOrder: 2,
+  title: 'Module 02 Quiz: Data Entry, Formatting & Worksheets',
+  description:
+    'Test your skills in entering and editing data, formatting text, numbers, dates, and cells, adjusting rows and columns, managing worksheets, Freeze Panes, and saving/printing workbooks. Score at least 70% (7 out of 10) to pass Module 2 and unlock Module 3.',
+  passPercentage: 70,
+  questionCount: 10,
+  randomizeOrder: false,
+  requiredForCompletion: true,
+  questions: [
+    {
+      id: 'excel_m02_q01',
+      prompt: 'Which keyboard shortcut is commonly used to save an Excel workbook?',
+      options: ['Ctrl + P', 'Ctrl + S', 'Ctrl + C', 'Ctrl + Z'],
+      correctOptionIndex: 1,
+      explanation:
+        'Ctrl + S (or Cmd + S on Mac) saves the active Excel workbook. Ctrl + P opens Print, Ctrl + C copies, and Ctrl + Z undoes the last action.',
+    },
+    {
+      id: 'excel_m02_q02',
+      prompt: 'Which Excel feature allows text to appear on multiple lines inside a cell?',
+      options: ['Merge & Center', 'AutoFit', 'Wrap Text', 'Freeze Panes'],
+      correctOptionIndex: 2,
+      explanation:
+        'Wrap Text breaks long text cleanly onto multiple lines within the same cell without spilling into neighboring columns or requiring cell merging.',
+    },
+    {
+      id: 'excel_m02_q03',
+      prompt: 'Which number format should be used to display a value as money?',
+      options: ['Percentage', 'Currency', 'General', 'Date'],
+      correctOptionIndex: 1,
+      explanation:
+        'Currency format displays numeric values with a currency symbol, thousand separators, and decimal places while keeping the underlying number ready for calculations.',
+    },
+    {
+      id: 'excel_m02_q04',
+      prompt: 'What does AutoFit do?',
+      options: [
+        'Deletes blank cells',
+        'Automatically adjusts column width or row height to fit content',
+        'Calculates totals',
+        'Creates a new worksheet',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        'AutoFit resizes a column width or row height automatically to fit the widest or tallest entry so text is readable and ### errors disappear.',
+    },
+    {
+      id: 'excel_m02_q05',
+      prompt: 'Which command allows you to add another worksheet to a workbook?',
+      options: ['Insert Worksheet', 'Print Preview', 'Format Painter', 'Find and Replace'],
+      correctOptionIndex: 0,
+      explanation:
+        'Insert Worksheet (or clicking the + icon next to the sheet tabs) adds a fresh worksheet tab inside the current workbook.',
+    },
+    {
+      id: 'excel_m02_q06',
+      prompt: 'Why would you use Freeze Panes?',
+      options: [
+        'To prevent the workbook from opening',
+        'To keep selected rows or columns visible while scrolling',
+        'To delete unnecessary data',
+        'To format currency',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        'Freeze Panes locks heading rows and/or identifier columns in place so they stay visible while you scroll through large workplace tables.',
+    },
+    {
+      id: 'excel_m02_q07',
+      prompt: 'Which option changes the background color of a cell?',
+      options: ['Font Color', 'Fill Color', 'Number Format', 'Formula Bar'],
+      correctOptionIndex: 1,
+      explanation:
+        'Fill Color (the paint bucket icon on the Home tab) changes the background shading of selected cells, whereas Font Color changes the text color.',
+    },
+    {
+      id: 'excel_m02_q08',
+      prompt: 'What happens when you rename a worksheet?',
+      options: [
+        'The entire workbook is deleted',
+        "Only the worksheet's name changes",
+        'All data is erased',
+        'A new workbook is created',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        "Renaming a worksheet changes only the label on that sheet's tab; all existing data, formatting, and other worksheets stay intact.",
+    },
+    {
+      id: 'excel_m02_q09',
+      prompt: 'Which Excel feature helps display a worksheet before printing?',
+      options: ['Print Preview', 'AutoSum', 'Sort', 'Wrap Text'],
+      correctOptionIndex: 0,
+      explanation:
+        'Print Preview (File -> Print or Ctrl + P) shows exactly how pages, margins, orientation, and headers will look on paper before you print.',
+    },
+    {
+      id: 'excel_m02_q10',
+      prompt: 'Which file format is the standard Excel workbook format?',
+      options: ['.mp4', '.jpg', '.xlsx', '.exe'],
+      correctOptionIndex: 2,
+      explanation:
+        '.xlsx is the standard Microsoft Excel workbook format that preserves multiple worksheets, cell formatting, formulas, and print settings.',
+    },
+  ],
+};
+
