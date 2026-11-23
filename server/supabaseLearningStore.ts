@@ -29,7 +29,10 @@ import type {
 import { isSigningSecretConfigured } from './learningStore';
 
 const TABLES = {
+  users: 'learning_users',
   courses: 'learning_courses',
+  modules: 'learning_modules',
+  lessons: 'learning_lessons',
   assessments: 'learning_assessments',
   sessions: 'learning_assessment_sessions',
   lessonProgress: 'learning_lesson_progress',
@@ -232,6 +235,51 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
     return this.clientCache;
   }
 
+  /**
+   * Ensures the verified Firebase UID exists in `public.learning_users` before
+   * inserting child rows referencing `learning_users(firebase_uid)`.
+   */
+  private async ensureLearningUser(
+    firebaseUid: string,
+    fullName?: string,
+    email?: string
+  ): Promise<void> {
+    const payload: Record<string, unknown> = {
+      firebase_uid: firebaseUid,
+      updated_at: new Date().toISOString(),
+    };
+    if (fullName && fullName.trim()) payload.full_name = fullName.trim().slice(0, 120);
+    if (email && email.trim()) payload.email = email.trim().slice(0, 150);
+
+    const { error } = await this.client()
+      .from(TABLES.users)
+      .upsert(payload, { onConflict: 'firebase_uid' });
+    if (error) throwStorageError('ensureLearningUser', error);
+  }
+
+  /**
+   * Ensures the parent `public.learning_courses` row exists before inserting
+   * child assessment/progress rows referencing `learning_courses(course_id)`.
+   */
+  private async ensureCourseExists(
+    courseId: string,
+    courseSlug?: string,
+    courseTitle?: string
+  ): Promise<void> {
+    const existing = await this.getCourseDefinition(courseId);
+    if (existing) return;
+    await this.upsertCourseDefinition({
+      courseId,
+      courseSlug: (courseSlug || courseId).trim().slice(0, 128),
+      courseTitle: (courseTitle || courseId).trim().slice(0, 160),
+      orderedModuleIds: [],
+      requiredLessonIds: [],
+      passPercentage: 70,
+      certificateTemplateId: 'default_abhi_certificate',
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
   // --------------------------------------------------------------------------
   // Courses
   // --------------------------------------------------------------------------
@@ -299,6 +347,7 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
   async upsertAssessmentConfig(
     config: PersistedAssessmentConfig
   ): Promise<PersistedAssessmentConfig> {
+    await this.ensureCourseExists(config.courseId, config.courseSlug, config.courseTitle);
     const payload = {
       id: config.id,
       course_id: config.courseId,
@@ -337,6 +386,8 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
   async createAssessmentSession(
     session: PersistedAssessmentSession
   ): Promise<PersistedAssessmentSession> {
+    await this.ensureLearningUser(session.userId, session.candidateName, session.candidateEmail);
+    await this.ensureCourseExists(session.courseId);
     const payload = {
       session_id: session.sessionId,
       config_id: session.configId,
@@ -421,6 +472,8 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
     courseId: string,
     completedLessonIds: string[]
   ): Promise<string[]> {
+    await this.ensureLearningUser(userId);
+    await this.ensureCourseExists(courseId);
     const payload = {
       firebase_uid: userId,
       course_id: courseId,
@@ -444,6 +497,8 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
   // --------------------------------------------------------------------------
 
   async insertAttempt(attempt: PersistedAttemptRecord): Promise<PersistedAttemptRecord> {
+    await this.ensureLearningUser(attempt.userId, attempt.candidateName, attempt.candidateEmail);
+    await this.ensureCourseExists(attempt.courseId, attempt.courseSlug, attempt.courseTitle);
     if (attempt.assessmentType === 'final_assessment') {
       const payload = {
         id: attempt.id,
@@ -611,6 +666,8 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
   async upsertModuleUnlock(
     record: PersistedModuleUnlockRecord
   ): Promise<PersistedModuleUnlockRecord> {
+    await this.ensureLearningUser(record.userId);
+    await this.ensureCourseExists(record.courseId);
     const payload = {
       firebase_uid: record.userId,
       course_id: record.courseId,
@@ -679,6 +736,8 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
   async insertCertificate(
     cert: PersistedCertificateRecord
   ): Promise<PersistedCertificateRecord> {
+    await this.ensureLearningUser(cert.userId, cert.candidateName);
+    await this.ensureCourseExists(cert.courseId, cert.courseSlug, cert.courseTitle);
     const payload = {
       certificate_id: cert.certificateId,
       firebase_uid: cert.userId,
@@ -719,33 +778,34 @@ export class SupabaseLearningStoreRepository implements LearningStoreRepository 
     clearedModuleUnlocks: number;
   }> {
     const db = this.client();
-    // Delete all rows safely using non-null primary key predicates
-    const [sessions, quizAtt, finalAtt, unlocks, progress, certs, configs, courses] =
-      await Promise.all([
-        db.from(TABLES.sessions).delete().neq('session_id', '').select('session_id'),
-        db.from(TABLES.quizAttempts).delete().neq('id', '').select('id'),
-        db.from(TABLES.finalAttempts).delete().neq('id', '').select('id'),
-        db.from(TABLES.moduleUnlocks).delete().neq('firebase_uid', '').select('firebase_uid'),
-        db.from(TABLES.lessonProgress).delete().neq('firebase_uid', '').select('firebase_uid'),
-        db.from(TABLES.certificates).delete().neq('certificate_id', '').select('certificate_id'),
-        db.from(TABLES.assessments).delete().neq('id', '').select('id'),
-        db.from(TABLES.courses).delete().neq('course_id', '').select('course_id'),
-      ]);
+    // Delete child rows strictly before parent rows to respect PostgreSQL FK constraints
+    const sessions = await db.from(TABLES.sessions).delete().neq('session_id', '').select('session_id');
+    if (sessions.error) throwStorageError('resetAllLearningData.sessions', sessions.error);
 
-    const errors = [
-      sessions.error,
-      quizAtt.error,
-      finalAtt.error,
-      unlocks.error,
-      progress.error,
-      certs.error,
-      configs.error,
-      courses.error,
-    ].filter(Boolean);
+    const certs = await db.from(TABLES.certificates).delete().neq('certificate_id', '').select('certificate_id');
+    if (certs.error) throwStorageError('resetAllLearningData.certificates', certs.error);
 
-    if (errors.length > 0) {
-      throwStorageError('resetAllLearningData', errors[0]!);
+    const [quizAtt, finalAtt, unlocks, progress] = await Promise.all([
+      db.from(TABLES.quizAttempts).delete().neq('id', '').select('id'),
+      db.from(TABLES.finalAttempts).delete().neq('id', '').select('id'),
+      db.from(TABLES.moduleUnlocks).delete().neq('firebase_uid', '').select('firebase_uid'),
+      db.from(TABLES.lessonProgress).delete().neq('firebase_uid', '').select('firebase_uid'),
+    ]);
+    for (const r of [quizAtt, finalAtt, unlocks, progress]) {
+      if (r.error) throwStorageError('resetAllLearningData.attemptsOrProgress', r.error);
     }
+
+    const configs = await db.from(TABLES.assessments).delete().neq('id', '').select('id');
+    if (configs.error) throwStorageError('resetAllLearningData.assessments', configs.error);
+
+    const lessons = await db.from(TABLES.lessons).delete().neq('id', '').select('id');
+    if (lessons.error) throwStorageError('resetAllLearningData.lessons', lessons.error);
+
+    const modules = await db.from(TABLES.modules).delete().neq('id', '').select('id');
+    if (modules.error) throwStorageError('resetAllLearningData.modules', modules.error);
+
+    const courses = await db.from(TABLES.courses).delete().neq('course_id', '').select('course_id');
+    if (courses.error) throwStorageError('resetAllLearningData.courses', courses.error);
 
     return {
       clearedConfigs: configs.data?.length ?? 0,

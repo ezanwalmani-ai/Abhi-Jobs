@@ -13,6 +13,7 @@ import {
   FileText,
   Layers,
   Loader2,
+  Lock,
   LogIn,
   PlayCircle,
   Settings2,
@@ -84,7 +85,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
         .filter((q) => q.requiredForCompletion && q.moduleId)
         .map((q) => q.moduleId as string);
     }
-    return course.modules.map((m) => m.id);
+    return course.modules
+      .filter((m) => !m.isUpcomingPlaceholder && m.quizRequired !== false)
+      .map((m) => m.id);
   }, [assessmentOverview, course.modules]);
 
   const passedQuizSet = useMemo(
@@ -187,13 +190,19 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 <span className="inline-flex items-center gap-1.5">
                   <Layers className="w-4 h-4 text-[#F47A24]" />
                   <span>
-                    {course.modules.length} modules · {totalLessons} lessons
+                    {course.modules.filter((m) => !m.isUpcomingPlaceholder).length} active{' '}
+                    {course.modules.filter((m) => !m.isUpcomingPlaceholder).length === 1
+                      ? 'module'
+                      : 'modules'}{' '}
+                    · {totalLessons} {totalLessons === 1 ? 'lesson' : 'lessons'}
                   </span>
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Award className="w-4 h-4 text-[#F47A24]" />
                   <span>
-                    Module Quizzes &amp; Final Assessment ({assessmentOverview?.finalAssessment?.passPercentage ?? 70}% pass)
+                    {assessmentOverview?.finalAssessment
+                      ? `Module Quizzes & Final Assessment (${assessmentOverview.finalAssessment.passPercentage}% pass)`
+                      : `Module Quiz (${course.passPercentage ?? 70}% pass to unlock next module)`}
                   </span>
                 </span>
               </div>
@@ -234,10 +243,15 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                       />
                     </div>
                     <p className="text-[11px] text-[#778397] tabular-nums">
-                      {completedSet.size}/{totalLessons} lessons · {passedQuizSet.size}/{requiredQuizIds.length} quizzes · Final{' '}
-                      {enrolment?.finalAssessmentPassed
-                        ? `passed${enrolment.bestFinalScorePercent ? ` (${enrolment.bestFinalScorePercent}%)` : ''}`
-                        : 'pending'}
+                      {completedSet.size}/{totalLessons} {totalLessons === 1 ? 'lesson' : 'lessons'} · {passedQuizSet.size}/{requiredQuizIds.length}{' '}
+                      {requiredQuizIds.length === 1 ? 'quiz' : 'quizzes'}
+                      {assessmentOverview?.finalAssessment
+                        ? ` · Final ${
+                            enrolment?.finalAssessmentPassed
+                              ? `passed${enrolment.bestFinalScorePercent ? ` (${enrolment.bestFinalScorePercent}%)` : ''}`
+                              : 'pending'
+                          }`
+                        : ''}
                       {lastAccessedLabel ? ` · ${lastAccessedLabel}` : ''}
                     </p>
                   </div>
@@ -423,7 +437,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               </h2>
             </div>
             <span className="text-xs text-[#778397] tabular-nums">
-              {course.modules.length} modules · {totalLessons} lessons · Module Quizzes &amp; Final Assessment
+              {course.modules.filter((m) => !m.isUpcomingPlaceholder).length} active{' '}
+              {course.modules.filter((m) => !m.isUpcomingPlaceholder).length === 1
+                ? 'module'
+                : 'modules'}{' '}
+              · {totalLessons} {totalLessons === 1 ? 'lesson' : 'lessons'}
+              {assessmentOverview?.finalAssessment
+                ? ' · Module Quizzes & Final Assessment'
+                : ' · Video + 10-Question Module Quiz'}
             </span>
           </div>
 
@@ -436,6 +457,53 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   (q) => q.moduleId === mod.id
                 );
                 const quizPassed = passedQuizSet.has(mod.id);
+                const unlockedOrder = Math.max(
+                  enrolment?.unlockedModuleOrder ?? 1,
+                  passedQuizSet.size + 1
+                );
+                const isPlaceholderUnlocked = mod.isUpcomingPlaceholder && unlockedOrder >= mod.order;
+
+                if (mod.isUpcomingPlaceholder) {
+                  return (
+                    <div key={mod.id} className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-4 min-w-0">
+                        <span className="font-display text-sm font-bold text-[#9AA6B8] tabular-nums pt-0.5 shrink-0">
+                          0{mod.order}
+                        </span>
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="font-display text-base font-bold text-[#102B4E]">
+                            {mod.title}
+                          </h3>
+                          <p className="text-sm text-[#566479] leading-relaxed">
+                            {isPlaceholderUnlocked
+                              ? 'Module 01 Quiz passed! Module 02 is now unlocked for your account.'
+                              : mod.summary}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 self-start sm:self-center ${
+                          isPlaceholderUnlocked
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {isPlaceholderUnlocked ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Unlocked</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-3.5 h-3.5" />
+                            <span>Locked (Pass Module 01 Quiz)</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={mod.id} className="py-5 space-y-3.5">
                     <div className="flex items-start gap-4">
@@ -443,9 +511,16 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         0{mod.order}
                       </span>
                       <div className="space-y-1 min-w-0">
-                        <h3 className="font-display text-base font-bold text-[#102B4E]">
-                          {mod.title}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display text-base font-bold text-[#102B4E]">
+                            {mod.title}
+                          </h3>
+                          {mod.level && (
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                              {mod.level}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-[#566479] leading-relaxed">{mod.summary}</p>
                       </div>
                     </div>
@@ -458,8 +533,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         .map((lesson) => {
                           const completed = completedSet.has(lesson.id);
                           const hasVideo = Boolean(
-                            lesson.videoUrl &&
-                              parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+                            (lesson.videos && lesson.videos.length > 0) ||
+                              (lesson.videoUrl &&
+                                parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid')
                           );
                           return (
                             <div
@@ -480,7 +556,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                               </div>
 
                               <div className="flex items-center gap-x-2 text-xs text-[#778397] shrink-0 tabular-nums pl-6 sm:pl-0">
-                                <span>{hasVideo ? 'Video & Reading' : 'Written Lesson'}</span>
+                                <span>{hasVideo ? 'Video & Study Guide' : 'Written Lesson'}</span>
                                 <span aria-hidden="true">·</span>
                                 <span>{lesson.estimatedMinutes} min</span>
                                 {completed && (
@@ -506,12 +582,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                           <span>Module 0{mod.order} Quiz</span>
                         </span>
                         <span className="text-[#778397] tabular-nums pl-5 sm:pl-0">
-                          {modQuizMeta ? `${modQuizMeta.questionCount} questions` : '3 questions'} ·{' '}
+                          {modQuizMeta ? `${modQuizMeta.questionCount} questions` : '10 questions'} ·{' '}
                           {quizPassed ? (
                             <span className="font-semibold text-emerald-700">Passed</span>
                           ) : (
                             <span>
-                              Pass {modQuizMeta?.passPercentage ?? 60}%+ · Instant feedback
+                              Pass {modQuizMeta?.passPercentage ?? mod.passPercentage ?? 70}%+ · Unlimited retakes
                             </span>
                           )}
                         </span>
@@ -521,34 +597,36 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 );
               })}
 
-            {/* Final Course Assessment Row */}
-            <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <Award className="w-5 h-5 text-[#F47A24] shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <h3 className="font-display text-base font-bold text-[#102B4E]">
-                    Final Course Assessment
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[#566479]">
-                    Unlocks after completing all required lessons and module quizzes. Retakes allowed.
+            {/* Final Course Assessment Row (only shown when configured) */}
+            {assessmentOverview?.finalAssessment && (
+              <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <Award className="w-5 h-5 text-[#F47A24] shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <h3 className="font-display text-base font-bold text-[#102B4E]">
+                      Final Course Assessment
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#566479]">
+                      Unlocks after completing all required lessons and module quizzes. Retakes allowed.
+                    </p>
+                  </div>
+                </div>
+                <div className="text-xs text-[#566479] tabular-nums sm:text-right shrink-0 pl-8 sm:pl-0">
+                  <p className="font-semibold text-[#102B4E]">
+                    {assessmentOverview.finalAssessment.questionCount} randomized questions ·{' '}
+                    {assessmentOverview.finalAssessment.passPercentage}% to pass
                   </p>
+                  {enrolment?.finalAssessmentPassed && (
+                    <p className="font-semibold text-emerald-700 mt-0.5">
+                      Passed
+                      {typeof enrolment.bestFinalScorePercent === 'number'
+                        ? ` (${enrolment.bestFinalScorePercent}%)`
+                        : ''}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="text-xs text-[#566479] tabular-nums sm:text-right shrink-0 pl-8 sm:pl-0">
-                <p className="font-semibold text-[#102B4E]">
-                  {assessmentOverview?.finalAssessment?.questionCount ?? 12} randomized questions ·{' '}
-                  {assessmentOverview?.finalAssessment?.passPercentage ?? 70}% to pass
-                </p>
-                {enrolment?.finalAssessmentPassed && (
-                  <p className="font-semibold text-emerald-700 mt-0.5">
-                    Passed
-                    {typeof enrolment.bestFinalScorePercent === 'number'
-                      ? ` (${enrolment.bestFinalScorePercent}%)`
-                      : ''}
-                  </p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </section>
       </div>

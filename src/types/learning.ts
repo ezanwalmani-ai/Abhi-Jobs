@@ -37,12 +37,34 @@ export interface LessonExercise {
 export interface LessonVideoItem {
   id: string;
   title: string;
-  /** Valid 11-character YouTube video ID (e.g. dQw4w9WgXcQ) */
+  /** Video publisher/channel attribution (e.g. Microsoft Mechanics) */
+  publisher?: string;
+  /** Valid 11-character YouTube video ID (e.g. QiSCaEHQ7Yo) */
   youtubeVideoId: string;
+  /** Explicit embed base URL when required (e.g. https://www.youtube.com/embed/QiSCaEHQ7Yo) */
+  embedUrl?: string;
   description: string;
   durationSeconds: number;
   durationLabel?: string;
   order: number;
+}
+
+export interface StudyGuideSection {
+  heading: string;
+  body: string;
+  bullets?: string[];
+}
+
+export interface StudyGuideTableExample {
+  title: string;
+  subtitle: string;
+  columns: string[];
+  rows: string[][];
+}
+
+export interface LessonStudyGuide {
+  sections: StudyGuideSection[];
+  examples: StudyGuideTableExample[];
 }
 
 export interface CourseLesson {
@@ -58,6 +80,8 @@ export interface CourseLesson {
   videos?: LessonVideoItem[];
   estimatedMinutes: number;
   writtenContent: string;
+  /** Optional concise structured study guide & real-world table examples (secondary to video + quiz) */
+  studyGuide?: LessonStudyGuide;
   exercise?: LessonExercise;
   attachments: LessonAttachment[];
   /** Indicates lesson was added or customized by an administrator */
@@ -70,12 +94,16 @@ export interface CourseModule {
   order: number;
   title: string;
   summary: string;
+  level?: CourseDifficultyLevel;
+  learningObjectives?: string[];
   lessons: CourseLesson[];
   /** Module quizzes are supported per module */
   quizPlanned: true;
   estimatedMinutes?: number;
   quizRequired?: boolean;
   passPercentage?: number;
+  /** Placeholder module used to display sequential unlock status before next module content is published */
+  isUpcomingPlaceholder?: boolean;
 }
 
 export type CoursePublishStatus = 'draft' | 'published';
@@ -157,7 +185,7 @@ export interface VideoProgressRecord {
   lastPositionSeconds: number;
   /** Strictly set to true only after real playback starts; never set on page load */
   hasPlayed: boolean;
-  /** Set to true only when verified player playback reaches completion threshold (>= 80%) */
+  /** Set to true only when verified player playback reaches completion threshold (>= 90%) */
   completedViaPlayer: boolean;
   manualCompleted: boolean;
   updatedAt: string;

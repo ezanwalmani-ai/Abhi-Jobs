@@ -19,6 +19,9 @@ import {
   Lock,
   PlayCircle,
   Settings2,
+  Table2,
+  Target,
+  Unlock,
   X,
 } from 'lucide-react';
 import {
@@ -29,6 +32,7 @@ import {
   CourseEnrolmentRecord,
   CourseLesson,
   LearningCourseItem,
+  VideoProgressRecord,
 } from '../../types/learning';
 import { flattenCourseLessons } from '../../data/learningCatalog';
 import {
@@ -36,7 +40,15 @@ import {
   parseSafeVideoEmbed,
 } from '../../services/courseContentService';
 import { evaluateCourseCompletion } from '../../services/courseEnrolmentService';
+import {
+  loadCourseVideoProgress,
+  saveVideoPlaybackProgress,
+} from '../../services/learningFirestoreService';
 import { CourseAssessmentRunner } from './CourseAssessmentRunner';
+import {
+  YouTubeTrackedPlayer,
+  VideoProgressUpdatePayload,
+} from './YouTubeTrackedPlayer';
 import { EASE_PREMIUM } from '../../lib/motion';
 
 interface CoursePlayerViewProps {
@@ -103,13 +115,16 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     enrolment.completedLessonIds || []
   );
 
-  // Resume from last viewed lesson if valid; otherwise open Course Introduction for first-time learners
+  // Open Module 1 / first lesson immediately so the video player is visible right away
   const [activeId, setActiveId] = useState<string>(() => {
     if (
       enrolment.currentLessonId &&
       flatLessons.some((item) => item.lesson.id === enrolment.currentLessonId)
     ) {
       return enrolment.currentLessonId;
+    }
+    if (flatLessons.length > 0) {
+      return flatLessons[0].lesson.id;
     }
     return INTRO_VIEW_ID;
   });
@@ -125,12 +140,34 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>({});
   const [lockNotice, setLockNotice] = useState<string | null>(null);
+  const [videoProgressById, setVideoProgressById] = useState<Record<string, VideoProgressRecord>>({});
+  const [isSavingVideo, setIsSavingVideo] = useState(false);
 
   useEffect(() => {
     if (Array.isArray(enrolment.completedLessonIds)) {
       setCompletedIds(enrolment.completedLessonIds);
     }
   }, [enrolment.courseId, enrolment.completedLessonIds]);
+
+  // Load saved per-video playback progress for the authenticated student from Firestore
+  useEffect(() => {
+    let active = true;
+    loadCourseVideoProgress(course.id)
+      .then((res) => {
+        if (!active) return;
+        const map: Record<string, VideoProgressRecord> = {};
+        res.records.forEach((rec) => {
+          map[rec.videoId] = rec;
+        });
+        setVideoProgressById(map);
+      })
+      .catch(() => {
+        // Non-blocking
+      });
+    return () => {
+      active = false;
+    };
+  }, [course.id, candidateId]);
 
   const validLessonIdSet = useMemo(
     () => new Set(flatLessons.map((item) => item.lesson.id)),
@@ -159,7 +196,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         .filter((q) => q.requiredForCompletion && q.moduleId)
         .map((q) => q.moduleId as string);
     }
-    return sortedModules.map((m) => m.id);
+    return sortedModules
+      .filter((m) => !m.isUpcomingPlaceholder && m.quizRequired !== false)
+      .map((m) => m.id);
   }, [assessmentOverview, sortedModules]);
 
   // Combine passed module quizzes from enrolment & loaded attempts
@@ -172,6 +211,21 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     });
     return set;
   }, [enrolment.passedModuleQuizIds, courseAttempts]);
+
+  // Authoritative sequential unlock order: Module 1 starts unlocked; Module N+1 unlocks ONLY when Module N quiz is passed
+  const effectiveUnlockedModuleOrder = useMemo(() => {
+    let computed = 1;
+    for (let i = 0; i < sortedModules.length; i++) {
+      const mod = sortedModules[i];
+      if (mod.isUpcomingPlaceholder) break;
+      if (passedModuleQuizSet.has(mod.id)) {
+        computed = mod.order + 1;
+      } else {
+        break;
+      }
+    }
+    return Math.max(enrolment.unlockedModuleOrder ?? 1, computed);
+  }, [sortedModules, passedModuleQuizSet, enrolment.unlockedModuleOrder]);
 
   const finalAssessmentPassed = useMemo(() => {
     if (enrolment.finalAssessmentPassed) return true;
@@ -214,24 +268,29 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   // Helper: are all lessons in a specific module completed?
   const isModuleLessonsComplete = (moduleId: string): boolean => {
     const mod = sortedModules.find((m) => m.id === moduleId);
-    if (!mod || mod.lessons.length === 0) return true;
+    if (!mod || mod.lessons.length === 0) return false;
     return mod.lessons.every((l) => validCompletedSet.has(l.id));
   };
 
+  // Strict student progression: NO client-side bypass (applies equally to all learners)
   const isModuleQuizUnlocked = (moduleId: string): boolean => {
-    if (isAdmin || passedModuleQuizSet.has(moduleId)) return true;
+    if (passedModuleQuizSet.has(moduleId)) return true;
+    const mod = sortedModules.find((m) => m.id === moduleId);
+    if (mod && mod.order > effectiveUnlockedModuleOrder) return false;
     return isModuleLessonsComplete(moduleId);
   };
 
   const isFinalAssessmentUnlocked =
-    isAdmin ||
-    finalAssessmentPassed ||
-    (completionState.allLessonsCompleted && completionState.allRequiredQuizzesPassed);
+    Boolean(assessmentOverview?.finalAssessment) &&
+    (finalAssessmentPassed ||
+      (completionState.allLessonsCompleted && completionState.allRequiredQuizzesPassed));
 
   const isLessonUnlocked = (globalIndex: number): boolean => {
-    if (!course.sequentialUnlock || isAdmin || globalIndex <= 0) return true;
-    const targetLesson = flatLessons[globalIndex]?.lesson;
-    if (targetLesson && validCompletedSet.has(targetLesson.id)) return true;
+    if (!course.sequentialUnlock || globalIndex <= 0) return true;
+    const entry = flatLessons[globalIndex];
+    if (!entry) return false;
+    if (entry.module.order > effectiveUnlockedModuleOrder) return false;
+    if (validCompletedSet.has(entry.lesson.id)) return true;
     const prevLesson = flatLessons[globalIndex - 1]?.lesson;
     return Boolean(prevLesson && validCompletedSet.has(prevLesson.id));
   };
@@ -340,6 +399,53 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     });
   };
 
+  const handleVideoProgressSave = async (
+    lessonId: string,
+    payload: VideoProgressUpdatePayload,
+    triggerLessonUnlock = false
+  ) => {
+    setIsSavingVideo(true);
+    try {
+      const saveRes = await saveVideoPlaybackProgress({
+        courseId: course.id,
+        lessonId,
+        videoId: payload.videoId,
+        youtubeVideoId: payload.youtubeVideoId,
+        durationSeconds: payload.durationSeconds,
+        watchedSeconds: payload.watchedSeconds,
+        maxPercentWatched: payload.maxPercentWatched,
+        lastPositionSeconds: payload.lastPositionSeconds,
+        hasPlayed: payload.hasPlayed,
+        completedViaPlayer: payload.completedViaPlayer,
+        manualCompleted: payload.manualCompleted,
+      });
+
+      if (saveRes.success && saveRes.record) {
+        setVideoProgressById((prev) => ({
+          ...prev,
+          [payload.videoId]: saveRes.record!,
+        }));
+      }
+
+      if (triggerLessonUnlock && !validCompletedSet.has(lessonId)) {
+        const nextSet = new Set(validCompletedSet);
+        nextSet.add(lessonId);
+        const nextList = Array.from(nextSet);
+        setCompletedIds(nextList);
+        setLockNotice(null);
+
+        await onUpdateProgress({
+          currentLessonId: lessonId,
+          completedLessonIds: nextList,
+          totalLessons,
+          requiredModuleQuizIds,
+        });
+      }
+    } finally {
+      setIsSavingVideo(false);
+    }
+  };
+
   const handlePrevious = () => {
     if (activeGlobalIndex === 0) {
       selectIntro();
@@ -370,7 +476,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     ) {
       if (!isModuleQuizUnlocked(activeModule.id)) {
         setLockNotice(
-          'Mark this lesson complete first to unlock the Module Quiz.'
+          'Watch at least 90% of the Module video above first to unlock the Module Quiz.'
         );
         return;
       }
@@ -381,13 +487,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     const nextIndex = activeGlobalIndex + 1;
     const next = flatLessons[nextIndex];
     if (!next) {
-      selectFinalAssessment();
+      if (assessmentOverview?.finalAssessment) {
+        selectFinalAssessment();
+      }
       return;
     }
 
     if (!isLessonUnlocked(nextIndex)) {
       setLockNotice(
-        'Mark this lesson as complete first to unlock the next lesson in sequence.'
+        'Complete the current module and pass its quiz (70%+) to unlock the next module.'
       );
       return;
     }
@@ -397,7 +505,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   const getContinueActionAfterModuleQuiz = (moduleId: string) => {
     const modIndex = sortedModules.findIndex((m) => m.id === moduleId);
     const nextMod = modIndex >= 0 ? sortedModules[modIndex + 1] : null;
-    if (nextMod && nextMod.lessons.length > 0) {
+    if (nextMod && !nextMod.isUpcomingPlaceholder && nextMod.lessons.length > 0) {
       const firstNextLesson = nextMod.lessons
         .slice()
         .sort((a, b) => a.order - b.order)[0];
@@ -409,9 +517,28 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         };
       }
     }
+    if (nextMod?.isUpcomingPlaceholder) {
+      return {
+        label: `Back to Module 01 (Module 0${nextMod.order} Unlocked)`,
+        action: () => {
+          const first = flatLessons[0];
+          if (first) {
+            void selectLesson(first.lesson.id, 0);
+          } else {
+            onBackToCourseDetails();
+          }
+        },
+      };
+    }
+    if (assessmentOverview?.finalAssessment) {
+      return {
+        label: 'Proceed to Final Assessment',
+        action: () => selectFinalAssessment(),
+      };
+    }
     return {
-      label: 'Proceed to Final Assessment',
-      action: () => selectFinalAssessment(),
+      label: 'Return to Course Overview',
+      action: () => onBackToCourseDetails(),
     };
   };
 
@@ -516,26 +643,41 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         <div className="space-y-1 text-[11px] text-[#778397] tabular-nums">
           <div className="flex items-center justify-between">
             <span>
-              Lessons: {validCompletedSet.size}/{totalLessons}
+              Video/Lessons: {validCompletedSet.size}/{totalLessons}
             </span>
             <span>
               Quizzes: {passedRequiredCount}/{requiredModuleQuizIds.length}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span>
-              Final Assessment:{' '}
-              <strong
-                className={
-                  finalAssessmentPassed ? 'text-emerald-700' : 'text-[#566479]'
-                }
-              >
-                {finalAssessmentPassed
-                  ? `Passed${bestFinalScore ? ` (${bestFinalScore}%)` : ''}`
-                  : 'Required (70%+)'}
-              </strong>
-            </span>
-          </div>
+          {assessmentOverview?.finalAssessment ? (
+            <div className="flex items-center justify-between">
+              <span>
+                Final Assessment:{' '}
+                <strong
+                  className={
+                    finalAssessmentPassed ? 'text-emerald-700' : 'text-[#566479]'
+                  }
+                >
+                  {finalAssessmentPassed
+                    ? `Passed${bestFinalScore ? ` (${bestFinalScore}%)` : ''}`
+                    : 'Required (70%+)'}
+                </strong>
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span>
+                Module 02 Status:{' '}
+                <strong
+                  className={
+                    effectiveUnlockedModuleOrder >= 2 ? 'text-emerald-700' : 'text-[#566479]'
+                  }
+                >
+                  {effectiveUnlockedModuleOrder >= 2 ? 'Unlocked' : 'Locked (Pass M01 70%+)'}
+                </strong>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -568,6 +710,51 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
         {/* Modules */}
         {sortedModules.map((mod) => {
+          if (mod.isUpcomingPlaceholder) {
+            const isPlaceholderUnlocked = effectiveUnlockedModuleOrder >= mod.order;
+            return (
+              <div key={mod.id} className="p-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLockNotice(
+                      isPlaceholderUnlocked
+                        ? `Module 0${mod.order} is unlocked! Module 01 has been completed and passed.`
+                        : `Module 0${mod.order} is locked. Watch the Module 01 video (90%+) and score at least 70% on the Module 01 Quiz to unlock it.`
+                    );
+                    setMobileDrawerOpen(false);
+                  }}
+                  className={`w-full min-h-[48px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer border ${
+                    isPlaceholderUnlocked
+                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                      : 'bg-[#FAFBFD] border-[#E5EAF0] text-[#778397]'
+                  }`}
+                >
+                  <span className="mt-0.5 shrink-0" aria-hidden="true">
+                    {isPlaceholderUnlocked ? (
+                      <Unlock className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-[#9AA6B8]" />
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide">
+                      Module 0{mod.order}
+                    </p>
+                    <p className="text-xs font-bold leading-snug text-[#102B4E]">
+                      {isPlaceholderUnlocked ? 'Unlocked — Ready Next' : 'Next Module (Locked)'}
+                    </p>
+                    <p className="text-[11px]">
+                      {isPlaceholderUnlocked
+                        ? 'Module 01 passed (70%+)'
+                        : 'Pass Module 01 Quiz (70%+) to unlock'}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            );
+          }
+
           const isExpanded = expandedModules[mod.id] !== false;
           const modCompletedCount = mod.lessons.filter((l) =>
             validCompletedSet.has(l.id)
@@ -624,8 +811,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       const completed = validCompletedSet.has(lesson.id);
                       const isCurrent = activeId === lesson.id;
                       const hasVideo = Boolean(
-                        lesson.videoUrl &&
-                          parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+                        (lesson.videos && lesson.videos.length > 0) ||
+                          (lesson.videoUrl &&
+                            parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid')
                       );
 
                       return (
@@ -683,7 +871,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                                 isCurrent ? 'text-slate-300' : 'text-[#778397]'
                               }`}
                             >
-                              <span>{hasVideo ? 'Video' : 'Written'}</span>
+                              <span>{hasVideo ? 'Video & Guide' : 'Written'}</span>
                               <span aria-hidden="true">·</span>
                               <span>{lesson.estimatedMinutes} min</span>
                               {isCurrent && (
@@ -778,12 +966,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                                   : 'font-semibold text-amber-700'
                               }
                             >
-                              Best {quizBestScore}% · Retry
+                              Best {quizBestScore}% · Retake
                             </span>
                           ) : quizUnlocked ? (
-                            <span className="font-semibold text-[#F47A24]">Ready</span>
+                            <span className="font-semibold text-[#F47A24]">Unlocked · Start</span>
                           ) : (
-                            <span>Complete module lessons</span>
+                            <span>Watch video (90%) to unlock</span>
                           )}
                         </div>
                       </div>
@@ -795,75 +983,77 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
           );
         })}
 
-        {/* Final Course Assessment Entry */}
-        <div className="p-3">
-          <button
-            type="button"
-            onClick={selectFinalAssessment}
-            aria-current={isViewingFinalAssessment ? 'step' : undefined}
-            className={`w-full min-h-[50px] px-3.5 py-3 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
-              isViewingFinalAssessment
-                ? 'bg-[#102B4E] text-white'
-                : isFinalAssessmentUnlocked
-                ? 'bg-[#FFF8F2] border border-[#F47A24]/40 hover:border-[#F47A24] text-[#102B4E]'
-                : 'bg-[#FAFBFD] border border-[#E5EAF0] text-[#778397] hover:border-[#CBD5E1]'
-            }`}
-          >
-            <span className="mt-0.5 shrink-0" aria-hidden="true">
-              {finalAssessmentPassed ? (
-                <CheckCircle2
-                  className={`w-4 h-4 ${
-                    isViewingFinalAssessment ? 'text-emerald-300' : 'text-emerald-600'
-                  }`}
-                />
-              ) : !isFinalAssessmentUnlocked ? (
-                <Lock className="w-4 h-4 text-[#9AA6B8]" />
-              ) : (
-                <Award className="w-4 h-4 text-[#F47A24]" />
-              )}
-            </span>
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <p
-                className={`text-xs sm:text-[13px] font-bold leading-snug ${
-                  isViewingFinalAssessment
-                    ? 'text-white'
-                    : isFinalAssessmentUnlocked
-                    ? 'text-[#102B4E]'
-                    : 'text-[#566479]'
-                }`}
-              >
-                Final Course Assessment
-              </p>
-              <div
-                className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
-                  isViewingFinalAssessment ? 'text-slate-300' : 'text-[#778397]'
-                }`}
-              >
-                <span>
-                  {assessmentOverview?.finalAssessment?.questionCount ?? 12} questions
-                </span>
-                <span aria-hidden="true">·</span>
+        {/* Final Course Assessment Entry (shown only when configured) */}
+        {assessmentOverview?.finalAssessment && (
+          <div className="p-3">
+            <button
+              type="button"
+              onClick={selectFinalAssessment}
+              aria-current={isViewingFinalAssessment ? 'step' : undefined}
+              className={`w-full min-h-[50px] px-3.5 py-3 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+                isViewingFinalAssessment
+                  ? 'bg-[#102B4E] text-white'
+                  : isFinalAssessmentUnlocked
+                  ? 'bg-[#FFF8F2] border border-[#F47A24]/40 hover:border-[#F47A24] text-[#102B4E]'
+                  : 'bg-[#FAFBFD] border border-[#E5EAF0] text-[#778397] hover:border-[#CBD5E1]'
+              }`}
+            >
+              <span className="mt-0.5 shrink-0" aria-hidden="true">
                 {finalAssessmentPassed ? (
-                  <span
-                    className={
-                      isViewingFinalAssessment
-                        ? 'font-semibold text-emerald-300'
-                        : 'font-semibold text-emerald-700'
-                    }
-                  >
-                    Passed{bestFinalScore ? ` (${bestFinalScore}%)` : ''}
-                  </span>
-                ) : isFinalAssessmentUnlocked ? (
-                  <span className="font-semibold text-[#F47A24]">
-                    Pass {assessmentOverview?.finalAssessment?.passPercentage ?? 70}%+
-                  </span>
+                  <CheckCircle2
+                    className={`w-4 h-4 ${
+                      isViewingFinalAssessment ? 'text-emerald-300' : 'text-emerald-600'
+                    }`}
+                  />
+                ) : !isFinalAssessmentUnlocked ? (
+                  <Lock className="w-4 h-4 text-[#9AA6B8]" />
                 ) : (
-                  <span>Locked until prerequisites done</span>
+                  <Award className="w-4 h-4 text-[#F47A24]" />
                 )}
+              </span>
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p
+                  className={`text-xs sm:text-[13px] font-bold leading-snug ${
+                    isViewingFinalAssessment
+                      ? 'text-white'
+                      : isFinalAssessmentUnlocked
+                      ? 'text-[#102B4E]'
+                      : 'text-[#566479]'
+                  }`}
+                >
+                  Final Course Assessment
+                </p>
+                <div
+                  className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                    isViewingFinalAssessment ? 'text-slate-300' : 'text-[#778397]'
+                  }`}
+                >
+                  <span>
+                    {assessmentOverview.finalAssessment.questionCount} questions
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  {finalAssessmentPassed ? (
+                    <span
+                      className={
+                        isViewingFinalAssessment
+                          ? 'font-semibold text-emerald-300'
+                          : 'font-semibold text-emerald-700'
+                      }
+                    >
+                      Passed{bestFinalScore ? ` (${bestFinalScore}%)` : ''}
+                    </span>
+                  ) : isFinalAssessmentUnlocked ? (
+                    <span className="font-semibold text-[#F47A24]">
+                      Pass {assessmentOverview.finalAssessment.passPercentage}%+
+                    </span>
+                  ) : (
+                    <span>Locked until prerequisites done</span>
+                  )}
+                </div>
               </div>
-            </div>
-          </button>
-        </div>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1320,7 +1510,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 </div>
               </motion.article>
             ) : (
-              /* VIEW D: ACTIVE LESSON */
+              /* VIEW D: ACTIVE LESSON (VIDEO + OBJECTIVES + QUIZ CARD + STUDY GUIDE + ACTIVITY) */
               <motion.article
                 key={activeLesson.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -1328,111 +1518,371 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 transition={{ duration: 0.25, ease: EASE_PREMIUM }}
                 className="space-y-6"
               >
-                <section className="bg-white rounded-2xl border border-[#E5EAF0] overflow-hidden">
-                  {parsedVideo && parsedVideo.kind !== 'invalid' && (
-                    <div className="w-full bg-[#0B1726]">
-                      <div className="relative w-full aspect-video">
-                        {parsedVideo.kind === 'iframe' ? (
-                          <iframe
-                            src={parsedVideo.embedUrl}
-                            title={activeLesson.title}
-                            className="absolute inset-0 w-full h-full border-0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        ) : (
-                          <video
-                            src={parsedVideo.embedUrl}
-                            controls
-                            playsInline
-                            className="absolute inset-0 w-full h-full object-contain bg-black"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-6 sm:p-8 lg:p-10 space-y-6">
-                    <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
+                {/* 1. Primary Module Header & Embedded YouTube Video (Immediately Visible) */}
+                {activeLesson.videos && activeLesson.videos.length > 0 ? (
+                  <div className="space-y-6">
+                    {/* Module Title & Metadata Banner */}
+                    <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-7 space-y-3">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
                         {activeModule && (
-                          <span className="font-semibold text-[#102B4E]">
-                            Module 0{activeModule.order}: {activeModule.title}
+                          <span className="font-bold text-[#F47A24]">
+                            Module 0{activeModule.order}
                           </span>
                         )}
-                        <span aria-hidden="true">·</span>
-                        <span>
-                          Lesson {activeGlobalIndex + 1} of {totalLessons}
-                        </span>
+                        {activeModule?.level && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="font-semibold text-[#102B4E]">
+                              {activeModule.level}
+                            </span>
+                          </>
+                        )}
                         <span aria-hidden="true">·</span>
                         <span className="inline-flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-[#F47A24]" />
                           <span>Est. {activeLesson.estimatedMinutes} min</span>
                         </span>
-                        <span aria-hidden="true">·</span>
-                        <span>
-                          {parsedVideo && parsedVideo.kind !== 'invalid'
-                            ? `Video & Reading (${parsedVideo.providerLabel})`
-                            : 'Written Lesson'}
-                        </span>
-                        {isCurrentLessonCompleted && (
+                        {activeModule && passedModuleQuizSet.has(activeModule.id) && (
                           <>
                             <span aria-hidden="true">·</span>
                             <span className="font-semibold text-emerald-700 inline-flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Completed</span>
+                              <span>Module Passed</span>
                             </span>
                           </>
                         )}
                       </div>
 
                       <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
-                        {activeLesson.title}
+                        {activeModule ? activeModule.title : activeLesson.title}
                       </h1>
 
-                      {activeLesson.description && (
-                        <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[68ch]">
-                          {activeLesson.description}
-                        </p>
+                      <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[70ch]">
+                        {activeModule?.summary || activeLesson.description}
+                      </p>
+                    </section>
+
+                    {/* Immediately Visible Tracked YouTube Video Player */}
+                    {activeLesson.videos.map((vid) => (
+                      <YouTubeTrackedPlayer
+                        key={vid.id}
+                        video={vid}
+                        savedProgress={videoProgressById[vid.id]}
+                        isSaving={isSavingVideo || isSavingProgress}
+                        onSaveProgress={(payload, triggerUnlock) =>
+                          handleVideoProgressSave(activeLesson.id, payload, triggerUnlock)
+                        }
+                      />
+                    ))}
+
+                    {/* Learning Objectives — Directly Underneath the Video */}
+                    {activeModule?.learningObjectives &&
+                      activeModule.learningObjectives.length > 0 && (
+                        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-7 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Target className="w-4 h-4 text-[#F47A24] shrink-0" />
+                            <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+                              Module 0{activeModule.order} Learning Objectives
+                            </h2>
+                          </div>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {activeModule.learningObjectives.map((obj, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed bg-[#FAFBFD] border border-[#E5EAF0]/80 rounded-xl px-3.5 py-2.5"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                                <span>{obj}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
                       )}
-                    </div>
 
-                    <div className="space-y-4 max-w-[68ch]">
-                      <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
-                        Lesson Explanation
-                      </h2>
-                      <div className="space-y-4">
-                        {renderWrittenParagraphs(activeLesson.writtenContent)}
-                      </div>
-                    </div>
+                    {/* Primary Progression Card: Module Quiz & Module 02 Unlock */}
+                    {activeModule && moduleQuizByModuleId.has(activeModule.id) && (
+                      <section
+                        className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
+                          passedModuleQuizSet.has(activeModule.id)
+                            ? 'bg-emerald-50/50 border-emerald-200'
+                            : isModuleQuizUnlocked(activeModule.id)
+                            ? 'bg-[#FFF8F2] border-[#F47A24]/40'
+                            : 'bg-white border-[#E5EAF0]'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-1.5 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                              {passedModuleQuizSet.has(activeModule.id) ? (
+                                <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>
+                                    Module 0{activeModule.order} Passed · Module 0
+                                    {activeModule.order + 1} Unlocked
+                                  </span>
+                                </span>
+                              ) : isModuleQuizUnlocked(activeModule.id) ? (
+                                <span className="inline-flex items-center gap-1.5 text-[#F47A24]">
+                                  <Unlock className="w-4 h-4" />
+                                  <span>Video Completed — Quiz Unlocked</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-slate-600">
+                                  <Lock className="w-4 h-4" />
+                                  <span>Locked Until Video Reaches 90%</span>
+                                </span>
+                              )}
+                            </div>
 
-                    {isAdmin &&
-                      (!parsedVideo || parsedVideo.kind === 'invalid') &&
-                      onOpenAdminContentManager && (
-                        <div className="pt-4 border-t border-[#E5EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#566479]">
-                          <span>
-                            This lesson is currently a written lesson. You can attach an embedded video URL (YouTube, Vimeo, Loom, or MP4) anytime.
-                          </span>
+                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+                              Module 0{activeModule.order} Quiz:{' '}
+                              {moduleQuizByModuleId.get(activeModule.id)?.questionCount ?? 10}{' '}
+                              Questions (Pass{' '}
+                              {moduleQuizByModuleId.get(activeModule.id)?.passPercentage ?? 70}%+)
+                            </h2>
+
+                            <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
+                              {passedModuleQuizSet.has(activeModule.id)
+                                ? `Best score: ${getBestScoreForModuleQuiz(activeModule.id) ?? 70}%. Module 0${activeModule.order + 1} is now unlocked for your account. You may retake the quiz anytime to review.`
+                                : isModuleQuizUnlocked(activeModule.id)
+                                ? 'Complete all 10 multiple-choice questions and score at least 70% (7/10) to pass Module 01 and unlock Module 02. Unlimited retakes allowed.'
+                                : 'Watch at least 90% of the embedded video above to automatically unlock the 10-question Module 01 Quiz.'}
+                            </p>
+                          </div>
+
                           <button
                             type="button"
-                            onClick={onOpenAdminContentManager}
-                            className="font-semibold text-[#102B4E] hover:text-[#F47A24] underline underline-offset-4 whitespace-nowrap cursor-pointer shrink-0 text-left"
+                            onClick={() =>
+                              selectModuleQuiz(activeModule.id, activeModule.title)
+                            }
+                            className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                              isModuleQuizUnlocked(activeModule.id)
+                                ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
+                                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                            }`}
                           >
-                            Attach video or edit lesson
+                            {!isModuleQuizUnlocked(activeModule.id) && (
+                              <Lock className="w-4 h-4 shrink-0" />
+                            )}
+                            <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
+                            <span>
+                              {passedModuleQuizSet.has(activeModule.id)
+                                ? 'Retake Module 01 Quiz'
+                                : getBestScoreForModuleQuiz(activeModule.id) !== null
+                                ? `Retake Quiz (Best ${getBestScoreForModuleQuiz(activeModule.id)}%)`
+                                : isModuleQuizUnlocked(activeModule.id)
+                                ? 'Start Module 01 Quiz'
+                                : 'Quiz Locked'}
+                            </span>
+                            <ArrowRight className="w-4 h-4 shrink-0" />
                           </button>
                         </div>
-                      )}
-                  </div>
-                </section>
+                      </section>
+                    )}
 
-                {/* Practical Exercise */}
+                    {/* 2. Supporting Study Material (Secondary to Video + Quiz) */}
+                    {activeLesson.studyGuide ? (
+                      <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-8 space-y-6">
+                        <div className="space-y-1 border-b border-[#E5EAF0] pb-4">
+                          <p className="text-xs font-semibold text-teal-700 inline-flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>Supporting Study Material</span>
+                          </p>
+                          <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+                            Concise Excel Fundamentals Study Guide
+                          </h2>
+                          <p className="text-xs sm:text-sm text-[#566479]">
+                            Quick written reference covering key concepts, interface tools, and workplace spreadsheet examples to reinforce the video lesson.
+                          </p>
+                        </div>
+
+                        {/* 7 Concise Concept Blocks */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {activeLesson.studyGuide.sections.map((sec, idx) => (
+                            <div
+                              key={idx}
+                              className={`p-4 sm:p-5 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-2 ${
+                                sec.bullets && sec.bullets.length >= 4 ? 'md:col-span-2' : ''
+                              }`}
+                            >
+                              <h3 className="font-display text-sm sm:text-[15px] font-bold text-[#102B4E]">
+                                {sec.heading}
+                              </h3>
+                              <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
+                                {sec.body}
+                              </p>
+                              {sec.bullets && sec.bullets.length > 0 && (
+                                <ul className="space-y-1.5 pt-1">
+                                  {sec.bullets.map((b, bIdx) => (
+                                    <li
+                                      key={bIdx}
+                                      className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
+                                    >
+                                      <span
+                                        aria-hidden="true"
+                                        className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
+                                      />
+                                      <span>{b}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Real-World Spreadsheet Examples (Employee Spreadsheet & Supplier List) */}
+                        {activeLesson.studyGuide.examples.length > 0 && (
+                          <div className="space-y-5 pt-2">
+                            <div className="flex items-center gap-2">
+                              <Table2 className="w-4 h-4 text-[#F47A24] shrink-0" />
+                              <h3 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+                                Real-World Workplace Spreadsheet Examples
+                              </h3>
+                            </div>
+
+                            {activeLesson.studyGuide.examples.map((ex, exIdx) => (
+                              <div
+                                key={exIdx}
+                                className="rounded-xl border border-[#D4DCE6] overflow-hidden bg-white"
+                              >
+                                <div className="px-4 py-3 bg-[#F6F8FB] border-b border-[#E5EAF0] space-y-0.5">
+                                  <p className="text-sm font-bold text-[#102B4E]">{ex.title}</p>
+                                  <p className="text-xs text-[#566479] leading-relaxed">
+                                    {ex.subtitle}
+                                  </p>
+                                </div>
+                                <div className="w-full overflow-x-auto">
+                                  <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[520px]">
+                                    <thead>
+                                      <tr className="bg-emerald-50/70 border-b border-[#D4DCE6]">
+                                        <th className="py-2 px-3 w-10 text-center font-bold text-slate-500 border-r border-[#E5EAF0] bg-slate-100">
+                                          Row
+                                        </th>
+                                        {ex.columns.map((col, cIdx) => (
+                                          <th
+                                            key={cIdx}
+                                            className="py-2 px-3 font-bold text-[#102B4E] border-r last:border-r-0 border-[#E5EAF0] whitespace-nowrap"
+                                          >
+                                            {col}
+                                          </th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#E5EAF0]">
+                                      {ex.rows.map((row, rIdx) => (
+                                        <tr
+                                          key={rIdx}
+                                          className="hover:bg-[#FAFBFD] transition-colors"
+                                        >
+                                          <td className="py-2 px-3 text-center font-semibold text-slate-500 border-r border-[#E5EAF0] bg-slate-50 tabular-nums">
+                                            {rIdx + 2}
+                                          </td>
+                                          {row.map((cell, cellIdx) => (
+                                            <td
+                                              key={cellIdx}
+                                              className="py-2 px-3 text-[#253449] border-r last:border-r-0 border-[#E5EAF0] whitespace-nowrap"
+                                            >
+                                              {cell}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+                    ) : (
+                      <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+                        <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+                          Lesson Notes
+                        </h2>
+                        <div className="space-y-4">
+                          {renderWrittenParagraphs(activeLesson.writtenContent)}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                ) : (
+                  /* Legacy non-tracked lesson rendering preserved for any future written lessons */
+                  <section className="bg-white rounded-2xl border border-[#E5EAF0] overflow-hidden">
+                    {parsedVideo && parsedVideo.kind !== 'invalid' && (
+                      <div className="w-full bg-[#0B1726]">
+                        <div className="relative w-full aspect-video">
+                          {parsedVideo.kind === 'iframe' ? (
+                            <iframe
+                              src={parsedVideo.embedUrl}
+                              title={activeLesson.title}
+                              className="absolute inset-0 w-full h-full border-0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <video
+                              src={parsedVideo.embedUrl}
+                              controls
+                              playsInline
+                              className="absolute inset-0 w-full h-full object-contain bg-black"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-6 sm:p-8 lg:p-10 space-y-6">
+                      <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
+                          {activeModule && (
+                            <span className="font-semibold text-[#102B4E]">
+                              Module 0{activeModule.order}: {activeModule.title}
+                            </span>
+                          )}
+                          <span aria-hidden="true">·</span>
+                          <span>
+                            Lesson {activeGlobalIndex + 1} of {totalLessons}
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#F47A24]" />
+                            <span>Est. {activeLesson.estimatedMinutes} min</span>
+                          </span>
+                        </div>
+
+                        <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
+                          {activeLesson.title}
+                        </h1>
+
+                        {activeLesson.description && (
+                          <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[68ch]">
+                            {activeLesson.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-4 max-w-[68ch]">
+                        <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
+                          Lesson Explanation
+                        </h2>
+                        <div className="space-y-4">
+                          {renderWrittenParagraphs(activeLesson.writtenContent)}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Practical Activity */}
                 {activeLesson.exercise && (
                   <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1">
                         <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
                           <ClipboardCheck className="w-3.5 h-3.5" />
-                          <span>Practical Exercise</span>
+                          <span>Practical Activity</span>
                         </p>
                         <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
                           {activeLesson.exercise.title}
@@ -1447,7 +1897,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                             [activeLesson.id]: !prev[activeLesson.id],
                           }))
                         }
-                        className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors border ${
+                        className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors border ${
                           checkedExercises[activeLesson.id]
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                             : 'bg-[#FAFBFD] border-[#E5EAF0] text-[#566479] hover:border-[#102B4E] hover:text-[#102B4E]'
@@ -1456,8 +1906,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>
                           {checkedExercises[activeLesson.id]
-                            ? 'Exercise Practiced'
-                            : 'Mark Exercise Done'}
+                            ? 'Activity Practiced'
+                            : 'Mark Activity Practiced'}
                         </span>
                       </button>
                     </div>
@@ -1511,7 +1961,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                             onClick={() =>
                               downloadLessonResource(course.title, activeLesson.title, att)
                             }
-                            className="min-h-[40px] px-4 py-2 rounded-xl border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                            className="min-h-[44px] px-4 py-2 rounded-xl border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Download {att.url ? att.fileType : 'PDF'}</span>
@@ -1522,42 +1972,79 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Lesson Completion & Navigation Controls */}
+                {/* Lesson Completion Status & Navigation Controls */}
                 <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-bold text-[#102B4E]">
-                        {isCurrentLessonCompleted
-                          ? 'Lesson completed'
-                          : 'Finished studying this lesson?'}
-                      </p>
-                      <p className="text-xs text-[#778397]">
-                        {isCurrentLessonCompleted
-                          ? 'Your course progress is updated and saved automatically.'
-                          : isLastLessonOfModule
-                          ? 'Mark this lesson complete to unlock the Module Quiz.'
-                          : 'Mark this lesson complete to update your progress and unlock the next lesson.'}
-                      </p>
-                    </div>
+                  {activeLesson.videos && activeLesson.videos.length > 0 ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-[#102B4E]">
+                          {isCurrentLessonCompleted
+                            ? 'Video requirement completed'
+                            : 'Complete the embedded video to unlock the quiz'}
+                        </p>
+                        <p className="text-xs text-[#778397]">
+                          {isCurrentLessonCompleted
+                            ? 'Your video progress is saved. Take the Module Quiz to unlock the next module.'
+                            : 'Video completion is recorded automatically at 90% playback — no manual bypass is permitted while playback tracking is active.'}
+                        </p>
+                      </div>
 
-                    <button
-                      type="button"
-                      disabled={isSavingProgress}
-                      onClick={() => void handleToggleComplete()}
-                      className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors disabled:opacity-60 ${
-                        isCurrentLessonCompleted
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          : 'bg-[#F47A24] hover:bg-[#DE6816] text-white'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>
-                        {isCurrentLessonCompleted
-                          ? 'Completed (Click to Undo)'
-                          : 'Mark Lesson as Complete'}
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 self-start sm:self-center ${
+                          isCurrentLessonCompleted
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {isCurrentLessonCompleted ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Video Completed</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4" />
+                            <span>Watch 90% Above</span>
+                          </>
+                        )}
                       </span>
-                    </button>
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-[#102B4E]">
+                          {isCurrentLessonCompleted
+                            ? 'Lesson completed'
+                            : 'Finished studying this lesson?'}
+                        </p>
+                        <p className="text-xs text-[#778397]">
+                          {isCurrentLessonCompleted
+                            ? 'Your course progress is updated and saved automatically.'
+                            : isLastLessonOfModule
+                            ? 'Mark this lesson complete to unlock the Module Quiz.'
+                            : 'Mark this lesson complete to update your progress and unlock the next lesson.'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={isSavingProgress}
+                        onClick={() => void handleToggleComplete()}
+                        className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors disabled:opacity-60 ${
+                          isCurrentLessonCompleted
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-[#F47A24] hover:bg-[#DE6816] text-white'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>
+                          {isCurrentLessonCompleted
+                            ? 'Completed (Click to Undo)'
+                            : 'Mark Lesson as Complete'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
                   <div className="pt-4 border-t border-[#E5EAF0] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <button
@@ -1609,7 +2096,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         <span>Next Lesson</span>
                         <ArrowRight className="w-4 h-4 shrink-0" />
                       </button>
-                    ) : (
+                    ) : assessmentOverview?.finalAssessment ? (
                       <button
                         type="button"
                         onClick={selectFinalAssessment}
@@ -1619,7 +2106,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         <span>Go to Final Assessment</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </section>
               </motion.article>

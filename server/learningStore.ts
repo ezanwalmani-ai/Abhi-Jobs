@@ -13,7 +13,11 @@
  */
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { SupabaseLearningStoreRepository } from './supabaseLearningStore';
+import { FileLearningStoreRepository } from './fileLearningStore';
+import { EXCEL_COURSE_DEFINITION, EXCEL_M01_QUIZ_CONFIG } from './excelCurriculumSeed';
 
 export type AssessmentType = 'module_quiz' | 'final_assessment';
 export type CertificateValidityStatus = 'valid' | 'revoked';
@@ -54,6 +58,11 @@ export interface PersistedAssessmentSession {
   candidateName: string;
   candidateEmail: string;
   servedQuestionIds: string[];
+  /**
+   * Maps each questionId -> [origIdxAtDisplay0, origIdxAtDisplay1, origIdxAtDisplay2, origIdxAtDisplay3]
+   * so options can be shuffled per attempt while grading maps deterministically back to canonical index.
+   */
+  optionPermutations?: Record<string, [number, number, number, number]>;
   createdAt: string;
   expiresAt: string;
   submitted: boolean;
@@ -208,16 +217,89 @@ export interface LearningStoreRepository {
 }
 
 // ============================================================================
-// ACTIVE REPOSITORY (PRODUCTION SUPABASE POSTGRESQL BY DEFAULT)
+// ACTIVE REPOSITORY (SUPABASE IF AVAILABLE, OTHERWISE SERVER FILE STORE)
 // ============================================================================
 
 let activeRepository: LearningStoreRepository | null = null;
+let initializedPromise: Promise<void> | null = null;
 
 export function getLearningStore(): LearningStoreRepository {
   if (!activeRepository) {
-    activeRepository = new SupabaseLearningStoreRepository();
+    activeRepository = new FileLearningStoreRepository();
   }
   return activeRepository;
+}
+
+/**
+ * Initializes the learning repository on server boot and idempotently seeds
+ * Module 1 ("Excel Fundamentals") under "Excel for Job Seekers" without ever
+ * overwriting existing student attempts, unlocks, or creating duplicates.
+ */
+export async function initializeLearningStore(): Promise<void> {
+  if (initializedPromise) {
+    return initializedPromise;
+  }
+
+  initializedPromise = (async () => {
+    const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+    const supabaseKey = (
+      process.env.SUPABASE_SECRET_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      ''
+    ).trim();
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const supabaseRepo = new SupabaseLearningStoreRepository();
+        const diag = await supabaseRepo.getDiagnostics();
+        if (diag.connected) {
+          activeRepository = supabaseRepo;
+          console.log('[learningStore] Connected to Supabase PostgreSQL learning store.');
+        } else {
+          console.warn(
+            `[learningStore] Supabase unavailable (${diag.connectionError || 'unconnected'}); using server-side file learning store (.learning-data/store.json).`
+          );
+          activeRepository = new FileLearningStoreRepository();
+        }
+      } catch (err) {
+        console.warn(
+          '[learningStore] Supabase connection check failed; using server-side file learning store (.learning-data/store.json):',
+          err instanceof Error ? err.message : err
+        );
+        activeRepository = new FileLearningStoreRepository();
+      }
+    } else {
+      activeRepository = new FileLearningStoreRepository();
+    }
+
+    await seedDefaultExcelModule1IfNeeded();
+  })();
+
+  return initializedPromise;
+}
+
+/**
+ * Idempotently registers the "Excel for Job Seekers" course definition and
+ * Module 1 ("Excel Fundamentals") 10-question quiz bank if not already present.
+ */
+export async function seedDefaultExcelModule1IfNeeded(): Promise<void> {
+  const store = getLearningStore();
+
+  const existingCourse = await store.getCourseDefinition(EXCEL_COURSE_DEFINITION.courseId);
+  if (!existingCourse) {
+    await store.upsertCourseDefinition({
+      ...EXCEL_COURSE_DEFINITION,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  const existingQuiz = await store.getAssessmentConfigById(EXCEL_M01_QUIZ_CONFIG.id);
+  if (!existingQuiz) {
+    await store.upsertAssessmentConfig({
+      ...EXCEL_M01_QUIZ_CONFIG,
+      updatedAt: new Date().toISOString(),
+    });
+  }
 }
 
 /**
@@ -226,6 +308,7 @@ export function getLearningStore(): LearningStoreRepository {
  */
 export function setLearningStoreRepository(repo: LearningStoreRepository | null): void {
   activeRepository = repo;
+  initializedPromise = null;
 }
 
 // ============================================================================
@@ -257,18 +340,37 @@ function resolveSigningSecret(): string {
     );
   }
 
-  // Non-production dev fallback (strictly in memory, never persisted to disk)
+  // Non-production dev fallback: persist inside server-only .learning-data/.dev-signing-key
+  // so HMAC-verified quiz attempts and module unlocks survive dev server restarts.
   if (envSecret.length >= 16) {
     return envSecret;
   }
 
   if (!devFallbackSigningSecret) {
-    devFallbackSigningSecret = crypto.randomBytes(32).toString('hex');
+    const keyFilePath = path.resolve(process.cwd(), '.learning-data', '.dev-signing-key');
+    try {
+      if (fs.existsSync(keyFilePath)) {
+        const stored = fs.readFileSync(keyFilePath, 'utf8').trim();
+        if (stored.length >= 32) {
+          devFallbackSigningSecret = stored;
+        }
+      }
+      if (!devFallbackSigningSecret) {
+        devFallbackSigningSecret = crypto.randomBytes(32).toString('hex');
+        const dir = path.dirname(keyFilePath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(keyFilePath, devFallbackSigningSecret, { encoding: 'utf8', mode: 0o600 });
+      }
+    } catch {
+      devFallbackSigningSecret = crypto.randomBytes(32).toString('hex');
+    }
   }
   if (!loggedDevSecretWarning) {
     loggedDevSecretWarning = true;
     console.warn(
-      '[learningStore] LEARNING_SIGNING_SECRET (32+ chars) is not set. Using a temporary dev-only key. Configure LEARNING_SIGNING_SECRET in your server environment so signatures stay valid across restarts and instances.'
+      '[learningStore] LEARNING_SIGNING_SECRET (32+ chars) is not set. Using a local server-only dev key. Configure LEARNING_SIGNING_SECRET in production environment variables.'
     );
   }
   return devFallbackSigningSecret;

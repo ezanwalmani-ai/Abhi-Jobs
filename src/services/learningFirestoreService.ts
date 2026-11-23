@@ -635,7 +635,7 @@ function docToVideoProgress(docId: string, data: any, fallbackUserId: string): V
         ? Math.min(86400, Math.round(data.lastPositionSeconds))
         : 0,
     hasPlayed,
-    completedViaPlayer: Boolean(data.completedViaPlayer) && hasPlayed && maxPercentWatched >= 80,
+    completedViaPlayer: Boolean(data.completedViaPlayer) && hasPlayed && maxPercentWatched >= 90,
     manualCompleted: Boolean(data.manualCompleted),
     updatedAt: normalizeTimestamp(data.updatedAt),
   };
@@ -709,9 +709,9 @@ export async function saveVideoPlaybackProgress(input: {
     Math.min(86400, Math.round(input.lastPositionSeconds || 0))
   );
   const hasPlayed = Boolean(input.hasPlayed);
-  // Strictly disallow player completion unless genuine playback reached >= 80%
+  // Strictly disallow player completion unless genuine playback reached >= 90%
   const completedViaPlayer =
-    Boolean(input.completedViaPlayer) && hasPlayed && maxPercentWatched >= 80;
+    Boolean(input.completedViaPlayer) && hasPlayed && maxPercentWatched >= 90;
   const manualCompleted = Boolean(input.manualCompleted);
 
   const docPath = `users/${fbUid}/video_progress/${progressKey}`;

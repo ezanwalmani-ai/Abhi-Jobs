@@ -348,6 +348,16 @@ export async function loadCandidateEnrolments(
         const mergedCompletedLessons = Array.from(
           new Set([...rec.completedLessonIds, ...serverStatus.completedLessonIds])
         );
+        // If Firestore holds verified lesson completion that server hasn't seen yet, sync it cleanly
+        if (
+          rec.completedLessonIds.some((id) => !serverStatus.completedLessonIds.includes(id))
+        ) {
+          await syncLessonProgressToServer({
+            courseId: rec.courseId,
+            completedLessonIds: mergedCompletedLessons,
+            candidateId: fbUid,
+          });
+        }
         const unlockedOrder = Math.max(rec.unlockedModuleOrder, serverStatus.unlockedModuleOrder);
         const finalPassed = rec.finalAssessmentPassed || serverStatus.finalAssessmentPassed;
         const bestFinal =
@@ -738,8 +748,8 @@ export async function saveCandidateCourseProgress(
     writeLocalEnrolments(appUserId, nextList);
   }
 
-  // Keep backend lesson progress synchronized for certificate eligibility checks
-  void syncLessonProgressToServer({
+  // Keep backend lesson progress synchronously aligned before unlocking quiz/certificate endpoints
+  await syncLessonProgressToServer({
     courseId: course.id,
     completedLessonIds: sanitizedCompleted,
     candidateId: effectiveUid,

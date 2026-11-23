@@ -507,9 +507,9 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
                 <p className="text-sm text-[#566479] max-w-[64ch] leading-relaxed">
                   {latestResult.passed
                     ? isFinal
-                      ? `You scored ${latestResult.scorePercent}% on the ${latestResult.assessmentTitle}. Your result has been saved to your ABHI JOBS profile.`
-                      : `You scored ${latestResult.scorePercent}% on ${latestResult.assessmentTitle}. Review the explanations below and continue to the next section.`
-                    : `You scored ${latestResult.scorePercent}%, which is below the ${latestResult.passPercentage}% passing mark. Review each explanation below and retry whenever you are ready.`}
+                      ? `You scored ${latestResult.scorePercent}% (${latestResult.correctAnswers}/${latestResult.totalQuestions}) on ${latestResult.assessmentTitle}. Your verified result has been saved to your ABHI JOBS profile.`
+                      : `You scored ${latestResult.scorePercent}% (${latestResult.correctAnswers}/${latestResult.totalQuestions}) on ${latestResult.assessmentTitle}. You passed — the next module is now unlocked! Review the explanations below.`
+                    : `You scored ${latestResult.scorePercent}% (${latestResult.correctAnswers}/${latestResult.totalQuestions}), which is below the ${latestResult.passPercentage}% passing mark. The next module remains locked — review each explanation below and retake the quiz whenever you are ready.`}
                 </p>
               </div>
 
@@ -583,7 +583,7 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
                 <span>{latestResult.passed ? 'Retake Assessment' : 'Retry Assessment'}</span>
               </button>
 
-              {onContinueAfterPass && (
+              {latestResult.passed && onContinueAfterPass && (
                 <button
                   type="button"
                   onClick={onContinueAfterPass}

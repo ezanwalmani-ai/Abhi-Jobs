@@ -329,7 +329,9 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
         ? assessmentOverview.moduleQuizzes
             .filter((q) => q.requiredForCompletion && q.moduleId)
             .map((q) => q.moduleId as string)
-        : course.modules.map((m) => m.id);
+        : course.modules
+            .filter((m) => !m.isUpcomingPlaceholder && m.quizRequired !== false)
+            .map((m) => m.id);
 
     const passedQuizSet = new Set<string>(existingEnrolment?.passedModuleQuizIds || []);
     nextAttempts.forEach((a) => {
@@ -388,14 +390,14 @@ export const LearnWithAbhiPage: React.FC<LearnWithAbhiPageProps> = ({
             'success',
             attempt.assessmentType === 'final_assessment'
               ? 'Final Assessment Passed'
-              : 'Module Quiz Passed',
+              : 'Module Quiz Passed — Next Module Unlocked!',
             `Score: ${attempt.scorePercent}% (${attempt.correctAnswers}/${attempt.totalQuestions} correct).`
           );
         } else {
           showToast(
             'info',
-            'Attempt Recorded',
-            `You scored ${attempt.scorePercent}%. Review the explanations and retry to reach ${attempt.passPercentage}%.`
+            'Attempt Recorded — Module 2 Remains Locked',
+            `You scored ${attempt.scorePercent}%. Review the explanations and retake to reach ${attempt.passPercentage}%.`
           );
         }
       }

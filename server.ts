@@ -36,8 +36,10 @@ import {
 import {
   getDurableStoreDiagnostics,
   getRegisteredCourseDefinition,
+  initializeLearningStore,
   upsertRegisteredCourseDefinition,
 } from './server/learningStore';
+import { MODULE_REQUIRED_LESSONS } from './server/excelCurriculumSeed';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -359,11 +361,17 @@ function shuffleArray<T>(items: T[]): T[] {
   return copy;
 }
 
-function stripQuestionSecrets(q: ServerQuizQuestion) {
+function stripQuestionSecrets(
+  q: ServerQuizQuestion,
+  perm?: [number, number, number, number]
+) {
+  const displayOptions: [string, string, string, string] = perm
+    ? [q.options[perm[0]], q.options[perm[1]], q.options[perm[2]], q.options[perm[3]]]
+    : q.options;
   return {
     id: q.id,
     prompt: q.prompt,
-    options: q.options,
+    options: displayOptions,
   };
 }
 
@@ -437,6 +445,8 @@ function handleLearningRouteError(res: Response, err: unknown): void {
 // ============================================================================
 
 async function startServer() {
+  await initializeLearningStore();
+
   const app = express();
   app.use(express.json({ limit: '1mb' }));
 
@@ -517,6 +527,26 @@ async function startServer() {
           });
           return;
         }
+
+        // Enforce server-side video/lesson completion prerequisite before unlocking the module quiz
+        const requiredModuleLessons = config.moduleId
+          ? MODULE_REQUIRED_LESSONS[config.moduleId] || []
+          : [];
+        if (requiredModuleLessons.length > 0) {
+          const completedLessonSet = new Set(authoritativeStatus.completedLessonIds);
+          const missingLessons = requiredModuleLessons.filter(
+            (lessonId) => !completedLessonSet.has(lessonId)
+          );
+          if (missingLessons.length > 0) {
+            res.status(403).json({
+              error:
+                'Watch at least 90% of the Module video (or complete the verified tracking fallback if playback tracking is unavailable) before starting the Module Quiz.',
+              code: 'VIDEO_COMPLETION_REQUIRED',
+              missingLessonIds: missingLessons,
+            });
+            return;
+          }
+        }
       } else if (assessmentType === 'final_assessment') {
         const { moduleQuizzes } = await getCourseAssessments(courseId);
         const passedQuizSet = new Set(authoritativeStatus.passedModuleQuizIds);
@@ -555,6 +585,13 @@ async function startServer() {
         : [...config.questions];
       const selectedQuestions = orderedPool.slice(0, countToServe);
 
+      // Shuffle answer option order per question server-side while preserving exact correct answer mapping
+      const optionPermutations: Record<string, [number, number, number, number]> = {};
+      for (const q of selectedQuestions) {
+        const perm = shuffleArray([0, 1, 2, 3]) as [number, number, number, number];
+        optionPermutations[q.id] = perm;
+      }
+
       const nowMs = Date.now();
       const sessionId = `sess_${crypto.randomBytes(16).toString('hex')}`;
       await createServerAssessmentSession({
@@ -567,6 +604,7 @@ async function startServer() {
         candidateName,
         candidateEmail,
         servedQuestionIds: selectedQuestions.map((q) => q.id),
+        optionPermutations,
         createdAt: new Date(nowMs).toISOString(),
         expiresAt: new Date(nowMs + SESSION_TTL_MS).toISOString(),
         submitted: false,
@@ -591,7 +629,9 @@ async function startServer() {
         passPercentage: config.passPercentage,
         totalQuestions: selectedQuestions.length,
         previousAttempts,
-        questions: selectedQuestions.map(stripQuestionSecrets),
+        questions: selectedQuestions.map((q) =>
+          stripQuestionSecrets(q, optionPermutations[q.id])
+        ),
       });
     } catch (err) {
       handleLearningRouteError(res, err);
@@ -677,15 +717,25 @@ async function startServer() {
         }
 
         sanitizedAnswers[q.id] = selectedOptionIndex;
-        const isCorrect = selectedOptionIndex === q.correctOptionIndex;
+
+        const perm = session.optionPermutations?.[q.id];
+        const canonicalSelectedIndex = perm ? perm[selectedOptionIndex] : selectedOptionIndex;
+        const displayedOptions: [string, string, string, string] = perm
+          ? [q.options[perm[0]], q.options[perm[1]], q.options[perm[2]], q.options[perm[3]]]
+          : q.options;
+        const displayedCorrectIndex = perm
+          ? (perm.indexOf(q.correctOptionIndex) as 0 | 1 | 2 | 3)
+          : q.correctOptionIndex;
+
+        const isCorrect = canonicalSelectedIndex === q.correctOptionIndex;
         if (isCorrect) correctAnswers += 1;
 
         questionResults.push({
           questionId: q.id,
           prompt: q.prompt,
-          options: q.options,
+          options: displayedOptions,
           selectedOptionIndex,
-          correctOptionIndex: q.correctOptionIndex,
+          correctOptionIndex: displayedCorrectIndex,
           isCorrect,
           explanation: q.explanation,
         });
