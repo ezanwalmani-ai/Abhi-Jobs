@@ -422,6 +422,8 @@ export interface CertificateTemplateRecord {
   updatedAt: string;
 }
 
+export type CertificateIssuanceMethod = 'server_hmac' | 'admin_approved';
+
 export interface CourseCertificateRecord {
   certificateId: string;
   userId: string;
@@ -436,6 +438,10 @@ export interface CourseCertificateRecord {
   verificationSignature: string;
   finalAttemptId?: string;
   templateId?: string;
+  /** Distinguishes existing HMAC-signed certificates from Starter-tier Admin-Approved records */
+  issuanceMethod?: CertificateIssuanceMethod;
+  approvedBy?: string;
+  approvalNote?: string;
 }
 
 export interface PublicCertificateVerification {
@@ -444,6 +450,7 @@ export interface PublicCertificateVerification {
   courseTitle: string;
   issueDate: string;
   status: CertificateValidityStatus;
+  issuanceMethod?: CertificateIssuanceMethod;
 }
 
 export interface CertificateVerificationResult {

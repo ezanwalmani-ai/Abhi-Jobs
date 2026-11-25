@@ -6,12 +6,134 @@ import {
   normalizeTemplateId,
   flattenSkillCategories,
 } from '../types/resume';
-import { supabase } from '../lib/supabase';
+import {
+  auth as firebaseAuth,
+  db,
+  doc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  serverTimestamp,
+} from '../lib/firebase';
 import { CandidateProfile } from '../types';
 
 const MULTI_STORAGE_PREFIX = 'abhijobs_resumes_v2_';
 const LEGACY_STORAGE_PREFIX = 'abhijobs_resume_';
 const DRAFT_STORAGE_PREFIX = 'abhijobs_resume_draft_';
+
+const BASE64_DATA_URI_PATTERN = /^data:[a-zA-Z0-9/+.-]+;base64,/i;
+
+/**
+ * Checks whether a value contains a raw base64/data URI binary payload.
+ * Starter-tier Firestore documents strictly store structured JSON only — never raw PDFs, DOCX, or base64 images.
+ */
+export function containsBase64BinaryPayload(value: unknown): boolean {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return (
+      BASE64_DATA_URI_PATTERN.test(trimmed) ||
+      trimmed.startsWith('data:image/') ||
+      trimmed.startsWith('data:application/')
+    );
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => containsBase64BinaryPayload(item));
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).some((v) => containsBase64BinaryPayload(v));
+  }
+  return false;
+}
+
+function sanitizeSafeExternalUrl(rawUrl: string | undefined): string {
+  if (!rawUrl) return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed || containsBase64BinaryPayload(trimmed)) return '';
+  if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+    return trimmed.slice(0, 300);
+  }
+  // Allow clean domain-style handles (e.g., linkedin.com/in/...) without javascript:/data: protocols
+  if (/^(javascript|vbscript|data|file):/i.test(trimmed)) return '';
+  return trimmed.slice(0, 300);
+}
+
+/**
+ * Produces a schema-compliant structured JSON Firestore payload for /users/{uid}/resumes/{resumeId}.
+ * Strips any binary/base64 photo data so Firestore documents stay small, clean, and rules-compliant.
+ */
+export function sanitizeResumeForFirestore(
+  resume: ResumeData,
+  userId: string
+): Record<string, unknown> {
+  const cleanId = (resume.id || `res_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120);
+  const template = normalizeTemplateId(resume.design?.templateId || resume.template);
+
+  return {
+    id: cleanId,
+    userId,
+    title: (resume.title || 'My Professional Resume').trim().slice(0, 140),
+    targetRole: (resume.targetRole || '').trim().slice(0, 140),
+    fullName: (resume.fullName || '').trim().slice(0, 120),
+    professionalTitle: (resume.professionalTitle || '').trim().slice(0, 140),
+    email: (resume.email || '').trim().slice(0, 150),
+    phone: (resume.phone || '').trim().slice(0, 30),
+    city: (resume.city || '').trim().slice(0, 80),
+    state: (resume.state || '').trim().slice(0, 80),
+    linkedIn: sanitizeSafeExternalUrl(resume.linkedIn),
+    portfolio: sanitizeSafeExternalUrl(resume.portfolio),
+    summary: (resume.summary || '').trim().slice(0, 3000),
+    template: template.slice(0, 64),
+    design: {
+      templateId: template,
+      accentColor: String(resume.design?.accentColor || DEFAULT_DESIGN_SETTINGS.accentColor).slice(0, 32),
+      fontFamily: String(resume.design?.fontFamily || DEFAULT_DESIGN_SETTINGS.fontFamily).slice(0, 64),
+      fontSize: String(resume.design?.fontSize || DEFAULT_DESIGN_SETTINGS.fontSize).slice(0, 32),
+      lineSpacing: String(resume.design?.lineSpacing || DEFAULT_DESIGN_SETTINGS.lineSpacing).slice(0, 32),
+      margins: String(resume.design?.margins || DEFAULT_DESIGN_SETTINGS.margins).slice(0, 32),
+      sectionOrder: Array.isArray(resume.design?.sectionOrder)
+        ? resume.design.sectionOrder.slice(0, 20)
+        : DEFAULT_DESIGN_SETTINGS.sectionOrder,
+    },
+    skillCategories: {
+      technical: (resume.skillCategories?.technical || []).slice(0, 40),
+      professional: (resume.skillCategories?.professional || []).slice(0, 40),
+      industry: (resume.skillCategories?.industry || []).slice(0, 40),
+      tools: (resume.skillCategories?.tools || []).slice(0, 40),
+    },
+    skills: (resume.skills || []).slice(0, 60).map((s) => String(s).slice(0, 80)),
+    experiences: (resume.experiences || []).slice(0, 20),
+    education: (resume.education || []).slice(0, 15),
+    projects: (resume.projects || []).slice(0, 15),
+    certifications: (resume.certifications || []).slice(0, 20),
+    languages: (resume.languages || []).slice(0, 15),
+    achievements: (resume.achievements || []).slice(0, 20),
+    awards: (resume.awards || []).slice(0, 15),
+    training: (resume.training || []).slice(0, 15),
+    volunteer: (resume.volunteer || []).slice(0, 15),
+    publications: (resume.publications || []).slice(0, 15),
+    memberships: (resume.memberships || []).slice(0, 15),
+    customSections: (resume.customSections || []).slice(0, 10),
+    createdAt: resume.createdAt || new Date().toISOString(),
+    updatedAt: serverTimestamp(),
+  };
+}
+
+function getVerifiedFirebaseUidFor(userId: string): string | null {
+  const fbUser = firebaseAuth.currentUser;
+  if (fbUser && fbUser.uid === userId && fbUser.emailVerified) {
+    return fbUser.uid;
+  }
+  return null;
+}
+
+function normalizeTimestamp(val: unknown): string {
+  if (typeof val === 'string' && val.trim()) return val;
+  if (val && typeof val === 'object' && 'toDate' in val && typeof (val as any).toDate === 'function') {
+    return (val as any).toDate().toISOString();
+  }
+  return new Date().toISOString();
+}
 
 function ensureResumeShape(raw: Partial<ResumeData>, userId: string): ResumeData {
   const templateId = normalizeTemplateId(raw.design?.templateId || raw.template);
@@ -24,6 +146,10 @@ function ensureResumeShape(raw: Partial<ResumeData>, userId: string): ResumeData
     Array.isArray(raw.skills) ? raw.skills : []
   );
 
+  // Strip base64 photo payloads from persisted resume shapes to guarantee Starter-tier safety
+  const cleanPhotoUrl =
+    raw.photoUrl && !containsBase64BinaryPayload(raw.photoUrl) ? raw.photoUrl : '';
+
   return {
     ...EMPTY_RESUME,
     ...raw,
@@ -34,6 +160,10 @@ function ensureResumeShape(raw: Partial<ResumeData>, userId: string): ResumeData
       (raw.professionalTitle ? `${raw.professionalTitle} Resume` : '') ||
       (raw.fullName ? `${raw.fullName} Resume` : 'My Professional Resume'),
     targetRole: raw.targetRole || raw.professionalTitle || '',
+    linkedIn: sanitizeSafeExternalUrl(raw.linkedIn),
+    portfolio: sanitizeSafeExternalUrl(raw.portfolio),
+    photoUrl: cleanPhotoUrl,
+    showPhoto: Boolean(cleanPhotoUrl && raw.showPhoto),
     experiences: Array.isArray(raw.experiences)
       ? raw.experiences.map((exp) => ({
           ...exp,
@@ -60,8 +190,8 @@ function ensureResumeShape(raw: Partial<ResumeData>, userId: string): ResumeData
       ...(raw.design || {}),
       templateId,
     },
-    createdAt: raw.createdAt || raw.updatedAt || new Date().toISOString(),
-    updatedAt: raw.updatedAt || new Date().toISOString(),
+    createdAt: normalizeTimestamp(raw.createdAt || raw.updatedAt),
+    updatedAt: normalizeTimestamp(raw.updatedAt),
   };
 }
 
@@ -86,90 +216,75 @@ function writeLocalList(userId: string, resumes: ResumeData[]): void {
   try {
     localStorage.setItem(`${MULTI_STORAGE_PREFIX}${userId}`, JSON.stringify(resumes));
     if (resumes.length > 0) {
-      // Keep legacy key updated with most recent resume for backward compatibility
       localStorage.setItem(`${LEGACY_STORAGE_PREFIX}${userId}`, JSON.stringify(resumes[0]));
     }
   } catch (err) {
-    console.error('LocalStorage multi-resume save error:', err);
+    console.error('LocalStorage multi-resume cache error:', err);
   }
 }
 
 /**
- * Lists all resumes owned strictly by the authenticated user.
- * Automatically migrates any legacy single resume into the multi-resume collection.
+ * Lists all structured JSON resumes owned strictly by the authenticated user.
+ * Loads authoritatively from Firestore (/users/{uid}/resumes) for verified Firebase users,
+ * with local browser draft cache support when offline.
  */
 export async function listUserResumes(userId: string): Promise<ResumeData[]> {
   if (!userId) return [];
 
-  let list = readLocalList(userId);
+  const byId = new Map<string, ResumeData>();
+  const localList = readLocalList(userId);
+  localList.forEach((r) => byId.set(r.id, r));
 
-  // Migrate legacy single resume if v2 collection is empty
-  if (list.length === 0) {
+  // Migrate legacy single resume cache if empty
+  if (byId.size === 0) {
     try {
       const legacyRaw = localStorage.getItem(`${LEGACY_STORAGE_PREFIX}${userId}`);
       if (legacyRaw) {
         const legacyParsed = JSON.parse(legacyRaw);
         if (legacyParsed) {
           const migrated = ensureResumeShape(legacyParsed, userId);
-          list = [migrated];
-          writeLocalList(userId, list);
+          byId.set(migrated.id, migrated);
         }
       }
     } catch {
-      // ignore migration read error
+      // ignore
     }
   }
 
-  // Merge remote Supabase record if present and newer
-  try {
-    const { data, error } = await supabase
-      .from('resumes')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (!error && data) {
-      const remoteResume = ensureResumeShape(
-        {
-          id: data.id || `res_${userId}`,
-          userId: data.user_id,
-          fullName: data.full_name || '',
-          professionalTitle: data.professional_title || '',
-          email: data.email || '',
-          phone: data.phone || '',
-          city: data.city || '',
-          state: data.state || '',
-          linkedIn: data.linkedin || '',
-          portfolio: data.portfolio || '',
-          photoUrl: data.photo_url || '',
-          showPhoto: !!data.show_photo,
-          summary: data.summary || '',
-          experiences: Array.isArray(data.experiences) ? data.experiences : [],
-          education: Array.isArray(data.education) ? data.education : [],
-          skills: Array.isArray(data.skills) ? data.skills : [],
-          projects: Array.isArray(data.projects) ? data.projects : [],
-          certifications: Array.isArray(data.certifications) ? data.certifications : [],
-          languages: Array.isArray(data.languages) ? data.languages : [],
-          template: data.template || 'classic-professional',
-          updatedAt: data.updated_at || new Date().toISOString(),
-        },
-        userId
-      );
-
-      const existsIdx = list.findIndex((r) => r.id === remoteResume.id);
-      if (existsIdx === -1 && list.length === 0) {
-        list = [remoteResume];
-        writeLocalList(userId, list);
-      }
+  // Authoritative Firestore read for verified Firebase Auth owner
+  const verifiedUid = getVerifiedFirebaseUidFor(userId);
+  if (verifiedUid) {
+    try {
+      const snap = await getDocs(collection(db, 'users', verifiedUid, 'resumes'));
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        const remote = ensureResumeShape(
+          {
+            ...d,
+            id: String(d.id || docSnap.id),
+            userId: verifiedUid,
+            createdAt: normalizeTimestamp(d.createdAt),
+            updatedAt: normalizeTimestamp(d.updatedAt),
+          },
+          verifiedUid
+        );
+        const existing = byId.get(remote.id);
+        if (!existing || new Date(remote.updatedAt).getTime() >= new Date(existing.updatedAt).getTime()) {
+          byId.set(remote.id, remote);
+        }
+      });
+    } catch (err) {
+      console.warn('Firestore resumes load notice:', err);
     }
-  } catch {
-    // Graceful offline fallback
   }
 
-  // Sort by most recently updated first
-  return list.sort(
+  const sorted = Array.from(byId.values()).sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
+  if (sorted.length > 0) {
+    writeLocalList(userId, sorted);
+  }
+  return sorted;
 }
 
 /**
@@ -181,12 +296,13 @@ export async function loadUserResume(userId: string): Promise<ResumeData | null>
 }
 
 /**
- * Saves or updates a resume belonging strictly to the authenticated user.
+ * Saves or updates a structured JSON resume belonging strictly to the authenticated user.
+ * Syncs directly to Firestore (/users/{uid}/resumes/{resumeId}) without storing raw binary files.
  */
 export async function saveUserResume(
   userId: string,
   resumeData: ResumeData
-): Promise<{ success: boolean; resume?: ResumeData; error?: string }> {
+): Promise<{ success: boolean; resume?: ResumeData; syncedToFirestore?: boolean; error?: string }> {
   if (!userId) return { success: false, error: 'User is not authenticated' };
 
   const sanitized = ensureResumeShape(
@@ -212,43 +328,20 @@ export async function saveUserResume(
   writeLocalList(userId, updatedList);
   clearResumeDraft(userId, sanitized.id);
 
-  // Sync primary record to Supabase if table is configured
-  try {
-    const payload = {
-      user_id: userId,
-      full_name: sanitized.fullName,
-      professional_title: sanitized.professionalTitle,
-      email: sanitized.email,
-      phone: sanitized.phone,
-      city: sanitized.city,
-      state: sanitized.state,
-      linkedin: sanitized.linkedIn,
-      portfolio: sanitized.portfolio,
-      photo_url: sanitized.photoUrl,
-      show_photo: sanitized.showPhoto,
-      summary: sanitized.summary,
-      experiences: sanitized.experiences,
-      education: sanitized.education,
-      skills: sanitized.skills,
-      projects: sanitized.projects,
-      certifications: sanitized.certifications,
-      languages: sanitized.languages,
-      template: sanitized.design?.templateId || sanitized.template,
-      updated_at: sanitized.updatedAt,
-    };
-
-    const { error } = await supabase
-      .from('resumes')
-      .upsert(payload, { onConflict: 'user_id' });
-
-    if (error && error.code !== 'PGRST205') {
-      console.warn('Supabase resumes upsert notice:', error.message);
+  let syncedToFirestore = false;
+  const verifiedUid = getVerifiedFirebaseUidFor(userId);
+  if (verifiedUid) {
+    try {
+      const firestorePayload = sanitizeResumeForFirestore(sanitized, verifiedUid);
+      const docId = String(firestorePayload.id);
+      await setDoc(doc(db, 'users', verifiedUid, 'resumes', docId), firestorePayload);
+      syncedToFirestore = true;
+    } catch (err) {
+      console.warn('Firestore resume sync notice:', err);
     }
-  } catch {
-    // Graceful offline fallback
   }
 
-  return { success: true, resume: sanitized };
+  return { success: true, resume: sanitized, syncedToFirestore };
 }
 
 /**
@@ -259,7 +352,7 @@ export async function duplicateUserResume(
   resumeId: string
 ): Promise<{ success: boolean; resume?: ResumeData; error?: string }> {
   if (!userId) return { success: false, error: 'Not authenticated' };
-  const list = readLocalList(userId);
+  const list = await listUserResumes(userId);
   const source = list.find((r) => r.id === resumeId);
   if (!source) return { success: false, error: 'Resume not found' };
 
@@ -277,13 +370,11 @@ export async function duplicateUserResume(
     userId
   );
 
-  const nextList = [copy, ...list];
-  writeLocalList(userId, nextList);
-  return { success: true, resume: copy };
+  return saveUserResume(userId, copy);
 }
 
 /**
- * Deletes a resume owned by the authenticated user.
+ * Deletes a resume owned by the authenticated user from both local cache and Firestore.
  */
 export async function deleteUserResume(
   userId: string,
@@ -294,6 +385,16 @@ export async function deleteUserResume(
   const nextList = list.filter((r) => r.id !== resumeId);
   writeLocalList(userId, nextList);
   clearResumeDraft(userId, resumeId);
+
+  const verifiedUid = getVerifiedFirebaseUidFor(userId);
+  if (verifiedUid) {
+    try {
+      await deleteDoc(doc(db, 'users', verifiedUid, 'resumes', resumeId));
+    } catch (err) {
+      console.warn('Firestore resume delete notice:', err);
+    }
+  }
+
   return { success: true };
 }
 
@@ -347,7 +448,6 @@ export function clearResumeDraft(userId: string, resumeId: string): void {
 
 /**
  * Initializes a brand-new resume with optional authenticated candidate profile info.
- * Never fabricates experience or qualifications.
  */
 export function buildResumeFromProfile(
   userId: string,
@@ -421,7 +521,7 @@ export function buildResumeFromProfile(
       state: candidate.state || candidate.location?.split(',')[1]?.trim() || '',
       linkedIn: '',
       portfolio: '',
-      photoUrl: candidate.avatar || '',
+      photoUrl: '',
       showPhoto: false,
       summary: candidate.about || '',
       experiences: mappedExperiences,

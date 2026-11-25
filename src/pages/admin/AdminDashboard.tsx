@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AnimatedStatusBadge } from '../../lib/motion';
 import {
@@ -25,9 +25,12 @@ import {
   Send,
   Eye,
   EyeOff,
-  Lock,
-  ArrowRight,
   GraduationCap,
+  Award,
+  Globe,
+  UserCheck,
+  UserX,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Job,
@@ -35,11 +38,23 @@ import {
   Application,
   ApplicationStatus,
   HiringEnquiry,
+  EmployerProfile,
 } from '../../types';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { AdminCourseContentManager } from '../../components/learning/AdminCourseContentManager';
 import { AdminAssessmentManager } from '../../components/learning/AdminAssessmentManager';
 import { AdminCsvExportModal } from '../../components/admin/AdminCsvExportModal';
+import { AdminAccessGate } from '../../components/admin/AdminAccessGate';
+import { AdminRoleManagementPanel } from '../../components/admin/AdminRoleManagementPanel';
+import { AdminCmsAndSettingsPanel } from '../../components/admin/AdminCmsAndSettingsPanel';
+import { AdminCertificateQueuePanel } from '../../components/admin/AdminCertificateQueuePanel';
+import {
+  fetchPlatformAggregateCounts,
+  listAllEmployersAdminFromFirestore,
+  updateEmployerVerificationInFirestore,
+  setUserAccountStatusInFirestore,
+  type PlatformAggregateCounts,
+} from '../../services/recruitmentFirestoreService';
 import type { AdminCsvDataset } from '../../utils/csvExport';
 
 interface AdminDashboardProps {
@@ -48,11 +63,14 @@ interface AdminDashboardProps {
 
 type AdminTab =
   | 'overview'
+  | 'employers'
   | 'jobs'
   | 'applications'
   | 'candidates'
   | 'enquiries'
-  | 'courses';
+  | 'courses'
+  | 'cms'
+  | 'roles';
 
 const APPLICATION_STATUSES: ApplicationStatus[] = [
   'Applied',
@@ -100,8 +118,9 @@ const statusBadgeClasses = (status: string): string => {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   const {
     currentUser,
-    currentRole,
-    loginAs,
+    adminSession,
+    adminSessionLoading,
+    refreshAdminSession,
     jobs,
     courses,
     candidates,
@@ -127,15 +146,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [csvModalDataset, setCsvModalDataset] = useState<AdminCsvDataset>('jobs');
+  const [firestoreCounts, setFirestoreCounts] = useState<PlatformAggregateCounts | null>(null);
+  const [loadingCounts, setLoadingCounts] = useState(false);
+  const [firestoreEmployers, setFirestoreEmployers] = useState<EmployerProfile[]>([]);
+  const [updatingEmployerId, setUpdatingEmployerId] = useState<string | null>(null);
+  const [updatingUserUid, setUpdatingUserUid] = useState<string | null>(null);
+
+  const loadFirestoreMetricsAndEmployers = async () => {
+    if (!adminSession?.authorized) return;
+    setLoadingCounts(true);
+    try {
+      const counts = await fetchPlatformAggregateCounts();
+      setFirestoreCounts(counts);
+      if (adminSession.permissions?.canManageEmployers) {
+        const emps = await listAllEmployersAdminFromFirestore(100).catch(() => []);
+        if (emps.length > 0) setFirestoreEmployers(emps);
+      }
+    } finally {
+      setLoadingCounts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (adminSession?.authorized) {
+      loadFirestoreMetricsAndEmployers();
+    }
+  }, [adminSession?.authorized, adminSession?.uid, adminSession?.role]);
 
   const openCsvExportModal = (dataset?: AdminCsvDataset) => {
+    if (!adminSession?.permissions?.canExportCsv) {
+      showToast('error', 'Super Admin Only', 'Only active Super Admins can export system CSV files.');
+      return;
+    }
     const defaultByTab: Record<AdminTab, AdminCsvDataset> = {
       overview: 'jobs',
+      employers: 'employers',
       jobs: 'jobs',
       applications: 'applications',
       candidates: 'candidates',
       enquiries: 'hiring_enquiries',
       courses: 'student_progress',
+      cms: 'jobs',
+      roles: 'jobs',
     };
     setCsvModalDataset(dataset || defaultByTab[activeTab]);
     setCsvModalOpen(true);
@@ -204,7 +256,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   const [courseCategory, setCourseCategory] = useState('Technology & Engineering');
   const [courseLevel, setCourseLevel] = useState<Course['level']>('Intermediate');
   const [courseMode, setCourseMode] = useState<NonNullable<Course['learningMode']>>('Live Online');
-  const [coursesSubTab, setCoursesSubTab] = useState<'lessons' | 'assessments' | 'partner'>('lessons');
+  const [coursesSubTab, setCoursesSubTab] = useState<'lessons' | 'assessments' | 'certificates' | 'partner'>('lessons');
   const [courseDuration, setCourseDuration] = useState('6 Weeks');
   const [courseModules, setCourseModules] = useState(8);
   const [courseFees, setCourseFees] = useState('₹14,999');
@@ -292,46 +344,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
     [applications, selectedAppId]
   );
 
-  // Access Gate: Internal Recruiter / Admin Only
-  if (!currentUser || currentRole !== 'admin') {
+  // Access Gate: Strictly Verified Firebase Auth + Active Firestore /admin_roles/{uid} RBAC
+  if (!adminSession?.authorized || !adminSession.permissions) {
     return (
-      <div className="min-h-[75vh] bg-[#F6F8FB] flex items-center justify-center px-4 py-10">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E5EAF0] shadow-sm p-5 sm:p-6 text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-[#102B4E]/10 text-[#102B4E] flex items-center justify-center mx-auto">
-            <Lock className="w-7 h-7" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-xl font-bold text-[#102B4E]">
-              Internal Recruitment Console
-            </h1>
-            <p className="text-sm text-[#778397] leading-relaxed">
-              This workspace is restricted to ABHI JOBS internal recruiters and administrators.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                loginAs('admin');
-                showToast('success', 'Recruiter Console Active', 'Signed in to internal admin workspace.');
-              }}
-              className="flex-1 min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>Enter as Recruiter Admin</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#253449] text-sm font-semibold transition-colors cursor-pointer"
-            >
-              Back Home
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminAccessGate
+        adminSession={adminSession}
+        loading={adminSessionLoading}
+        onRefreshSession={refreshAdminSession}
+        onNavigateHome={() => navigate('/')}
+        onNotify={showToast}
+      />
     );
   }
+
+  const perms = adminSession.permissions;
+  const adminUid = adminSession.uid || currentUser?.id || '';
+  const mergedEmployers = firestoreEmployers.length > 0 ? firestoreEmployers : companies;
+
+  const handleEmployerVerification = async (
+    employerId: string,
+    verificationStatus: 'verified' | 'rejected' | 'suspended' | 'pending'
+  ) => {
+    if (!perms.canManageEmployers) return;
+    setUpdatingEmployerId(employerId);
+    try {
+      await updateEmployerVerificationInFirestore({
+        employerId,
+        verificationStatus,
+        adminUid,
+      });
+      setFirestoreEmployers((prev) =>
+        prev.map((emp) =>
+          emp.id === employerId
+            ? { ...emp, verificationStatus, verified: verificationStatus === 'verified' }
+            : emp
+        )
+      );
+      showToast(
+        'success',
+        'Employer Status Updated',
+        `Employer ${employerId} marked as ${verificationStatus}.`
+      );
+    } catch (err: any) {
+      showToast('error', 'Update Failed', err?.message || 'Could not update employer verification status.');
+    } finally {
+      setUpdatingEmployerId(null);
+    }
+  };
+
+  const handleToggleCandidateStatus = async (targetUid: string, nextStatus: 'active' | 'suspended') => {
+    if (!perms.canSuspendUsers) return;
+    setUpdatingUserUid(targetUid);
+    try {
+      await setUserAccountStatusInFirestore(targetUid, nextStatus);
+      showToast(
+        nextStatus === 'suspended' ? 'warning' : 'success',
+        nextStatus === 'suspended' ? 'Account Suspended' : 'Account Reactivated',
+        `User ${targetUid} status set to ${nextStatus} in Firestore.`
+      );
+    } catch (err: any) {
+      showToast('error', 'Status Update Failed', err?.message || 'Unable to update user status in Firestore.');
+    } finally {
+      setUpdatingUserUid(null);
+    }
+  };
 
   // Open Job Modal (Create or Edit)
   const openCreateJobModal = () => {
@@ -545,14 +621,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
     setNoteInput('');
   };
 
-  const tabs: { id: AdminTab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'jobs', label: 'Jobs', icon: <Briefcase className="w-4 h-4" />, count: jobs.length },
-    { id: 'applications', label: 'Applications', icon: <FileText className="w-4 h-4" />, count: applications.length },
-    { id: 'candidates', label: 'Candidates', icon: <Users className="w-4 h-4" />, count: candidates.length },
-    { id: 'enquiries', label: 'Hiring Enquiries', icon: <Building2 className="w-4 h-4" />, count: hiringEnquiries.length },
-    { id: 'courses', label: 'Courses', icon: <BookOpen className="w-4 h-4" />, count: courses.length },
+  const allTabs: { id: AdminTab; label: string; icon: React.ReactNode; count?: number; visible: boolean }[] = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" />, visible: perms.canViewOverview },
+    { id: 'employers', label: 'Employers', icon: <Building2 className="w-4 h-4" />, count: mergedEmployers.length, visible: perms.canManageEmployers },
+    { id: 'jobs', label: 'Jobs', icon: <Briefcase className="w-4 h-4" />, count: jobs.length, visible: perms.canManageJobs },
+    { id: 'applications', label: 'Applications', icon: <FileText className="w-4 h-4" />, count: applications.length, visible: perms.canManageApplications },
+    { id: 'candidates', label: 'Candidates', icon: <Users className="w-4 h-4" />, count: candidates.length, visible: perms.canManageCandidates },
+    { id: 'enquiries', label: 'Enquiries', icon: <Mail className="w-4 h-4" />, count: hiringEnquiries.length + courseEnquiries.length, visible: perms.canManageHiringEnquiries || perms.canManageCourseEnquiries },
+    { id: 'courses', label: 'Courses & Certificates', icon: <BookOpen className="w-4 h-4" />, count: courses.length, visible: perms.canManageCourses || perms.canManageAssessments || perms.canApproveCertificates },
+    { id: 'cms', label: 'CMS & Settings', icon: <Globe className="w-4 h-4" />, visible: perms.canManageCms || perms.canManagePublicSettings },
+    { id: 'roles', label: 'Roles & Audit', icon: <Shield className="w-4 h-4" />, visible: perms.canManageRoles },
   ];
+  const tabs = allTabs.filter((t) => t.visible);
 
   return (
     <div className="min-h-screen bg-[#F6F8FB] pb-12">
@@ -565,43 +645,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                 <AbhiJobsLogo variant="horizontal" theme="white" size="sm" />
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-xs font-semibold text-white/90 border border-white/15">
                   <Shield className="w-3.5 h-3.5 text-[#F47A24]" />
-                  Internal Recruiter &amp; Admin Console
+                  {perms.label}
                 </span>
+                {adminSession.email && (
+                  <span className="text-xs text-slate-300 truncate max-w-full">
+                    {adminSession.email}
+                  </span>
+                )}
               </div>
               <h1 className="font-display text-xl sm:text-[26px] font-bold tracking-tight text-white">
-                Recruitment Consultancy Operations
+                ABHI JOBS Admin Control Center
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-                Manage active job openings, screen candidate applications, coordinate employer hiring requirements, and curate partner learning programs.
+                {perms.description}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={openCreateJobModal}
-                className="min-h-[40px] px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Job</span>
-              </button>
-              <button
-                type="button"
-                onClick={openCreateCourseModal}
-                className="min-h-[40px] px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Add Course</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openCsvExportModal()}
-                className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
-                aria-label="Download CSV"
-              >
-                <Download className="w-4 h-4 text-[#F47A24]" />
-                <span>Download CSV</span>
-              </button>
+              {perms.canManageJobs && (
+                <button
+                  type="button"
+                  onClick={openCreateJobModal}
+                  className="min-h-[40px] px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Job</span>
+                </button>
+              )}
+              {perms.canManageCourses && (
+                <button
+                  type="button"
+                  onClick={openCreateCourseModal}
+                  className="min-h-[40px] px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Add Course</span>
+                </button>
+              )}
+              {perms.canExportCsv && (
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal()}
+                  className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                  aria-label="Download CSV"
+                >
+                  <Download className="w-4 h-4 text-[#F47A24]" />
+                  <span>Download CSV</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -645,6 +736,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* Live Firestore getCountFromServer() Aggregation Strip */}
+            <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 sm:p-5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-bold text-[#102B4E]">
+                    Live Cloud Firestore Counters (Server Aggregation)
+                  </h2>
+                  <p className="text-xs text-[#778397]">
+                    Powered by <code className="font-mono">getCountFromServer()</code> to minimize Starter-tier read usage.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadFirestoreMetricsAndEmployers}
+                  disabled={loadingCounts}
+                  className="min-h-[38px] px-3 py-1.5 rounded-xl border border-[#E5EAF0] hover:bg-[#F6F8FB] text-xs font-semibold text-[#102B4E] flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingCounts ? 'animate-spin' : ''}`} />
+                  <span>Refresh Counters</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {[
+                  { label: 'Firestore Candidates', value: firestoreCounts?.candidates ?? stats.totalCandidates },
+                  { label: 'Verified Employers', value: firestoreCounts?.verifiedEmployers ?? mergedEmployers.filter((e) => e.verified).length },
+                  { label: 'Published Jobs', value: firestoreCounts?.publishedJobs ?? stats.activeJobs },
+                  { label: 'Applications', value: firestoreCounts?.applications ?? stats.totalApplications },
+                  { label: 'Interviews', value: firestoreCounts?.interviews ?? stats.interviewed },
+                  { label: 'Pending Certs', value: firestoreCounts?.pendingCertificateRequests ?? 0 },
+                ].map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="p-3 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-center"
+                  >
+                    <div className="text-lg font-bold text-[#102B4E] tabular-nums">{metric.value}</div>
+                    <div className="text-[11px] text-[#778397] mt-0.5">{metric.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Primary Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
@@ -847,14 +979,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                 </select>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => openCsvExportModal('jobs')}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download CSV</span>
-                </button>
+                {perms.canExportCsv && (
+                  <button
+                    type="button"
+                    onClick={() => openCsvExportModal('jobs')}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download CSV</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={openCreateJobModal}
@@ -994,14 +1128,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   <option value="Withdrawn">Withdrawn</option>
                 </select>
               </div>
-              <button
-                type="button"
-                onClick={() => openCsvExportModal('applications')}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download CSV</span>
-              </button>
+              {perms.canExportCsv && (
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal('applications')}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download CSV</span>
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1234,14 +1370,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-xl border border-[#E5EAF0] text-sm text-[#253449] focus:outline-none focus:border-[#102B4E]"
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => openCsvExportModal('candidates')}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download CSV</span>
-              </button>
+              {perms.canExportCsv && (
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal('candidates')}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download CSV</span>
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1292,13 +1430,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#E5EAF0] flex items-center justify-between text-xs">
-                    <span className="text-[#778397]">
-                      Profile {cand.completionPercentage}% complete
-                    </span>
-                    <span className="font-semibold text-[#102B4E]">
-                      {cand.resumeName ? 'Resume on file' : 'No resume'}
-                    </span>
+                  <div className="pt-3 border-t border-[#E5EAF0] space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#778397]">
+                        Profile {cand.completionPercentage}% complete
+                      </span>
+                      <span className="font-semibold text-[#102B4E]">
+                        {cand.resumeName ? 'Resume on file' : 'No resume'}
+                      </span>
+                    </div>
+                    {perms.canSuspendUsers && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          disabled={updatingUserUid === cand.userId}
+                          onClick={() => handleToggleCandidateStatus(cand.userId, 'active')}
+                          className="flex-1 min-h-[36px] px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50 text-emerald-700 font-semibold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Activate</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={updatingUserUid === cand.userId}
+                          onClick={() => handleToggleCandidateStatus(cand.userId, 'suspended')}
+                          className="flex-1 min-h-[36px] px-2.5 py-1 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-700 font-semibold flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                          <span>Suspend</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1331,14 +1493,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  onClick={() => openCsvExportModal('hiring_enquiries')}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download CSV</span>
-                </button>
+                {perms.canExportCsv && (
+                  <button
+                    type="button"
+                    onClick={() => openCsvExportModal('hiring_enquiries')}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download CSV</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1527,6 +1691,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setCoursesSubTab('certificates')}
+                  className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                    coursesSubTab === 'certificates'
+                      ? 'bg-[#102B4E] text-white'
+                      : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                  }`}
+                >
+                  <Award className="w-4 h-4" />
+                  <span>Certificate Queue</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setCoursesSubTab('partner')}
                   className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
                     coursesSubTab === 'partner'
@@ -1537,19 +1713,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   Partner Programmes ({courses.length})
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => openCsvExportModal('student_progress')}
-                className="min-h-[42px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shrink-0"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Student Progress CSV</span>
-              </button>
+              {perms.canExportCsv && (
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal('student_progress')}
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Student Progress CSV</span>
+                </button>
+              )}
             </div>
 
             {coursesSubTab === 'lessons' && (
               <AdminCourseContentManager
-                adminUserId={currentUser?.id || 'admin'}
+                adminUserId={adminUid}
                 onNotify={showToast}
                 onPreviewCourse={(slug) => navigate(`/learning/courses/${slug}/learn`)}
               />
@@ -1557,6 +1735,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
 
             {coursesSubTab === 'assessments' && (
               <AdminAssessmentManager onNotify={showToast} />
+            )}
+
+            {coursesSubTab === 'certificates' && (
+              <AdminCertificateQueuePanel adminUid={adminUid} onNotify={showToast} />
             )}
 
             {coursesSubTab === 'partner' && (
@@ -1697,6 +1879,115 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               </div>
             )}
           </div>
+        )}
+
+        {/* TAB: EMPLOYERS VERIFICATION */}
+        {activeTab === 'employers' && perms.canManageEmployers && (
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-[#E5EAF0] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-[#102B4E]">
+                  Employer Verification &amp; Directory ({mergedEmployers.length})
+                </h2>
+                <p className="text-xs text-[#778397] mt-0.5">
+                  Newly registered employers start in <code className="font-mono">pending</code> status and must be verified before publishing jobs.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {perms.canExportCsv && (
+                  <button
+                    type="button"
+                    onClick={() => openCsvExportModal('employers')}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download CSV</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {mergedEmployers.map((emp) => {
+                const status = emp.verificationStatus || (emp.verified ? 'verified' : 'pending');
+                const isBusy = updatingEmployerId === emp.id;
+                return (
+                  <div
+                    key={emp.id}
+                    className="bg-white rounded-2xl border border-[#E5EAF0] p-5 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-bold text-[#102B4E] truncate">
+                          {emp.companyName || emp.name}
+                        </h3>
+                        <p className="text-xs text-[#778397]">
+                          {emp.industry} &middot; {emp.companySize || emp.size} &middot; {emp.location}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border capitalize shrink-0 ${
+                          status === 'verified'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : status === 'pending'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}
+                      >
+                        {status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#253449] space-y-1 bg-[#F6F8FB] p-3 rounded-xl border border-[#E5EAF0]">
+                      <div>
+                        <span className="font-semibold text-[#102B4E]">Recruiter:</span>{' '}
+                        {emp.recruiterName || 'Not provided'} ({emp.recruiterRole || 'HR'})
+                      </div>
+                      <div>
+                        <span className="font-semibold text-[#102B4E]">Private Contact:</span>{' '}
+                        {emp.recruiterEmail || 'Hidden'} {emp.recruiterPhone ? `· ${emp.recruiterPhone}` : ''}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        disabled={isBusy || status === 'verified'}
+                        onClick={() => handleEmployerVerification(emp.id, 'verified')}
+                        className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer"
+                      >
+                        Verify Employer
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy || status === 'rejected'}
+                        onClick={() => handleEmployerVerification(emp.id, 'rejected')}
+                        className="min-h-[40px] px-3.5 py-1.5 rounded-xl border border-amber-300 hover:bg-amber-50 disabled:opacity-50 text-amber-800 text-xs font-semibold cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy || status === 'suspended'}
+                        onClick={() => handleEmployerVerification(emp.id, 'suspended')}
+                        className="min-h-[40px] px-3.5 py-1.5 rounded-xl border border-rose-200 hover:bg-rose-50 disabled:opacity-50 text-rose-700 text-xs font-semibold cursor-pointer"
+                      >
+                        Suspend
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: WEBSITE CMS & PUBLIC SETTINGS */}
+        {activeTab === 'cms' && (perms.canManageCms || perms.canManagePublicSettings) && (
+          <AdminCmsAndSettingsPanel adminUid={adminUid} onNotify={showToast} />
+        )}
+
+        {/* TAB: ROLES & AUDIT LOGS (SUPER ADMIN ONLY) */}
+        {activeTab === 'roles' && perms.canManageRoles && (
+          <AdminRoleManagementPanel adminSession={adminSession} onNotify={showToast} />
         )}
       </div>
 

@@ -3,5 +3,12 @@
     "database": "ai-studio-jobhunnar-1b523c26-3c4c-4428-9065-5f763d85c23d",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "singleProjectMode": true
   }
 }

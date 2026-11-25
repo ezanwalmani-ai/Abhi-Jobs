@@ -8,7 +8,6 @@ import { RouteProtectionNotice } from './components/RouteProtectionNotice';
 import { GlobalLoadingFeedback } from './components/GlobalLoadingFeedback';
 import { CinematicBrandIntro, INTRO_SESSION_KEY } from './components/CinematicBrandIntro';
 import { EASE_PREMIUM } from './lib/motion';
-import { supabase } from './supabaseClient';
 import { auth as firebaseAuth, onAuthStateChanged as onFirebaseAuthStateChanged } from './lib/firebase';
 
 // Public & Shared Pages
@@ -67,7 +66,7 @@ function AppContent() {
     return '/';
   });
   const [routeParams, setRouteParams] = useState<{ id?: string; query?: string; location?: string; email?: string; registered?: string }>({});
-  const { currentRole, currentUser, logout, isGlobalLoading, globalLoadingMessage } = useApp();
+  const { currentRole, currentUser, adminSession, logout, isGlobalLoading, globalLoadingMessage } = useApp();
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
 
   // Show full-screen cinematic brand intro on initial homepage entry during this session
@@ -176,10 +175,10 @@ function AppContent() {
     }
   }, [currentRoute, routeParams, isNavigating]);
 
-  const isAuthenticated = Boolean(currentUser);
-  const isJobSeeker = isAuthenticated && (currentRole === 'job_seeker' || (currentRole as any) === 'candidate');
-  const isEmployer = isAuthenticated && currentRole === 'employer';
-  const isAdmin = isAuthenticated && currentRole === 'admin';
+  const isAuthenticated = Boolean(currentUser || firebaseAuth.currentUser);
+  const isAdmin = Boolean(adminSession?.authorized);
+  const isJobSeeker = isAuthenticated && !isAdmin && (currentRole === 'job_seeker' || (currentRole as any) === 'candidate');
+  const isEmployer = isAuthenticated && !isAdmin && currentRole === 'employer';
 
   // Helper to determine if a route is private
   const checkIsPrivateRoute = (route: string) => {
@@ -239,77 +238,18 @@ function AppContent() {
 
   const isCurrentRoutePrivate = checkIsPrivateRoute(currentRoute);
   const [hasValidSession, setHasValidSession] = useState<boolean | null>(() => {
-    if (Boolean(currentUser)) return true;
-    if (Boolean(firebaseAuth.currentUser)) return true;
-    try {
-      const stored = localStorage.getItem('abhijobs_currentUser') || localStorage.getItem('hunar_currentUser');
-      if (stored && JSON.parse(stored)) return true;
-    } catch {}
+    if (Boolean(currentUser) || Boolean(firebaseAuth.currentUser)) return true;
     return null;
   });
-
-  // Helper to determine if an active session exists locally or via Firebase
-  const checkIsSessionActive = () => {
-    if (Boolean(currentUser)) return true;
-    if (Boolean(firebaseAuth.currentUser)) return true;
-    try {
-      const stored = localStorage.getItem('abhijobs_currentUser') || localStorage.getItem('hunar_currentUser');
-      if (stored && JSON.parse(stored)) return true;
-    } catch {}
-    return false;
-  };
 
   useEffect(() => {
     let isMounted = true;
 
-    const checkSession = async () => {
-      // 1. Immediately validate if Firebase or local user is active
-      if (checkIsSessionActive()) {
-        if (isMounted) setHasValidSession(true);
-        return;
-      }
-
-      // 2. Validate with Supabase auth session
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted) return;
-        const active = Boolean(session) || checkIsSessionActive();
-        setHasValidSession(active);
-
-        // Protect private pages — only redirect if neither Supabase, Firebase, nor local session is active
-        if (checkIsPrivateRoute(currentRoute) && !active) {
-          navigate('/login');
-        }
-      } catch {
-        if (!isMounted) return;
-        const active = checkIsSessionActive();
-        setHasValidSession(active);
-        if (checkIsPrivateRoute(currentRoute) && !active) {
-          navigate('/login');
-        }
-      }
-    };
-
-    checkSession();
-
-    // Sync Firebase Auth state in real time
+    // Authoritative Firebase Auth state listener
     const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, (fbUser) => {
       if (!isMounted) return;
-      if (fbUser) {
-        setHasValidSession(true);
-      } else {
-        setHasValidSession(checkIsSessionActive());
-      }
-    });
-
-    // Sync Supabase auth state in real time
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return;
-      const active = Boolean(session) || checkIsSessionActive();
+      const active = Boolean(fbUser) || Boolean(currentUser);
       setHasValidSession(active);
-      if (event === 'SIGNED_IN' && window.location.pathname.includes('/dashboard')) {
-        setCurrentRoute('/dashboard');
-      }
       if (checkIsPrivateRoute(currentRoute) && !active) {
         navigate('/login');
       }
@@ -318,7 +258,6 @@ function AppContent() {
     return () => {
       isMounted = false;
       unsubscribeFirebase();
-      subscription?.unsubscribe();
     };
   }, [currentRoute, currentUser]);
 

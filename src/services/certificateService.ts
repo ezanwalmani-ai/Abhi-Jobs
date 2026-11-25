@@ -92,6 +92,20 @@ function normalizeCertificateRecord(
       typeof raw.templateId === 'string' && raw.templateId.trim()
         ? raw.templateId.trim().slice(0, 128)
         : 'default_abhi_certificate',
+    issuanceMethod:
+      raw.issuanceMethod === 'admin_approved'
+        ? 'admin_approved'
+        : raw.verificationSignature
+          ? 'server_hmac'
+          : undefined,
+    approvedBy:
+      typeof raw.approvedBy === 'string' && raw.approvedBy.trim()
+        ? raw.approvedBy.trim().slice(0, 128)
+        : undefined,
+    approvalNote:
+      typeof raw.approvalNote === 'string' && raw.approvalNote.trim()
+        ? raw.approvalNote.trim().slice(0, 500)
+        : undefined,
   };
 }
 
@@ -406,6 +420,10 @@ export async function verifyCertificatePublic(
           courseTitle: String(data.certificate.courseTitle),
           issueDate: String(data.certificate.issueDate),
           status: data.certificate.status === 'revoked' ? 'revoked' : 'valid',
+          issuanceMethod:
+            data.certificate.issuanceMethod === 'admin_approved'
+              ? 'admin_approved'
+              : 'server_hmac',
         };
         return {
           found: true,
@@ -432,6 +450,12 @@ export async function verifyCertificatePublic(
         courseTitle: String(data.courseTitle || ''),
         issueDate: String(data.issueDate || normalizeTimestamp(data.issuedAt)),
         status: data.status === 'revoked' ? 'revoked' : 'valid',
+        issuanceMethod:
+          data.issuanceMethod === 'admin_approved'
+            ? 'admin_approved'
+            : data.issuanceMethod === 'server_hmac'
+              ? 'server_hmac'
+              : undefined,
       };
       return {
         found: true,

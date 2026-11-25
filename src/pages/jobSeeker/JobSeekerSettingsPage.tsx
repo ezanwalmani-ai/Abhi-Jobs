@@ -28,6 +28,7 @@ import {
   DollarSign,
   Laptop,
 } from 'lucide-react';
+import { LocalDataMigrationCard } from '../../components/LocalDataMigrationCard';
 
 interface JobSeekerSettingsPageProps {
   navigate: (route: string) => void;
@@ -1868,9 +1869,12 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
             <div>
               <h2 className="text-lg font-bold text-[#101828]">Data & Account</h2>
               <p className="text-xs text-[#667085] mt-0.5">
-                Download your personal information archive, pause your account, or permanently delete your records.
+                Import legacy browser data to Firebase, download your personal information archive, pause your account, or permanently delete your records.
               </p>
             </div>
+
+            {/* User-Consented Legacy LocalStorage to Cloud Firestore Import */}
+            <LocalDataMigrationCard />
 
             {/* Download My Data */}
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

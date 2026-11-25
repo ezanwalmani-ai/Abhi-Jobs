@@ -17,8 +17,10 @@ import {
   StudentProgressExportRow,
   buildSafeCsvFilename,
   mapDatasetToCsvRows,
+  serializeCsvDocument,
   triggerCsvBlobDownload,
 } from '../utils/csvExport';
+import { resolveFirebaseAdminSession } from './adminRbacService';
 
 export interface SuperAdminExportAuthStatus {
   authorized: boolean;
@@ -43,9 +45,19 @@ export interface AdminCsvExportResult {
 }
 
 /**
- * Verifies Super Admin authorization status against the backend server.
+ * Verifies Super Admin authorization via Firebase /admin_roles RBAC and (when available) the dev backend.
  */
 export async function checkSuperAdminExportAuth(): Promise<SuperAdminExportAuthStatus> {
+  const rbacSession = await resolveFirebaseAdminSession(firebaseAuth.currentUser);
+  if (rbacSession.authorized && rbacSession.permissions?.canExportCsv) {
+    return {
+      authorized: true,
+      method: 'firebase',
+      passcodeMode: 'env',
+      actorEmail: rbacSession.email,
+    };
+  }
+
   try {
     const status = await checkAdminAssessmentAuthStatus();
     return {
@@ -116,14 +128,14 @@ async function collectAuthorizedFirestoreEnrolments(): Promise<StudentProgressEx
 
     return rows;
   } catch {
-    // Non-fatal: server-side assessment attempts will still be exported authoritatively
     return [];
   }
 }
 
 /**
- * Securely requests a server-verified, sanitized CSV export for Super Admins.
- * Always validates Super Admin authorization on the backend (/api/admin/export-csv).
+ * Generates a formula-safe CSV export strictly for verified Super Admins.
+ * Uses /api/admin/export-csv when available and safely falls back to verified Firebase Super Admin
+ * client serialization on static Netlify hosting (Starter tier).
  */
 export async function downloadAuthorizedAdminCsv(
   dataset: AdminCsvDataset,
@@ -133,17 +145,21 @@ export async function downloadAuthorizedAdminCsv(
     throw new Error('Unsupported export dataset selected.');
   }
 
+  const rbacSession = await resolveFirebaseAdminSession(firebaseAuth.currentUser);
+  const isFirebaseSuperAdmin = Boolean(rbacSession.authorized && rbacSession.permissions?.canExportCsv);
   const headers = await getAdminAuthHeaders();
-  if (!headers.Authorization) {
+
+  if (!isFirebaseSuperAdmin && !headers.Authorization) {
     throw new Error(
       'Super Admin verification is required before exporting system data. Please verify your Super Admin account first.'
     );
   }
 
   let bodyPayload: Record<string, unknown> = { dataset };
+  let enrolmentRows: StudentProgressExportRow[] = [];
 
   if (dataset === 'student_progress') {
-    const enrolmentRows = await collectAuthorizedFirestoreEnrolments();
+    enrolmentRows = await collectAuthorizedFirestoreEnrolments();
     bodyPayload = {
       dataset,
       enrolments: enrolmentRows,
@@ -163,38 +179,74 @@ export async function downloadAuthorizedAdminCsv(
     };
   }
 
-  const res = await fetch('/api/admin/export-csv', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: JSON.stringify(bodyPayload),
-  });
-
-  if (!res.ok) {
-    let errorMessage = `Export failed (${res.status}).`;
+  // Attempt server-verified endpoint first (dev Express server / future Cloud Function)
+  if (headers.Authorization) {
     try {
-      const errJson = await res.json();
-      if (errJson?.error) errorMessage = String(errJson.error);
-    } catch {
-      // ignore non-JSON error body
+      const res = await fetch('/api/admin/export-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify(bodyPayload),
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const rowCountHeader = Number(res.headers.get('X-Export-Row-Count') || '0');
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="([^"]+)"/i);
+        const filename = match?.[1] || buildSafeCsvFilename(dataset);
+
+        triggerCsvBlobDownload(blob, filename);
+
+        return {
+          filename,
+          rowCount: Number.isFinite(rowCountHeader) ? rowCountHeader : 0,
+          dataset,
+          serverVerified: true,
+        };
+      }
+
+      if (res.status !== 404 && !isFirebaseSuperAdmin) {
+        let errorMessage = `Export failed (${res.status}).`;
+        try {
+          const errJson = await res.json();
+          if (errJson?.error) errorMessage = String(errJson.error);
+        } catch {
+          // ignore
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (err) {
+      if (!isFirebaseSuperAdmin) {
+        throw err;
+      }
     }
-    throw new Error(errorMessage);
   }
 
-  const blob = await res.blob();
-  const rowCountHeader = Number(res.headers.get('X-Export-Row-Count') || '0');
-  const disposition = res.headers.get('Content-Disposition') || '';
-  const match = disposition.match(/filename="([^"]+)"/i);
-  const filename = match?.[1] || buildSafeCsvFilename(dataset);
+  // Verified Firebase Super Admin Starter-tier fallback (formula-safe RFC 4180 CSV)
+  if (!isFirebaseSuperAdmin) {
+    throw new Error('Super Admin authorization could not be confirmed.');
+  }
 
-  triggerCsvBlobDownload(blob, filename);
+  const mapped = mapDatasetToCsvRows(dataset, {
+    jobs: sources.jobs,
+    applications: sources.applications,
+    candidates: sources.candidates,
+    employers: sources.employers,
+    hiringEnquiries: sources.hiringEnquiries,
+    studentProgress: enrolmentRows,
+  });
+
+  const csvContent = serializeCsvDocument(mapped.headers, mapped.rows);
+  const filename = buildSafeCsvFilename(dataset);
+  triggerCsvBlobDownload(csvContent, filename);
 
   return {
     filename,
-    rowCount: Number.isFinite(rowCountHeader) ? rowCountHeader : 0,
+    rowCount: mapped.rows.length,
     dataset,
-    serverVerified: true,
+    serverVerified: false,
   };
 }

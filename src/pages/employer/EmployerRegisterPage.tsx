@@ -17,7 +17,6 @@ import {
 import { useApp } from '../../context/AppContext';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { PasswordStrengthIndicator, usePasswordStrength } from '../../components/PasswordStrengthIndicator';
-import { supabase } from '../../supabaseClient';
 
 interface EmployerRegisterPageProps {
   navigate: (route: string) => void;
@@ -75,43 +74,32 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
     setConfirmationMessage('');
 
     try {
-      // Supabase Authentication: Sign Up
-      const { data, error: sbError } = await supabase.auth.signUp({
+      const regResult = await registerEmployer({
+        name: fullName.trim(),
         email: email.trim(),
+        companyName: companyName.trim(),
+        phone: phone.trim(),
         password,
+        industry,
+        location: location.trim() || 'India',
+        website: website.trim(),
+        companySize,
       });
 
-      if (sbError) {
-        setErrors({ form: sbError.message });
+      if (!regResult.success) {
+        setErrors({ form: regResult.error || 'Failed to register employer account.' });
         setIsSubmitting(false);
         return;
       }
 
-      // Pre-fill email and set message for the Sign In page
       try {
         sessionStorage.setItem('signup_prefill_email', email.trim());
         sessionStorage.setItem(
           'signup_success_msg',
-          'Your account has been created. Please check your email and verify your address before logging in.'
+          'Employer account created (pending verification). Please verify your email before signing in.'
         );
       } catch {}
 
-      // Cache registration details locally without logging in
-      try {
-        await registerEmployer({
-          name: fullName.trim(),
-          email: email.trim(),
-          companyName: companyName.trim(),
-          phone: phone.trim(),
-          password,
-          industry,
-          location: location.trim() || 'India',
-          website: website.trim(),
-          companySize,
-        });
-      } catch {}
-
-      // Do NOT auto-login. Redirect user to Sign In page with email parameter
       navigate(`/login?email=${encodeURIComponent(email.trim())}&registered=true`);
     } catch (err: any) {
       setErrors({ form: err?.message || 'Failed to register employer account.' });

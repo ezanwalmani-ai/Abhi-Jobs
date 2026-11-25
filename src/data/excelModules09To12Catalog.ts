@@ -162,7 +162,7 @@ export const EXCEL_MODULES_09_TO_12: CourseModule[] = [
           {
             id: 'excel_m09_practice_workbook',
             title: 'ABHI-Excel-Module-09-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-09-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-09-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + 44 Purchase Transactions + Practice Guide + Formula Benchmarks) · .xlsx',
@@ -322,7 +322,7 @@ export const EXCEL_MODULES_09_TO_12: CourseModule[] = [
           {
             id: 'excel_m10_practice_workbook',
             title: 'ABHI-Excel-Module-10-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-10-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-10-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + Purchase Data + Dashboard Practice + Formula KPI & Summary Reference) · .xlsx',
@@ -507,7 +507,7 @@ export const EXCEL_MODULES_09_TO_12: CourseModule[] = [
           {
             id: 'excel_m11_practice_workbook',
             title: 'ABHI-Excel-Module-11-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-11-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-11-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '7 Sheets (Instructions + Supplier + PO + Delivery + Invoice + Summary + Reference) · .xlsx',
@@ -679,7 +679,7 @@ export const EXCEL_MODULES_09_TO_12: CourseModule[] = [
           {
             id: 'excel_m12_practice_workbook',
             title: 'ABHI-Excel-Module-12-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-12-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-12-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Project Instructions + Sample Data + Blank Student Project + Completed Reference Project) · .xlsx',

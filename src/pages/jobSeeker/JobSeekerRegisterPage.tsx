@@ -21,7 +21,6 @@ import { INDIAN_STATES_AND_UTS, POPULAR_CITIES } from '../../data/locations';
 import { GoogleAuthModal } from '../../components/GoogleAuthModal';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { PasswordStrengthIndicator, usePasswordStrength } from '../../components/PasswordStrengthIndicator';
-import { supabase } from '../../supabaseClient';
 
 interface JobSeekerRegisterPageProps {
   navigate: (route: string) => void;
@@ -114,19 +113,25 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
     setConfirmationMessage('');
 
     try {
-      // Supabase Authentication: Sign Up
-      const { data, error: sbError } = await supabase.auth.signUp({
+      const regResult = await registerJobSeeker({
+        name: fullName.trim(),
         email: email.trim(),
+        phone: `${countryCode} ${mobileNumber.trim()}`,
         password,
+        workStatus,
+        experienceLevel: experienceLevel === 'fresher' ? 'Fresher' : 'Experienced',
+        experienceType: experienceLevel,
+        city: currentCity.trim(),
+        state: currentState,
+        marketingConsent,
       });
 
-      if (sbError) {
-        setSupabaseError(sbError.message);
+      if (!regResult.success) {
+        setSupabaseError(regResult.error || 'Unable to create account. Please try again.');
         setIsSubmitting(false);
         return;
       }
 
-      // Pre-fill email and set message for the Sign In page
       try {
         sessionStorage.setItem('signup_prefill_email', email.trim());
         sessionStorage.setItem(
@@ -135,23 +140,6 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
         );
       } catch {}
 
-      // Optional sync in local context without auto-logging in
-      try {
-        await registerJobSeeker({
-          name: fullName.trim(),
-          email: email.trim(),
-          phone: `${countryCode} ${mobileNumber.trim()}`,
-          password,
-          workStatus,
-          experienceLevel: experienceLevel === 'fresher' ? 'Fresher' : 'Experienced',
-          experienceType: experienceLevel,
-          city: currentCity.trim(),
-          state: currentState,
-          marketingConsent,
-        });
-      } catch {}
-
-      // Do NOT auto-login. Redirect user to Sign In page with email parameter
       navigate(`/login?email=${encodeURIComponent(email.trim())}&registered=true`);
     } catch (err: any) {
       setSupabaseError(err?.message || 'An unexpected error occurred. Please try again.');

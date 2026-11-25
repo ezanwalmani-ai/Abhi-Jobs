@@ -502,7 +502,7 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
               {
                 id: 'excel_m02_practice_workbook',
                 title: 'ABHI-Excel-Module-02-Practice-Workbook.xlsx',
-                url: '/api/learning/resources/excel-module-02-practice-workbook.xlsx',
+                url: '/downloads/workbooks/ABHI-Excel-Module-02-Practice-Workbook.xlsx',
                 fileType: 'Workbook',
                 sizeLabel: '4 Sheets (Instructions + 3 Data Sheets) · .xlsx',
               },
@@ -748,7 +748,7 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
               {
                 id: 'excel_m03_practice_workbook',
                 title: 'ABHI-Excel-Module-03-Practice-Workbook.xlsx',
-                url: '/api/learning/resources/excel-module-03-practice-workbook.xlsx',
+                url: '/downloads/workbooks/ABHI-Excel-Module-03-Practice-Workbook.xlsx',
                 fileType: 'Workbook',
                 sizeLabel: '3 Sheets (Instructions + Blank Practice + Answer Reference) · .xlsx',
               },
@@ -1001,7 +1001,7 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
               {
                 id: 'excel_m04_practice_workbook',
                 title: 'ABHI-Excel-Module-04-Practice-Workbook.xlsx',
-                url: '/api/learning/resources/excel-module-04-practice-workbook.xlsx',
+                url: '/downloads/workbooks/ABHI-Excel-Module-04-Practice-Workbook.xlsx',
                 fileType: 'Workbook',
                 sizeLabel:
                   '4 Sheets (Instructions + Purchase Data + Function Practice + Completed Answer Sheet) · .xlsx',

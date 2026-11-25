@@ -58,11 +58,14 @@ service cloud.firestore {
              request.auth.token.email == 'ezanwalmani@gmail.com';
     }
 
+    function hasRoleIn(roleData, allowedRoles) {
+      return roleData.status == 'active' && roleData.role in allowedRoles;
+    }
+
     function hasActiveAdminRole(allowedRoles) {
       return isVerifiedUser() &&
              exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/admin_roles/$(request.auth.uid)).data.status == 'active' &&
-             get(/databases/$(database)/documents/admin_roles/$(request.auth.uid)).data.role in allowedRoles;
+             hasRoleIn(get(/databases/$(database)/documents/admin_roles/$(request.auth.uid)).data, allowedRoles);
     }
 
     function isSuperAdmin() {
@@ -70,24 +73,24 @@ service cloud.firestore {
     }
 
     function isRecruitmentAdmin() {
-      return isSuperAdmin() || hasActiveAdminRole(['recruitment_admin']);
+      return isBootstrapSuperAdmin() || hasActiveAdminRole(['super_admin', 'recruitment_admin']);
     }
 
     function isCourseAdmin() {
-      return isSuperAdmin() || hasActiveAdminRole(['course_admin']);
+      return isBootstrapSuperAdmin() || hasActiveAdminRole(['super_admin', 'course_admin']);
     }
 
     function isContentAdmin() {
-      return isSuperAdmin() || hasActiveAdminRole(['content_admin']);
+      return isBootstrapSuperAdmin() || hasActiveAdminRole(['super_admin', 'content_admin']);
     }
 
     function isSupportAdmin() {
-      return isSuperAdmin() || hasActiveAdminRole(['support_admin']);
+      return isBootstrapSuperAdmin() || hasActiveAdminRole(['super_admin', 'support_admin']);
     }
 
     function isAnyAdmin() {
-      return isSuperAdmin() ||
-             hasActiveAdminRole(['recruitment_admin', 'course_admin', 'content_admin', 'support_admin']);
+      return isBootstrapSuperAdmin() ||
+             hasActiveAdminRole(['super_admin', 'recruitment_admin', 'course_admin', 'content_admin', 'support_admin']);
     }
 
     // Backward-compatible Learn with ABHI admin helper:
@@ -97,20 +100,28 @@ service cloud.firestore {
              (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
-    // Employer verification helpers (O(1) constant path keyed by owner Firebase Auth UID)
+    // Employer verification helpers (O(1) constant path keyed by owner Firebase Auth UID, single get())
+    function employerMatchesStatuses(empData, allowedStatuses) {
+      return empData.ownerUid == request.auth.uid &&
+             empData.verificationStatus in allowedStatuses;
+    }
+
     function isVerifiedEmployer() {
       return isVerifiedUser() &&
              exists(/databases/$(database)/documents/employers/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.ownerUid == request.auth.uid &&
-             get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.verificationStatus == 'verified';
+             employerMatchesStatuses(
+               get(/databases/$(database)/documents/employers/$(request.auth.uid)).data,
+               ['verified']
+             );
     }
 
     function isActiveNonSuspendedEmployer() {
       return isVerifiedUser() &&
              exists(/databases/$(database)/documents/employers/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.ownerUid == request.auth.uid &&
-             (get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.verificationStatus == 'pending' ||
-              get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.verificationStatus == 'verified');
+             employerMatchesStatuses(
+               get(/databases/$(database)/documents/employers/$(request.auth.uid)).data,
+               ['pending', 'verified']
+             );
     }
 
     // Master Gate parent-lookup helpers for isolated subcollections
@@ -124,6 +135,67 @@ service cloud.firestore {
       return isVerifiedUser() &&
              exists(/databases/$(database)/documents/applications/$(applicationId)) &&
              get(/databases/$(database)/documents/applications/$(applicationId)).data.employerOwnerUid == request.auth.uid;
+    }
+
+    // Relational sync single-get() helpers for applications and interviews
+    function matchesPublishedJob(jobData, appData) {
+      return jobData.status == 'published' &&
+             jobData.employerId == appData.employerId &&
+             jobData.employerOwnerUid == appData.employerOwnerUid;
+    }
+
+    function matchesActiveApplication(appData, intData) {
+      return !(appData.status in ['Withdrawn', 'Rejected', 'Not Selected']) &&
+             appData.candidateId == intData.candidateId &&
+             appData.jobId == intData.jobId &&
+             appData.employerId == intData.employerId &&
+             appData.employerOwnerUid == intData.employerOwnerUid;
+    }
+
+    // Job authorization helpers (checked before heavy schema validation to stay well under 1000 expressions)
+    function canCreateJobActor(data) {
+      return (isVerifiedUser() &&
+              data.employerId == request.auth.uid &&
+              data.employerOwnerUid == request.auth.uid &&
+              data.featured == false &&
+              (
+                (data.status == 'published' && data.isVerifiedCompany == true && isVerifiedEmployer()) ||
+                (data.status == 'draft' && data.isVerifiedCompany == false && isActiveNonSuspendedEmployer())
+              )) ||
+             isRecruitmentAdmin();
+    }
+
+    function canUpdateJobActor(data, prev) {
+      return (isVerifiedUser() &&
+              prev.employerOwnerUid == request.auth.uid &&
+              data.applicantsCount == prev.applicantsCount &&
+              data.viewsCount == prev.viewsCount &&
+              data.featured == prev.featured &&
+              data.isVerifiedCompany == prev.isVerifiedCompany &&
+              (data.status != 'published' || isVerifiedEmployer()) &&
+              data.diff(prev).affectedKeys().hasOnly([
+                'companyName',
+                'companyLogo',
+                'title',
+                'department',
+                'industry',
+                'location',
+                'employmentType',
+                'workMode',
+                'experienceLevel',
+                'minExperienceYears',
+                'salary',
+                'overview',
+                'responsibilities',
+                'requirements',
+                'preferredSkills',
+                'benefits',
+                'deadline',
+                'status',
+                'postedAt',
+                'updatedAt'
+              ])) ||
+             isRecruitmentAdmin();
     }
 
     // =========================================================================
@@ -2321,69 +2393,26 @@ service cloud.firestore {
                      isRecruitmentAdmin() ||
                      isSupportAdmin();
 
-      allow create: if isValidId(jobId) &&
-                       isValidJobPosting(incoming(), jobId) &&
-                       incoming().applicantsCount == 0 &&
-                       incoming().viewsCount == 0 &&
-                       incoming().postedAt == request.time &&
-                       incoming().createdAt == request.time &&
-                       incoming().updatedAt == request.time &&
-                       exists(/databases/$(database)/documents/employers/$(incoming().employerId)) &&
-                       (
-                         // Tier 1: Recruitment / Super Admin posting
-                         isRecruitmentAdmin() ||
-                         // Tier 2: Employer posting (unverified employers limited strictly to draft)
-                         (isVerifiedUser() &&
-                          incoming().employerId == request.auth.uid &&
-                          incoming().employerOwnerUid == request.auth.uid &&
-                          incoming().featured == false &&
-                          (
-                            (incoming().status == 'published' && isVerifiedEmployer() && incoming().isVerifiedCompany == true) ||
-                            (incoming().status == 'draft' && isActiveNonSuspendedEmployer() && incoming().isVerifiedCompany == false)
-                          ))
-                       );
+      allow create: if isVerifiedUser() &&
+                       isValidId(jobId) &&
+                       canCreateJobActor(request.resource.data) &&
+                       request.resource.data.applicantsCount == 0 &&
+                       request.resource.data.viewsCount == 0 &&
+                       request.resource.data.postedAt == request.time &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.updatedAt == request.time &&
+                       exists(/databases/$(database)/documents/employers/$(request.resource.data.employerId)) &&
+                       isValidJobPosting(request.resource.data, jobId);
 
-      allow update: if isValidId(jobId) &&
-                       isValidJobPosting(incoming(), jobId) &&
-                       incoming().id == existing().id &&
-                       incoming().employerId == existing().employerId &&
-                       incoming().employerOwnerUid == existing().employerOwnerUid &&
-                       incoming().createdAt == existing().createdAt &&
-                       incoming().updatedAt == request.time &&
-                       (
-                         // Tier 1: Recruitment / Super Admin moderation, featuring, and counter reconciliation
-                         isRecruitmentAdmin() ||
-                         // Tier 2: Owning Employer edits (strictly zero counter, featured, or verification spoofing)
-                         (isVerifiedUser() &&
-                          existing().employerOwnerUid == request.auth.uid &&
-                          incoming().applicantsCount == existing().applicantsCount &&
-                          incoming().viewsCount == existing().viewsCount &&
-                          incoming().featured == existing().featured &&
-                          incoming().isVerifiedCompany == existing().isVerifiedCompany &&
-                          (incoming().status != 'published' || isVerifiedEmployer()) &&
-                          incoming().diff(existing()).affectedKeys().hasOnly([
-                            'companyName',
-                            'companyLogo',
-                            'title',
-                            'department',
-                            'industry',
-                            'location',
-                            'employmentType',
-                            'workMode',
-                            'experienceLevel',
-                            'minExperienceYears',
-                            'salary',
-                            'overview',
-                            'responsibilities',
-                            'requirements',
-                            'preferredSkills',
-                            'benefits',
-                            'deadline',
-                            'status',
-                            'postedAt',
-                            'updatedAt'
-                          ]))
-                       );
+      allow update: if isVerifiedUser() &&
+                       isValidId(jobId) &&
+                       canUpdateJobActor(request.resource.data, resource.data) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.employerId == resource.data.employerId &&
+                       request.resource.data.employerOwnerUid == resource.data.employerOwnerUid &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.updatedAt == request.time &&
+                       isValidJobPosting(request.resource.data, jobId);
 
       allow delete: if isRecruitmentAdmin() && isValidId(jobId);
     }
@@ -2411,11 +2440,12 @@ service cloud.firestore {
                        !('matchScore' in incoming()) &&
                        incoming().appliedAt == request.time &&
                        incoming().updatedAt == request.time &&
-                       // Relational sync: verify target job exists, is published, and matches employer ownership
+                       // Relational sync: verify target job exists, is published, and matches employer ownership (single get)
                        exists(/databases/$(database)/documents/jobs/$(incoming().jobId)) &&
-                       get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data.status == 'published' &&
-                       get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data.employerId == incoming().employerId &&
-                       get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data.employerOwnerUid == incoming().employerOwnerUid;
+                       matchesPublishedJob(
+                         get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data,
+                         incoming()
+                       );
 
       allow update: if isVerifiedUser() &&
                        isValidId(applicationId) &&
@@ -2530,11 +2560,10 @@ service cloud.firestore {
                        incoming().createdAt == request.time &&
                        incoming().updatedAt == request.time &&
                        exists(/databases/$(database)/documents/applications/$(incoming().applicationId)) &&
-                       !(get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data.status in ['Withdrawn', 'Rejected', 'Not Selected']) &&
-                       get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data.candidateId == incoming().candidateId &&
-                       get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data.jobId == incoming().jobId &&
-                       get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data.employerId == incoming().employerId &&
-                       get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data.employerOwnerUid == incoming().employerOwnerUid &&
+                       matchesActiveApplication(
+                         get(/databases/$(database)/documents/applications/$(incoming().applicationId)).data,
+                         incoming()
+                       ) &&
                        (
                          incoming().employerOwnerUid == request.auth.uid ||
                          isRecruitmentAdmin()
@@ -2913,9 +2942,9 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Connection health check document (preserved)
+    // Connection health check document (locked to authenticated users; no anonymous open read)
     match /test/connection {
-      allow read: if true;
+      allow read: if isSignedIn();
     }
   }
 }

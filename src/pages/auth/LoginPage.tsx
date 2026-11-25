@@ -18,7 +18,6 @@ import { useApp } from '../../context/AppContext';
 import { GoogleAuthModal } from '../../components/GoogleAuthModal';
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { ScrollReveal, EASE_PREMIUM } from '../../lib/motion';
-import { supabase } from '../../supabaseClient';
 
 interface LoginPageProps {
   navigate: (route: string) => void;
@@ -33,7 +32,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   initialEmail = '',
   isSignupSuccess = false,
 }) => {
-  const { loginWithEmail, registerJobSeeker, loginWithGoogle, loginWithFirebaseGooglePopup } = useApp();
+  const { loginWithEmail, sendPasswordReset, loginWithGoogle, loginWithFirebaseGooglePopup } = useApp();
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const [email, setEmail] = useState(() => {
     if (initialEmail) return initialEmail;
@@ -110,30 +110,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setError('');
 
     try {
-      // Supabase Authentication: Sign In
-      const { data, error: sbError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (sbError) {
-        setError(sbError.message);
-        setIsSubmitting(false);
+      const res = await loginWithEmail(email.trim(), password);
+      if (!res.success || !res.user) {
+        setError(res.error || 'Invalid credentials. Please verify your email and password.');
         return;
       }
 
-      // Only redirect when a real session exists after login
-      if (!data?.session) {
-        setError('Check your email and confirm your account before logging in.');
-        setIsSubmitting(false);
-        return;
+      if (res.requiresEmailVerification) {
+        setSuccessMessage(
+          'Signed in. Please verify your email address from the link sent to your inbox to unlock full cloud sync.'
+        );
       }
 
-      // Sync active session with application state
-      await loginWithEmail(email.trim(), password);
-
-      // Redirect user to Home page
-      navigate('/');
+      routeUserByRole(res.user.role);
     } catch (err: any) {
       setError(err?.message || 'Invalid credentials. Please verify your email and password.');
     } finally {
@@ -141,15 +130,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
-  const handleQuickLogin = async (demoEmail: string) => {
-    setIsSubmitting(true);
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address above, then click "Forgot password?" to receive a reset link.');
+      return;
+    }
+    setIsResettingPassword(true);
     setError('');
-    const res = await loginWithEmail(demoEmail);
-    setIsSubmitting(false);
-    if (res.success && res.user) {
-      routeUserByRole(res.user.role);
-    } else {
-      setError(res.error || 'Failed to sign in.');
+    try {
+      const res = await sendPasswordReset(email.trim());
+      if (res.success) {
+        setSuccessMessage(
+          `Password reset link sent to ${email.trim()}. Check your inbox (and spam folder) to set a new password.`
+        );
+      } else {
+        setError(res.error || 'Unable to send password reset email.');
+      }
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -429,33 +427,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   {error}
                 </p>
               )}
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={isResettingPassword}
+                  className="text-xs font-semibold text-[#102B4E] hover:text-[#F47A24] transition-colors cursor-pointer min-h-[36px] px-1"
+                >
+                  {isResettingPassword ? 'Sending reset link...' : 'Forgot password? Send reset email'}
+                </button>
+              </div>
             </form>
-
-            {/* Quick Access for Testing Candidate & Internal Recruiter Portals */}
-            <div className="p-3.5 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] space-y-2">
-              <div className="text-[11px] font-semibold text-[#778397] uppercase tracking-wider text-center">
-                Quick Demo Access
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('jobseeker@abhijobs.careers')}
-                  className="px-3 py-2 rounded-lg bg-white border border-[#E5EAF0] hover:border-[#F47A24] text-[#102B4E] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <User className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
-                  <span>Candidate Account</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('admin@abhijobs.careers')}
-                  className="px-3 py-2 rounded-lg bg-white border border-[#E5EAF0] hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-[#102B4E] shrink-0" />
-                  <span>Recruiter / Admin</span>
-                </button>
-              </div>
-            </div>
 
             {/* New Account & Hiring Links */}
             <div className="pt-4 border-t border-[#E5EAF0] space-y-2 text-center text-xs text-[#778397]">

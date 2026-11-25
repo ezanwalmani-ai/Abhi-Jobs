@@ -257,6 +257,19 @@ export const CertificateVerificationPage: React.FC<CertificateVerificationPagePr
                       )}
                     </dd>
                   </div>
+
+                  {result.certificate.issuanceMethod && (
+                    <div className="px-4 py-3.5 grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4">
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-[#778397]">
+                        Verification Method
+                      </dt>
+                      <dd className="sm:col-span-2 text-xs sm:text-sm font-semibold text-[#102B4E]">
+                        {result.certificate.issuanceMethod === 'admin_approved'
+                          ? 'Admin-Approved Registry Record'
+                          : 'Cryptographically Signed Registry Record (HMAC)'}
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               )}
             </div>

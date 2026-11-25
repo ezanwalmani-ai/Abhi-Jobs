@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   User,
   UserRole,
@@ -30,14 +30,47 @@ import {
   INITIAL_ANALYTICS,
 } from '../data/mockData';
 import confetti from 'canvas-confetti';
-import { supabase, testSupabaseConnection, SupabaseHealthStatus } from '../lib/supabase';
 import {
   auth as firebaseAuth,
   testConnection as testFirebaseConnection,
   signInWithFirebaseGoogle,
+  signInWithFirebaseEmail,
+  registerWithFirebaseEmail,
+  requestFirebasePasswordReset,
   firebaseSignOut,
   onAuthStateChanged as onFirebaseAuthStateChanged,
 } from '../lib/firebase';
+import {
+  resolveFirebaseAdminSession,
+  type ResolvedAdminSession,
+} from '../services/adminRbacService';
+import {
+  fetchCandidateProfileFromFirestore,
+  saveCandidateProfileToFirestore,
+  listUserSavedJobIds,
+  setSavedJobInFirestore,
+  listRecentlyViewedJobIds,
+  recordRecentlyViewedJobInFirestore,
+  listUserNotificationsFromFirestore,
+  markUserNotificationReadInFirestore,
+  listVerifiedEmployersFromFirestore,
+  fetchOwnerEmployerFromFirestore,
+  createEmployerInFirestore,
+  updateEmployerVerificationInFirestore,
+  listPublishedJobsFromFirestore,
+  saveJobToFirestore,
+  updateJobModerationInFirestore,
+  listCandidateApplicationsFromFirestore,
+  listEmployerApplicationsFromFirestore,
+  submitApplicationToFirestore,
+  updateApplicationStatusInFirestore,
+  addApplicationInternalNote,
+  scheduleInterviewInFirestore,
+  createHiringEnquiryInFirestore,
+  updateHiringEnquiryAdminInFirestore,
+  createCourseEnquiryInFirestore,
+  setUserAccountStatusInFirestore,
+} from '../services/recruitmentFirestoreService';
 import {
   buildSafeCsvFilename,
   mapDatasetToCsvRows,
@@ -57,6 +90,8 @@ interface AppContextType {
   currentRole: UserRole;
   currentCandidate: CandidateProfile | null;
   currentEmployer: EmployerProfile | null;
+  adminSession: ResolvedAdminSession | null;
+  firebaseEmailVerified: boolean;
   users: User[];
   candidates: CandidateProfile[];
   companies: EmployerProfile[];
@@ -79,9 +114,13 @@ interface AppContextType {
   startGlobalLoading: (message?: string) => void;
   stopGlobalLoading: () => void;
 
-  // Auth & Role
-  loginAs: (role: UserRole) => void;
-  loginWithEmail: (email: string, password?: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  // Firebase Auth & Verified Admin Session (Zero One-Click Bypasses)
+  refreshAdminSession: () => Promise<ResolvedAdminSession>;
+  loginWithEmail: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string; user?: User; requiresEmailVerification?: boolean }>;
+  sendPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (googleUser: {
     name: string;
     email: string;
@@ -107,7 +146,13 @@ interface AppContextType {
     marketingConsent?: boolean;
     avatar?: string;
     isGoogle?: boolean;
-  }) => Promise<{ success: boolean; error?: string; user?: User; candidate?: CandidateProfile }>;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    candidate?: CandidateProfile;
+    verificationEmailSent?: boolean;
+  }>;
   registerEmployer: (data: {
     name: string;
     email: string;
@@ -118,9 +163,14 @@ interface AppContextType {
     location?: string;
     website?: string;
     companySize?: string;
-  }) => Promise<{ success: boolean; error?: string; user?: User; employer?: EmployerProfile }>;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    employer?: EmployerProfile;
+    verificationEmailSent?: boolean;
+  }>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
   updateUserStatus: (userId: string, status: 'active' | 'suspended') => void;
   updateCurrentUser: (updates: Partial<User>) => void;
   deactivateCurrentUser: () => void;
@@ -135,7 +185,9 @@ interface AppContextType {
   withdrawApplication: (applicationId: string, reason?: string) => boolean;
 
   // Employer / Job Actions
-  createJob: (newJob: Omit<Job, 'id' | 'postedDate' | 'applicantsCount' | 'viewsCount' | 'isVerifiedCompany'>) => Job;
+  createJob: (
+    newJob: Omit<Job, 'id' | 'postedDate' | 'applicantsCount' | 'viewsCount' | 'isVerifiedCompany'>
+  ) => Job;
   updateJob: (jobId: string, updates: Partial<Job>) => void;
   deleteJob: (jobId: string) => void;
   updateJobStatus: (jobId: string, status: Job['status']) => void;
@@ -173,35 +225,37 @@ interface AppContextType {
   recordApplicationView: (applicationId: string) => void;
   showToast: (type: ToastInfo['type'], title: string, message?: string) => void;
   removeToast: (id: string) => void;
-
-  // Supabase Cloud Integration
-  supabaseConnected: boolean;
-  supabaseHealth: SupabaseHealthStatus | null;
-  refreshSupabaseStatus: () => Promise<SupabaseHealthStatus>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 1. Initial State from localStorage or default mocks (No fake marketplace data)
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const stored = localStorage.getItem('abhijobs_currentUser') || localStorage.getItem('hunar_currentUser');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.role === 'candidate') parsed.role = 'job_seeker';
-        return parsed;
-      }
-    } catch {
-      // fallback
-    }
-    return null;
-  });
+function formatFirebaseAuthError(err: any): string {
+  const code = String(err?.code || '');
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'Invalid email or password. If your account was migrated, use "Forgot Password" to set a new password.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email address already exists. Please sign in or reset your password.';
+    case 'auth/weak-password':
+      return 'Please choose a stronger password (at least 8 characters).';
+    case 'auth/too-many-requests':
+      return 'Too many sign-in attempts. Please wait a few minutes and try again.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Contact ABHI JOBS support for assistance.';
+    default:
+      return err?.message || 'Authentication failed. Please try again.';
+  }
+}
 
-  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
-    if (currentUser?.role === 'candidate') return 'job_seeker';
-    return currentUser ? currentUser.role : 'job_seeker';
-  });
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentRole, setCurrentRole] = useState<UserRole>('job_seeker');
+  const [adminSession, setAdminSession] = useState<ResolvedAdminSession | null>(null);
+  const [firebaseEmailVerified, setFirebaseEmailVerified] = useState<boolean>(false);
 
   const [users, setUsers] = useState<User[]>(() => {
     try {
@@ -210,9 +264,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const parsed = JSON.parse(stored);
         return parsed.map((u: any) => (u.role === 'candidate' ? { ...u, role: 'job_seeker' } : u));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_USERS;
   });
 
@@ -223,9 +275,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const list: CandidateProfile[] = JSON.parse(stored);
         return list.filter((c) => !['cand-1', 'cand-2', 'cand-3', 'cand-4', 'cand-5', 'cand-aarav'].includes(c.id));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_CANDIDATES;
   });
 
@@ -246,9 +296,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           verified: c.verificationStatus === 'verified' || c.verified,
         }));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_COMPANIES;
   });
 
@@ -259,9 +307,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const list: Job[] = JSON.parse(stored);
         return list.filter((j) => !['job-1', 'job-2', 'job-3', 'job-4', 'job-5'].includes(j.id));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_JOBS;
   });
 
@@ -270,13 +316,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const stored = localStorage.getItem('abhijobs_courses') || localStorage.getItem('hunar_courses');
       if (stored) {
         const list: Course[] = JSON.parse(stored);
-        return list.filter(
-          (c) => !['course-demo-1', 'course-demo-2', 'course-demo-3'].includes(c.id)
-        );
+        return list.filter((c) => !['course-demo-1', 'course-demo-2', 'course-demo-3'].includes(c.id));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_COURSES;
   });
 
@@ -287,9 +329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const list: Application[] = JSON.parse(stored);
         return list.filter((a) => !['app-1', 'app-2', 'app-3', 'app-4'].includes(a.id));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_APPLICATIONS;
   });
 
@@ -300,9 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const list: Interview[] = JSON.parse(stored);
         return list.filter((i) => !['int-1', 'int-2', 'int-3'].includes(i.id));
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return INITIAL_INTERVIEWS;
   });
 
@@ -356,11 +394,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const stored = localStorage.getItem('abhijobs_savedJobs') || localStorage.getItem('hunar_savedJobs');
       if (stored) {
         const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed.filter((id) => !['job-1', 'job-2', 'job-3', 'job-4', 'job-5'].includes(id)) : [];
+        return Array.isArray(parsed)
+          ? parsed.filter((id) => !['job-1', 'job-2', 'job-3', 'job-4', 'job-5'].includes(id))
+          : [];
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return [];
   });
 
@@ -371,15 +409,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const parsed = JSON.parse(stored);
         return Array.isArray(parsed) ? parsed : [];
       }
-    } catch {
-      // fallback
-    }
+    } catch {}
     return [];
   });
 
   const [toasts, setToasts] = useState<ToastInfo[]>([]);
-
-  // Global Visual Loading State
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
   const [globalLoadingMessage, setGlobalLoadingMessage] = useState<string | null>(null);
 
@@ -393,265 +427,247 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setGlobalLoadingMessage(null);
   };
 
-  // Supabase Cloud Integration State
-  const [supabaseConnected, setSupabaseConnected] = useState<boolean>(false);
-  const [supabaseHealth, setSupabaseHealth] = useState<SupabaseHealthStatus | null>(null);
+  const refreshAdminSession = useCallback(async (): Promise<ResolvedAdminSession> => {
+    const resolved = await resolveFirebaseAdminSession(firebaseAuth.currentUser);
+    setAdminSession(resolved);
+    return resolved;
+  }, []);
 
-  const refreshSupabaseStatus = async (): Promise<SupabaseHealthStatus> => {
-    const status = await testSupabaseConnection();
-    setSupabaseConnected(status.connected);
-    setSupabaseHealth(status);
-    return status;
-  };
-
+  // Hydrate public Firestore catalog (published jobs & verified employers) on boot
   useEffect(() => {
-    // Proactively verify connection to Supabase and Firebase
-    refreshSupabaseStatus();
-    testFirebaseConnection();
+    testFirebaseConnection().catch(() => {});
 
-    // Subscribe to Firebase Auth state changes
-    const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, (fbUser) => {
-      if (fbUser && fbUser.email) {
-        const userEmail = fbUser.email.toLowerCase();
-        const displayName = fbUser.displayName || userEmail.split('@')[0] || 'Google User';
-        const avatarUrl =
-          fbUser.photoURL ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`;
-
-        setUsers((prevUsers) => {
-          const found = prevUsers.find((u) => u.email.toLowerCase() === userEmail);
-          if (found) {
-            const normalizedRole = found.role === 'candidate' ? 'job_seeker' : found.role;
-            const updated = { ...found, role: normalizedRole, lastActive: 'Just now' };
-            setCurrentUser(updated);
-            setCurrentRole(normalizedRole);
-            return prevUsers.map((u) => (u.id === found.id ? updated : u));
-          } else {
-            const newOAuthUser: User = {
-              id: fbUser.uid,
-              name: displayName,
-              email: userEmail,
-              role: 'job_seeker',
-              avatar: avatarUrl,
-              createdAt: new Date().toISOString(),
-              lastActive: 'Just now',
-              status: 'active',
-            };
-            setCurrentUser(newOAuthUser);
-            setCurrentRole('job_seeker');
-            return [...prevUsers, newOAuthUser];
-          }
+    let active = true;
+    Promise.all([
+      listPublishedJobsFromFirestore(100).catch(() => []),
+      listVerifiedEmployersFromFirestore(100).catch(() => []),
+    ]).then(([cloudJobs, cloudEmployers]) => {
+      if (!active) return;
+      if (cloudJobs.length > 0) {
+        setJobs((prev) => {
+          const map = new Map(prev.map((j) => [j.id, j]));
+          cloudJobs.forEach((j) => map.set(j.id, j));
+          return Array.from(map.values());
         });
-
-        // Ensure candidate profile exists in candidate directory for Google authenticated user
-        setCandidates((prevCandidates) => {
-          const candFound = prevCandidates.find(
-            (c) => c.userId === fbUser.uid || c.email.toLowerCase() === userEmail
-          );
-          if (candFound) return prevCandidates;
-
-          const newCand: CandidateProfile = {
-            id: 'cand-' + fbUser.uid.slice(0, 10),
-            userId: fbUser.uid,
-            name: displayName,
-            email: userEmail,
-            phone: '',
-            location: 'Bangalore, India',
-            city: 'Bangalore',
-            state: 'Karnataka',
-            headline: 'Software Professional | Job Seeker',
-            about: 'Career-focused candidate exploring verified employment opportunities on ABHI JOBS.',
-            currentRole: 'Software Engineer',
-            desiredRole: 'Software Engineer',
-            experienceLevel: 'Mid',
-            experienceType: 'experienced',
-            workStatus: 'Looking for a job',
-            yearsOfExperience: 2,
-            preferredLocation: 'Flexible / Hybrid',
-            workPreference: 'Hybrid',
-            skills: ['Problem Solving', 'Communication', 'Teamwork'],
-            education: [
-              {
-                id: 'edu-' + Date.now(),
-                qualification: 'Bachelor of Technology / Computer Science',
-                institution: 'VTU Karnataka',
-                fieldOfStudy: 'Computer Science & Engineering',
-                startYear: '2020',
-                endYear: '2024',
-              },
-            ],
-            experiences: [],
-            certifications: [],
-            completionPercentage: 55,
-            recommendations: [],
-            availability: 'Immediate',
-            profileVisibility: 'employers_only',
-            availableForOpportunities: true,
-            avatar: avatarUrl,
-            marketingConsent: true,
-          };
-          return [...prevCandidates, newCand];
+      }
+      if (cloudEmployers.length > 0) {
+        setCompanies((prev) => {
+          const map = new Map(prev.map((c) => [c.id, c]));
+          cloudEmployers.forEach((c) => map.set(c.id, c));
+          return Array.from(map.values());
         });
       }
     });
 
-    // Subscribe to Supabase Auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setSupabaseConnected(true);
-        const userEmail = session.user.email?.toLowerCase();
-        if (userEmail) {
-          const found = users.find((u) => u.email.toLowerCase() === userEmail);
-          if (found) {
-            const normalizedRole = found.role === 'candidate' ? 'job_seeker' : found.role;
-            setCurrentUser({ ...found, role: normalizedRole });
-            setCurrentRole(normalizedRole);
-          } else {
-            const userName =
-              session.user.user_metadata?.full_name ||
-              session.user.user_metadata?.name ||
-              userEmail.split('@')[0];
-            const newOAuthUser: User = {
-              id: session.user.id || `user-${Date.now()}`,
-              name: userName,
-              email: userEmail,
-              role: 'job_seeker',
-              avatar:
-                session.user.user_metadata?.avatar_url ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`,
-              createdAt: new Date().toISOString(),
-              lastActive: new Date().toISOString(),
-              status: 'active',
-            };
-            setCurrentUser(newOAuthUser);
-            setCurrentRole('job_seeker');
-            setUsers((prev) => (prev.some((u) => u.email.toLowerCase() === userEmail) ? prev : [...prev, newOAuthUser]));
-          }
-        }
+    // Authoritative Firebase Auth session listener (replaces localStorage & Supabase auth listeners)
+    const unsubscribeFirebase = onFirebaseAuthStateChanged(firebaseAuth, async (fbUser) => {
+      if (!active) return;
+      if (!fbUser || !fbUser.email) {
+        setCurrentUser(null);
+        setCurrentRole('job_seeker');
+        setAdminSession(null);
+        setFirebaseEmailVerified(false);
+        return;
+      }
+
+      setFirebaseEmailVerified(Boolean(fbUser.emailVerified));
+      const userEmail = fbUser.email.toLowerCase();
+      const displayName = fbUser.displayName || userEmail.split('@')[0] || 'ABHI JOBS Member';
+      const avatarUrl =
+        fbUser.photoURL ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`;
+
+      // Resolve authoritative admin RBAC role + owner employer/candidate docs in Firestore
+      const [resolvedAdmin, cloudCandidate, ownerEmployer, cloudSaved, cloudViewed, cloudNotifs] =
+        await Promise.all([
+          resolveFirebaseAdminSession(fbUser),
+          fbUser.emailVerified
+            ? fetchCandidateProfileFromFirestore(fbUser.uid).catch(() => null)
+            : Promise.resolve(null),
+          fbUser.emailVerified
+            ? fetchOwnerEmployerFromFirestore(fbUser.uid).catch(() => null)
+            : Promise.resolve(null),
+          fbUser.emailVerified
+            ? listUserSavedJobIds(fbUser.uid).catch(() => [])
+            : Promise.resolve([]),
+          fbUser.emailVerified
+            ? listRecentlyViewedJobIds(fbUser.uid).catch(() => [])
+            : Promise.resolve([]),
+          fbUser.emailVerified
+            ? listUserNotificationsFromFirestore(fbUser.uid).catch(() => [])
+            : Promise.resolve([]),
+        ]);
+
+      if (!active) return;
+      setAdminSession(resolvedAdmin);
+
+      // Determine authoritative role strictly from Firebase RBAC / Firestore records (never client spoofing)
+      const resolvedRole: UserRole = resolvedAdmin.authorized
+        ? 'admin'
+        : ownerEmployer
+          ? 'employer'
+          : 'job_seeker';
+
+      const syncedUser: User = {
+        id: fbUser.uid,
+        name: displayName,
+        email: userEmail,
+        role: resolvedRole,
+        avatar: avatarUrl,
+        createdAt: fbUser.metadata?.creationTime || new Date().toISOString(),
+        lastActive: 'Just now',
+        status: resolvedAdmin.denialReason === 'account_suspended' ? 'suspended' : 'active',
+      };
+
+      setCurrentUser(syncedUser);
+      setCurrentRole(resolvedRole);
+      setUsers((prev) => {
+        const exists = prev.some((u) => u.id === fbUser.uid || u.email.toLowerCase() === userEmail);
+        return exists
+          ? prev.map((u) =>
+              u.id === fbUser.uid || u.email.toLowerCase() === userEmail ? syncedUser : u
+            )
+          : [syncedUser, ...prev];
+      });
+
+      if (cloudCandidate) {
+        setCandidates((prev) => {
+          const filtered = prev.filter(
+            (c) => c.userId !== fbUser.uid && c.email.toLowerCase() !== userEmail
+          );
+          return [cloudCandidate, ...filtered];
+        });
+      }
+
+      if (ownerEmployer) {
+        setCompanies((prev) => {
+          const filtered = prev.filter((c) => c.id !== ownerEmployer.id && c.userId !== fbUser.uid);
+          return [ownerEmployer, ...filtered];
+        });
+      }
+
+      if (cloudSaved.length > 0) {
+        setSavedJobIds((prev) => Array.from(new Set([...cloudSaved, ...prev])));
+      }
+      if (cloudViewed.length > 0) {
+        setRecentlyViewedJobIds((prev) => Array.from(new Set([...cloudViewed, ...prev])).slice(0, 20));
+      }
+      if (cloudNotifs.length > 0) {
+        setNotifications((prev) => {
+          const map = new Map(prev.map((n) => [n.id, n]));
+          cloudNotifs.forEach((n) => map.set(n.id, n));
+          return Array.from(map.values());
+        });
+      }
+
+      // Hydrate user's applications from Firestore
+      if (fbUser.emailVerified) {
+        const appFetch = ownerEmployer
+          ? listEmployerApplicationsFromFirestore(fbUser.uid).catch(() => [])
+          : listCandidateApplicationsFromFirestore(fbUser.uid).catch(() => []);
+        appFetch.then((cloudApps) => {
+          if (!active || cloudApps.length === 0) return;
+          setApplications((prev) => {
+            const map = new Map(prev.map((a) => [a.id, a]));
+            cloudApps.forEach((a) => map.set(a.id, a));
+            return Array.from(map.values());
+          });
+        });
       }
     });
 
     return () => {
+      active = false;
       unsubscribeFirebase();
-      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
-  // Sync state to localStorage
+  // Sync non-authoritative local UI cache for offline continuity
   useEffect(() => {
-    localStorage.setItem('abhijobs_currentUser', JSON.stringify(currentUser));
-  }, [currentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('abhijobs_candidates', JSON.stringify(candidates));
+    try {
+      localStorage.setItem('abhijobs_candidates', JSON.stringify(candidates));
+    } catch {}
   }, [candidates]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_companies', JSON.stringify(companies));
+    try {
+      localStorage.setItem('abhijobs_companies', JSON.stringify(companies));
+    } catch {}
   }, [companies]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_jobs', JSON.stringify(jobs));
+    try {
+      localStorage.setItem('abhijobs_jobs', JSON.stringify(jobs));
+    } catch {}
   }, [jobs]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_courses', JSON.stringify(courses));
+    try {
+      localStorage.setItem('abhijobs_courses', JSON.stringify(courses));
+    } catch {}
   }, [courses]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_applications', JSON.stringify(applications));
+    try {
+      localStorage.setItem('abhijobs_applications', JSON.stringify(applications));
+    } catch {}
   }, [applications]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_interviews', JSON.stringify(interviews));
+    try {
+      localStorage.setItem('abhijobs_interviews', JSON.stringify(interviews));
+    } catch {}
   }, [interviews]);
 
-  // Synchronize savedJobIds with currentUser
   useEffect(() => {
-    if (currentUser?.id) {
-      try {
-        const userSavedKey = `abhijobs_savedJobs_${currentUser.id}`;
-        const userStored = localStorage.getItem(userSavedKey) || localStorage.getItem(`hunar_savedJobs_${currentUser.id}`);
-        if (userStored) {
-          const parsed = JSON.parse(userStored);
-          if (Array.isArray(parsed)) {
-            setSavedJobIds(parsed.filter((id) => !['job-1', 'job-2', 'job-3', 'job-4', 'job-5'].includes(id)));
-          }
-        }
-      } catch {
-        // fallback
+    try {
+      localStorage.setItem('abhijobs_savedJobs', JSON.stringify(savedJobIds));
+      if (currentUser?.id) {
+        localStorage.setItem(`abhijobs_savedJobs_${currentUser.id}`, JSON.stringify(savedJobIds));
       }
-    }
-  }, [currentUser?.id]);
-
-  useEffect(() => {
-    localStorage.setItem('abhijobs_savedJobs', JSON.stringify(savedJobIds));
-    if (currentUser?.id) {
-      localStorage.setItem(`abhijobs_savedJobs_${currentUser.id}`, JSON.stringify(savedJobIds));
-    }
+    } catch {}
   }, [savedJobIds, currentUser?.id]);
 
-  // Synchronize recently viewed jobs from Supabase cloud when authenticated user logs in
   useEffect(() => {
-    if (currentUser?.id) {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id);
-      if (isUUID) {
-        supabase
-          .from('recently_viewed_jobs')
-          .select('job_id, viewed_at')
-          .eq('job_seeker_id', currentUser.id)
-          .order('viewed_at', { ascending: false })
-          .limit(20)
-          .then(({ data, error }) => {
-            if (data && !error && data.length > 0) {
-              const cloudIds = data.map((d: any) => d.job_id);
-              setRecentlyViewedJobIds((prev) => Array.from(new Set([...cloudIds, ...prev])));
-            }
-          });
-      }
-    }
-  }, [currentUser?.id]);
-
-  useEffect(() => {
-    localStorage.setItem('abhijobs_recently_viewed', JSON.stringify(recentlyViewedJobIds));
+    try {
+      localStorage.setItem('abhijobs_recently_viewed', JSON.stringify(recentlyViewedJobIds));
+    } catch {}
   }, [recentlyViewedJobIds]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('abhijobs_notifications', JSON.stringify(notifications));
+    } catch {}
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_hiringEnquiries', JSON.stringify(hiringEnquiries));
+    try {
+      localStorage.setItem('abhijobs_hiringEnquiries', JSON.stringify(hiringEnquiries));
+    } catch {}
   }, [hiringEnquiries]);
 
   useEffect(() => {
-    localStorage.setItem('abhijobs_courseEnquiries', JSON.stringify(courseEnquiries));
+    try {
+      localStorage.setItem('abhijobs_courseEnquiries', JSON.stringify(courseEnquiries));
+    } catch {}
   }, [courseEnquiries]);
 
-  useEffect(() => {
-    localStorage.setItem('abhijobs_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('abhijobs_currentUser', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('abhijobs_currentUser');
-    }
-  }, [currentUser]);
-
-  // Derived current profiles
   const currentCandidate =
     (currentUser
-      ? candidates.find((c) => c.userId === currentUser.id || c.email.toLowerCase() === currentUser.email.toLowerCase())
+      ? candidates.find(
+          (c) => c.userId === currentUser.id || c.email.toLowerCase() === currentUser.email.toLowerCase()
+        )
       : null) || null;
 
   const currentEmployer =
     (currentUser
-      ? companies.find((e) => e.userId === currentUser.id || (e.recruiterEmail && e.recruiterEmail.toLowerCase() === currentUser.email.toLowerCase()))
+      ? companies.find(
+          (e) =>
+            e.userId === currentUser.id ||
+            (e.recruiterEmail && e.recruiterEmail.toLowerCase() === currentUser.email.toLowerCase())
+        )
       : null) || null;
 
-  // Toast System
   const showToast = (type: ToastInfo['type'], title: string, message?: string) => {
     const id = 'toast-' + Date.now() + Math.random().toString(36).substring(2, 5);
     setToasts((prev) => [...prev, { id, type, title, message }]);
@@ -664,7 +680,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Analytics event tracker
   const trackEvent = (eventName: string, metadata?: Record<string, any>, targetId?: string) => {
     const newEvent: AnalyticsEvent = {
       id: 'ev-' + Date.now(),
@@ -678,80 +693,94 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAnalyticsEvents((prev) => [newEvent, ...prev]);
   };
 
-  // Auth & Roles
-  const loginAs = (role: UserRole) => {
-    const normalizedRole = role === 'candidate' ? 'job_seeker' : role;
-    const match = users.find(
-      (u) => u.role === normalizedRole || (normalizedRole === 'job_seeker' && u.role === 'candidate')
-    );
-    if (match) {
-      const updatedUser = { ...match, role: normalizedRole };
-      setCurrentUser(updatedUser);
-      setCurrentRole(normalizedRole);
-      const roleDisplayName =
-        normalizedRole === 'job_seeker' ? 'Job Seeker' : normalizedRole === 'employer' ? 'Employer' : 'Administrator';
-      showToast('success', `Active as ${roleDisplayName}`, `Welcome back, ${match.name}`);
-      trackEvent('user_login', { role: normalizedRole });
-    }
-  };
+  // ============================================================================
+  // REAL FIREBASE AUTHENTICATION (ZERO ONE-CLICK BYPASSES)
+  // ============================================================================
 
   const loginWithEmail = async (
     email: string,
-    password?: string
-  ): Promise<{ success: boolean; error?: string; user?: User }> => {
-    startGlobalLoading('Signing in to ABHI JOBS...');
+    password: string
+  ): Promise<{ success: boolean; error?: string; user?: User; requiresEmailVerification?: boolean }> => {
+    if (!email.trim() || !password) {
+      return { success: false, error: 'Please enter both your email address and password.' };
+    }
+    startGlobalLoading('Signing in with Firebase Authentication...');
     try {
-      const trimmed = email.trim().toLowerCase();
+      const fbResult = await signInWithFirebaseEmail(email.trim(), password);
+      const resolvedAdmin = await resolveFirebaseAdminSession(fbResult.user);
+      setAdminSession(resolvedAdmin);
 
-      // 1. Attempt Supabase Auth login if password is provided
-      if (password && password.trim()) {
-        try {
-          const { data: sbAuth, error: sbError } = await supabase.auth.signInWithPassword({
-            email: trimmed,
-            password: password.trim(),
-          });
-          if (sbAuth?.user && !sbError) {
-            setSupabaseConnected(true);
-            const found = users.find((u) => u.email.toLowerCase() === trimmed);
-            if (found) {
-              const normalizedRole = found.role === 'candidate' ? 'job_seeker' : found.role;
-              const updatedUser = { ...found, role: normalizedRole };
-              setCurrentUser(updatedUser);
-              setCurrentRole(normalizedRole);
-              showToast('success', `Welcome back, ${found.name}!`, `Authenticated with Supabase Cloud (${found.email})`);
-              trackEvent('user_login', { method: 'supabase_auth', role: normalizedRole });
-              return { success: true, user: updatedUser };
-            }
-          }
-        } catch (err) {
-          console.warn('Supabase auth attempt note:', err);
-        }
-      }
-
-      // 2. Local profile lookup
-      const user = users.find((u) => {
-        const uEmail = u.email.toLowerCase();
-        if (uEmail === trimmed) return true;
-        if (trimmed.startsWith('jobseeker@') && uEmail.startsWith('jobseeker@')) return true;
-        if (trimmed.startsWith('employer@') && uEmail.startsWith('employer@')) return true;
-        if (trimmed.startsWith('admin@') && uEmail.startsWith('admin@')) return true;
-        return false;
-      });
-      if (!user) {
+      if (resolvedAdmin.denialReason === 'account_suspended') {
+        await firebaseSignOut(firebaseAuth).catch(() => {});
         return {
           success: false,
-          error: 'No account found with this email address. Please register for a free ABHI JOBS account first.',
+          error: 'Your account has been suspended. Please contact ABHI JOBS support.',
         };
       }
-      const normalizedRole = user.role === 'candidate' ? 'job_seeker' : user.role;
-      const updatedUser = { ...user, role: normalizedRole };
-      setCurrentUser(updatedUser);
-      setCurrentRole(normalizedRole);
-      showToast('success', `Welcome back, ${user.name}!`, `Signed in as ${user.email}`);
-      trackEvent('user_login', { method: 'email', role: normalizedRole });
-      return { success: true, user: updatedUser };
+
+      const ownerEmployer = fbResult.user.emailVerified
+        ? await fetchOwnerEmployerFromFirestore(fbResult.user.uid).catch(() => null)
+        : null;
+
+      const role: UserRole = resolvedAdmin.authorized
+        ? 'admin'
+        : ownerEmployer
+          ? 'employer'
+          : 'job_seeker';
+
+      const authenticatedUser: User = {
+        id: fbResult.user.uid,
+        name: fbResult.name,
+        email: fbResult.email.toLowerCase(),
+        role,
+        avatar: fbResult.avatar,
+        status: 'active',
+        createdAt: fbResult.user.metadata?.creationTime || new Date().toISOString(),
+        lastActive: 'Just now',
+      };
+
+      setCurrentUser(authenticatedUser);
+      setCurrentRole(role);
+      setFirebaseEmailVerified(Boolean(fbResult.user.emailVerified));
+
+      showToast(
+        'success',
+        `Welcome back, ${authenticatedUser.name}!`,
+        fbResult.user.emailVerified
+          ? `Signed in via Firebase (${authenticatedUser.email})`
+          : 'Please check your inbox and verify your email address to unlock all cloud features.'
+      );
+      trackEvent('user_login', { method: 'firebase_email', role });
+
+      return {
+        success: true,
+        user: authenticatedUser,
+        requiresEmailVerification: !fbResult.user.emailVerified,
+      };
+    } catch (err: any) {
+      return { success: false, error: formatFirebaseAuthError(err) };
     } finally {
       stopGlobalLoading();
+    }
+  };
+
+  const sendPasswordReset = async (
+    email: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address first.' };
+    }
+    try {
+      await requestFirebasePasswordReset(trimmed);
+      showToast(
+        'success',
+        'Password Reset Email Sent',
+        `Check ${trimmed} for your Firebase password reset link.`
+      );
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: formatFirebaseAuthError(err) };
     }
   };
 
@@ -760,45 +789,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     email: string;
     avatar?: string;
   }): Promise<{ success: boolean; error?: string; user?: User }> => {
-    startGlobalLoading('Signing in with Google...');
-    try {
-      const trimmedEmail = googleUser.email.trim().toLowerCase();
-      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-      if (existingUser) {
-        const normalizedRole = existingUser.role === 'candidate' ? 'job_seeker' : existingUser.role;
-        const updatedUser = { ...existingUser, role: normalizedRole, lastActive: 'Just now' };
-        setCurrentUser(updatedUser);
-        setCurrentRole(normalizedRole);
-        showToast('success', `Welcome back, ${existingUser.name}!`, `Signed in with Google (${existingUser.email})`);
-        trackEvent('user_login', { method: 'google', role: normalizedRole });
-        return { success: true, user: updatedUser };
-      }
-
-      // New Google User - automatically create candidate account
-      const res = await registerJobSeeker({
-        name: googleUser.name.trim(),
-        email: trimmedEmail,
-        avatar:
-          googleUser.avatar ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googleUser.name)}`,
-        isGoogle: true,
-        experienceType: 'experienced',
-        experienceLevel: 'Experienced',
-        workStatus: 'Looking for a job',
-        city: 'Bangalore',
-        state: 'Karnataka',
-        marketingConsent: true,
-      });
-
-      if (res.success && res.user) {
-        showToast('success', `Welcome to ABHI JOBS, ${googleUser.name}!`, `Authenticated with Google`);
-        return { success: true, user: res.user };
-      }
-
-      return { success: false, error: res.error || 'Failed to authenticate with Google' };
-    } finally {
-      stopGlobalLoading();
-    }
+    // Redirect any Google modal flow to real Firebase Google Sign-In popup; never fabricate admin sessions.
+    void googleUser;
+    const popupResult = await loginWithFirebaseGooglePopup();
+    return {
+      success: popupResult.success,
+      error: popupResult.error,
+      user: popupResult.user,
+    };
   };
 
   const loginWithFirebaseGooglePopup = async (): Promise<{
@@ -808,17 +806,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isUnauthorizedDomain?: boolean;
     hostname?: string;
   }> => {
-    startGlobalLoading('Connecting to Google with Firebase...');
+    startGlobalLoading('Connecting to Google via Firebase Auth...');
     try {
       const fbData = await signInWithFirebaseGoogle();
-      const res = await loginWithGoogle({
+      const resolvedAdmin = await resolveFirebaseAdminSession(fbData.user);
+      setAdminSession(resolvedAdmin);
+
+      if (resolvedAdmin.denialReason === 'account_suspended') {
+        await firebaseSignOut(firebaseAuth).catch(() => {});
+        return {
+          success: false,
+          error: 'Your account has been suspended. Contact ABHI JOBS support.',
+        };
+      }
+
+      const ownerEmployer = await fetchOwnerEmployerFromFirestore(fbData.user.uid).catch(() => null);
+      const role: UserRole = resolvedAdmin.authorized
+        ? 'admin'
+        : ownerEmployer
+          ? 'employer'
+          : 'job_seeker';
+
+      const authedUser: User = {
+        id: fbData.user.uid,
         name: fbData.name,
-        email: fbData.email,
+        email: fbData.email.toLowerCase(),
+        role,
         avatar: fbData.avatar,
-      });
-      return res;
+        status: 'active',
+        createdAt: fbData.user.metadata?.creationTime || new Date().toISOString(),
+        lastActive: 'Just now',
+      };
+
+      setCurrentUser(authedUser);
+      setCurrentRole(role);
+      setFirebaseEmailVerified(Boolean(fbData.user.emailVerified));
+
+      // Ensure candidate doc exists for non-employer Google sign-ins
+      if (!ownerEmployer) {
+        const existingCand = await fetchCandidateProfileFromFirestore(fbData.user.uid).catch(() => null);
+        if (!existingCand && fbData.user.emailVerified) {
+          const initialCand: CandidateProfile = {
+            id: fbData.user.uid,
+            userId: fbData.user.uid,
+            name: fbData.name,
+            email: fbData.email.toLowerCase(),
+            phone: '',
+            location: 'India',
+            headline: 'Job Seeker',
+            about: '',
+            currentRole: '',
+            desiredRole: '',
+            experienceLevel: 'Fresher',
+            experienceType: 'fresher',
+            workStatus: 'Looking for a job',
+            yearsOfExperience: 0,
+            preferredLocation: 'India',
+            workPreference: 'Hybrid',
+            availability: 'Immediate',
+            profileVisibility: 'employers_only',
+            availableForOpportunities: true,
+            skills: [],
+            education: [],
+            experiences: [],
+            certifications: [],
+            completionPercentage: 25,
+            recommendations: [],
+            avatar: fbData.avatar,
+          };
+          saveCandidateProfileToFirestore(fbData.user.uid, initialCand).catch(() => {});
+          setCandidates((prev) => [
+            initialCand,
+            ...prev.filter((c) => c.userId !== fbData.user.uid),
+          ]);
+        }
+      }
+
+      showToast('success', `Welcome, ${fbData.name}!`, 'Signed in with Google (Firebase Auth)');
+      trackEvent('user_login', { method: 'firebase_google', role });
+      return { success: true, user: authedUser };
     } catch (err: any) {
-      console.error('Firebase Google Auth error:', err);
       const isBlocked = err?.code === 'auth/popup-blocked';
       const isCancelled =
         err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request';
@@ -828,7 +895,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (isUnauthDomain) {
         return {
           success: false,
-          error: `Firebase domain authorization required: The domain "${currentHost}" is not added in Firebase Console > Authentication > Settings > Authorized domains.`,
+          error: `Firebase domain authorization required: "${currentHost}" is not in Firebase Authorized domains.`,
           isUnauthorizedDomain: true,
           hostname: currentHost,
         };
@@ -837,10 +904,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return {
         success: false,
         error: isBlocked
-          ? 'Popup was blocked by your browser. Please allow popups or use account selector.'
+          ? 'Popup was blocked by your browser. Please allow popups for this site.'
           : isCancelled
-          ? 'Google sign-in popup was cancelled.'
-          : err?.message || 'Google authentication encountered an error.',
+            ? 'Google sign-in popup was closed before completing.'
+            : formatFirebaseAuthError(err),
       };
     } finally {
       stopGlobalLoading();
@@ -860,56 +927,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     marketingConsent?: boolean;
     avatar?: string;
     isGoogle?: boolean;
-  }): Promise<{ success: boolean; error?: string; user?: User; candidate?: CandidateProfile }> => {
-    startGlobalLoading('Creating candidate account...');
+  }): Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    candidate?: CandidateProfile;
+    verificationEmailSent?: boolean;
+  }> => {
+    if (!data.password || data.password.length < 8) {
+      return { success: false, error: 'A password of at least 8 characters is required.' };
+    }
+    startGlobalLoading('Creating your Firebase account...');
     try {
       const trimmedEmail = data.email.trim().toLowerCase();
-      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-      if (existingUser) {
-        return {
-          success: false,
-          error: 'An account with this email address already exists. Please sign in instead.',
-        };
-      }
-
-      if (data.phone) {
-        const cleanPhone = data.phone.replace(/\D/g, '');
-        if (cleanPhone.length >= 10) {
-          const existingCandidateByPhone = candidates.find(
-            (c) => c.phone && c.phone.replace(/\D/g, '').includes(cleanPhone.slice(-10))
-          );
-          if (existingCandidateByPhone) {
-            return {
-              success: false,
-              error: 'An account with this mobile number already exists.',
-            };
-          }
-        }
-      }
-
-      const newUserId = 'user-js-' + Date.now();
-      const newUser: User = {
-        id: newUserId,
-        name: data.name.trim(),
+      const fbReg = await registerWithFirebaseEmail({
         email: trimmedEmail,
+        password: data.password,
+        displayName: data.name.trim(),
         role: 'job_seeker',
-        avatar:
-          data.avatar ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=062e22`,
-        status: 'active',
-        createdAt: new Date().toISOString().split('T')[0],
-        lastActive: 'Just now',
-      };
+      });
 
-      const newCandidateId = 'cand-' + Date.now();
       const locationStr = [data.city, data.state].filter(Boolean).join(', ') || 'India';
       const isFresher =
         data.experienceType === 'fresher' ||
         data.experienceLevel?.toLowerCase().includes('fresher');
 
+      const newUser: User = {
+        id: fbReg.user.uid,
+        name: data.name.trim(),
+        email: trimmedEmail,
+        role: 'job_seeker',
+        avatar: data.avatar || fbReg.avatar,
+        status: 'active',
+        createdAt: new Date().toISOString().split('T')[0],
+        lastActive: 'Just now',
+      };
+
       const newCandidate: CandidateProfile = {
-        id: newCandidateId,
-        userId: newUserId,
+        id: fbReg.user.uid,
+        userId: fbReg.user.uid,
         name: data.name.trim(),
         email: trimmedEmail,
         phone: data.phone || '',
@@ -933,52 +989,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         education: [],
         experiences: [],
         certifications: [],
-        completionPercentage: 20, // Baseline for basic registration
+        completionPercentage: 25,
         recommendations: [],
         avatar: newUser.avatar,
         marketingConsent: !!data.marketingConsent,
         lastActive: 'Just now',
       };
 
-      setUsers((prev) => [newUser, ...prev]);
-      setCandidates((prev) => [newCandidate, ...prev]);
-      setCurrentUser(newUser);
-      setCurrentRole('job_seeker');
+      setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id)]);
+      setCandidates((prev) => [newCandidate, ...prev.filter((c) => c.userId !== newCandidate.userId)]);
 
-      // Register user in Supabase Auth when password is provided
-      if (data.password && data.password.trim()) {
-        try {
-          supabase.auth.signUp({
-            email: trimmedEmail,
-            password: data.password.trim(),
-            options: {
-              data: {
-                name: data.name.trim(),
-                role: 'job_seeker',
-                phone: data.phone || '',
-              },
-            },
-          }).then(
-            (res) => {
-              if (res.data?.user) setSupabaseConnected(true);
-            },
-            () => {}
-          );
-        } catch {}
-      }
+      // Sign out after email/password registration until user verifies their email address
+      await firebaseSignOut(firebaseAuth).catch(() => {});
+      setCurrentUser(null);
 
       showToast(
         'success',
-        'Account Created Successfully',
-        `Welcome to ABHI JOBS, ${data.name.split(' ')[0]}!`
+        'Account Created — Verify Your Email',
+        `A verification link has been sent to ${trimmedEmail}. Please verify your email before signing in.`
       );
-      trackEvent('user_registered', {
-        method: data.isGoogle ? 'google' : 'email',
-        experienceType: newCandidate.experienceType,
-        marketingConsent: newCandidate.marketingConsent,
-      });
+      trackEvent('user_registered', { method: 'firebase_email', role: 'job_seeker' });
 
-      return { success: true, user: newUser, candidate: newCandidate };
+      return {
+        success: true,
+        user: newUser,
+        candidate: newCandidate,
+        verificationEmailSent: fbReg.verificationEmailSent,
+      };
+    } catch (err: any) {
+      return { success: false, error: formatFirebaseAuthError(err) };
     } finally {
       stopGlobalLoading();
     }
@@ -994,21 +1033,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     location?: string;
     website?: string;
     companySize?: string;
-  }): Promise<{ success: boolean; error?: string; user?: User; employer?: EmployerProfile }> => {
+  }): Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    employer?: EmployerProfile;
+    verificationEmailSent?: boolean;
+  }> => {
+    if (!data.password || data.password.length < 8) {
+      return { success: false, error: 'A password of at least 8 characters is required.' };
+    }
     startGlobalLoading('Registering company account...');
     try {
       const trimmedEmail = data.email.trim().toLowerCase();
-      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-      if (existingUser) {
-        return {
-          success: false,
-          error: 'An account with this email address already exists. Please sign in instead.',
-        };
-      }
+      const fbReg = await registerWithFirebaseEmail({
+        email: trimmedEmail,
+        password: data.password,
+        displayName: data.name.trim(),
+        role: 'employer',
+      });
 
-      const newUserId = 'user-emp-' + Date.now();
       const newUser: User = {
-        id: newUserId,
+        id: fbReg.user.uid,
         name: data.name.trim(),
         email: trimmedEmail,
         role: 'employer',
@@ -1018,86 +1064,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         lastActive: 'Just now',
       };
 
-      const newEmployerId = 'emp-' + Date.now();
-      const newEmployer: EmployerProfile = {
-        id: newEmployerId,
-        userId: newUserId,
-        name: data.companyName.trim(),
-        companyName: data.companyName.trim(),
-        industry: data.industry || 'Technology & Services',
-        location: data.location || 'India',
-        website: data.website || '',
-        companySize: data.companySize || '11-50',
-        size: data.companySize || '11-50',
-        recruiterName: data.name.trim(),
-        recruiterRole: 'Hiring Manager',
-        recruiterEmail: trimmedEmail,
-        recruiterPhone: '',
-        about: `Verified organization account for ${data.companyName.trim()}.`,
-        description: `Verified organization account for ${data.companyName.trim()}.`,
-        benefits: ['Competitive Compensation', 'Health Coverage', 'Growth Opportunities'],
-        culture: 'Skill-driven, collaborative, and forward-thinking.',
-        socialLinks: {},
-        verified: true,
-        verificationStatus: 'verified',
-        activeJobsCount: 0,
-        logo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.companyName)}&backgroundColor=062e22`,
-      };
-
-      const updatedUsers = [...users, newUser];
-      const updatedCompanies = [...companies, newEmployer];
-
-      setUsers(updatedUsers);
-      setCompanies(updatedCompanies);
-      setCurrentUser(newUser);
-      setCurrentRole('employer');
-
-      // Register employer in Supabase Auth when password is provided
-      if (data.password && data.password.trim()) {
-        try {
-          supabase.auth.signUp({
-            email: trimmedEmail,
-            password: data.password.trim(),
-            options: {
-              data: {
-                name: data.name.trim(),
-                role: 'employer',
-                company_name: data.companyName.trim(),
-                phone: data.phone || '',
-              },
-            },
-          }).then(
-            (res) => {
-              if (res.data?.user) setSupabaseConnected(true);
-            },
-            () => {}
-          );
-        } catch {}
-      }
-
+      // SECURITY: Self-registered employers are ALWAYS created as pending (never self-verified)
+      let createdEmployer: EmployerProfile;
       try {
-        localStorage.setItem('abhijobs_users', JSON.stringify(updatedUsers));
-        localStorage.setItem('abhijobs_companies', JSON.stringify(updatedCompanies));
-        localStorage.setItem('abhijobs_currentUser', JSON.stringify(newUser));
+        createdEmployer = await createEmployerInFirestore({
+          ownerUid: fbReg.user.uid,
+          companyName: data.companyName.trim(),
+          website: data.website?.trim(),
+          industry: data.industry || 'Technology & Services',
+          companySize: data.companySize || '11-50 employees',
+          location: data.location || 'India',
+          about: `Organization account for ${data.companyName.trim()}. Pending verification by ABHI JOBS Recruitment Team.`,
+          logo: newUser.avatar,
+          recruiterName: data.name.trim(),
+          recruiterRole: 'Hiring Manager',
+          recruiterEmail: trimmedEmail,
+          recruiterPhone: data.phone || '',
+        });
       } catch {
-        // fallback
+        createdEmployer = {
+          id: `emp_${fbReg.user.uid}`,
+          userId: fbReg.user.uid,
+          name: data.companyName.trim(),
+          companyName: data.companyName.trim(),
+          industry: data.industry || 'Technology & Services',
+          location: data.location || 'India',
+          website: data.website || '',
+          companySize: data.companySize || '11-50 employees',
+          size: data.companySize || '11-50 employees',
+          recruiterName: data.name.trim(),
+          recruiterRole: 'Hiring Manager',
+          recruiterEmail: trimmedEmail,
+          recruiterPhone: data.phone || '',
+          about: `Organization account for ${data.companyName.trim()}. Pending verification.`,
+          description: `Organization account for ${data.companyName.trim()}. Pending verification.`,
+          benefits: [],
+          culture: '',
+          socialLinks: {},
+          verified: false,
+          verificationStatus: 'pending',
+          activeJobsCount: 0,
+          logo: newUser.avatar || '',
+        };
       }
 
-      showToast('success', 'Employer Account Created', `Welcome to ABHI JOBS Employer Hub, ${data.name}!`);
+      setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id)]);
+      setCompanies((prev) => [createdEmployer, ...prev.filter((c) => c.id !== createdEmployer.id)]);
+
+      await firebaseSignOut(firebaseAuth).catch(() => {});
+      setCurrentUser(null);
+
+      showToast(
+        'success',
+        'Employer Account Registered (Pending Verification)',
+        `Verify your email at ${trimmedEmail}. Once approved by ABHI JOBS admins, you can publish jobs.`
+      );
       trackEvent('employer_register', { email: trimmedEmail, company: data.companyName });
 
-      return { success: true, user: newUser, employer: newEmployer };
+      return {
+        success: true,
+        user: newUser,
+        employer: createdEmployer,
+        verificationEmailSent: fbReg.verificationEmailSent,
+      };
+    } catch (err: any) {
+      return { success: false, error: formatFirebaseAuthError(err) };
     } finally {
       stopGlobalLoading();
     }
   };
 
-  const switchRole = (role: UserRole) => {
-    loginAs(role);
-  };
-
   const logout = () => {
-    supabase.auth.signOut().catch(() => {});
     firebaseSignOut(firebaseAuth).catch(() => {});
     try {
       localStorage.removeItem('abhijobs_currentUser');
@@ -1105,14 +1142,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
     setCurrentUser(null);
     setCurrentRole('job_seeker');
+    setAdminSession(null);
+    setFirebaseEmailVerified(false);
     setSavedJobIds([]);
     showToast('info', 'Signed Out', 'You have been signed out successfully.');
   };
 
   const updateUserStatus = (userId: string, status: 'active' | 'suspended') => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status } : u))
-    );
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
+    if (firebaseAuth.currentUser?.emailVerified && adminSession?.permissions?.canSuspendUsers) {
+      setUserAccountStatusInFirestore(userId, status).catch((err) => {
+        console.warn('Firestore user status update notice:', err);
+      });
+    }
     showToast('info', 'User Status Updated', `User is now marked as ${status}.`);
   };
 
@@ -1122,7 +1164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === currentUser.id ? { ...u, ...updates } : u)));
 
-    // Synchronize name/email with Candidate profile if candidate
     if (updates.name || updates.email) {
       setCandidates((prev) =>
         prev.map((c) =>
@@ -1135,31 +1176,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             : c
         )
       );
-
-      // Synchronize recruiter details with Company profile if employer
-      setCompanies((prev) =>
-        prev.map((comp) =>
-          comp.userId === currentUser.id || (comp.recruiterEmail && comp.recruiterEmail.toLowerCase() === currentUser.email.toLowerCase())
-            ? {
-                ...comp,
-                recruiterName: updates.name || comp.recruiterName,
-                recruiterEmail: updates.email || comp.recruiterEmail,
-              }
-            : comp
-        )
-      );
     }
-
     showToast('success', 'Settings Saved', 'Your account settings have been updated.');
   };
 
   const deactivateCurrentUser = () => {
     if (!currentUser) return;
     const uid = currentUser.id;
-    setUsers((prev) =>
-      prev.map((u) => (u.id === uid ? { ...u, status: 'suspended' } : u))
-    );
-    showToast('info', 'Account Deactivated', 'Your account has been deactivated. You can sign back in anytime to reactivate.');
+    setUsers((prev) => prev.map((u) => (u.id === uid ? { ...u, status: 'suspended' } : u)));
+    showToast('info', 'Account Deactivated', 'Your account has been deactivated.');
     logout();
   };
 
@@ -1169,86 +1194,98 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsers((prev) => prev.filter((u) => u.id !== uid));
     setCandidates((prev) => prev.filter((c) => c.userId !== uid));
     setCompanies((prev) => prev.filter((comp) => comp.userId !== uid));
-    showToast('info', 'Account Deleted', 'Your ABHI JOBS account has been permanently removed.');
+    showToast('info', 'Account Removed', 'Your ABHI JOBS local session data has been cleared.');
     logout();
   };
 
-  // Candidate Actions
+  // ============================================================================
+  // CANDIDATE ACTIONS (SYNCED TO FIRESTORE)
+  // ============================================================================
+
   const updateCandidateProfile = (updates: Partial<CandidateProfile>) => {
     let targetCandidate = currentCandidate;
     if (!targetCandidate && currentUser) {
       const fallbackCand: CandidateProfile = {
-        id: 'cand-' + currentUser.id.slice(0, 10),
+        id: currentUser.id,
         userId: currentUser.id,
         name: currentUser.name,
         email: currentUser.email,
         phone: '',
-        location: 'Bangalore, India',
-        city: 'Bangalore',
-        state: 'Karnataka',
-        headline: 'Professional | Job Seeker',
+        location: 'India',
+        headline: 'Job Seeker',
         about: '',
-        currentRole: 'Software Engineer',
-        desiredRole: 'Software Engineer',
-        experienceLevel: 'Mid',
-        experienceType: 'experienced',
+        currentRole: '',
+        desiredRole: '',
+        experienceLevel: 'Fresher',
+        experienceType: 'fresher',
         workStatus: 'Looking for a job',
-        yearsOfExperience: 2,
-        preferredLocation: 'Flexible',
+        yearsOfExperience: 0,
+        preferredLocation: 'India',
         workPreference: 'Hybrid',
-        skills: ['Problem Solving', 'Communication'],
+        skills: [],
         education: [],
         experiences: [],
         certifications: [],
-        completionPercentage: 35,
+        completionPercentage: 25,
         recommendations: [],
         availability: 'Immediate',
         profileVisibility: 'employers_only',
         availableForOpportunities: true,
         avatar: currentUser.avatar,
       };
-      setCandidates((prev) => [...prev, fallbackCand]);
+      setCandidates((prev) => [fallbackCand, ...prev]);
       targetCandidate = fallbackCand;
     }
     if (!targetCandidate) return;
 
     const candId = targetCandidate.id;
+    let computedUpdated: CandidateProfile | null = null;
+
     setCandidates((prev) =>
       prev.map((c) => {
         if (c.id === candId) {
           const updated = { ...c, ...updates };
-          // Progressive score calculation
-          let score = 20; // 20% baseline from basic registration
+          let score = 20;
           if (updated.headline && updated.headline.length > 5) score += 10;
           if (updated.about && updated.about.length > 15) score += 10;
           if (updated.education && updated.education.length > 0) score += 15;
-          if (
-            updated.experienceType === 'fresher' ||
-            (updated.experiences && updated.experiences.length > 0)
-          ) {
+          if (updated.experienceType === 'fresher' || (updated.experiences && updated.experiences.length > 0)) {
             score += 15;
           }
           if (updated.skills && updated.skills.length >= 3) score += 15;
           if (updated.desiredRole && updated.desiredRole.length > 3) score += 5;
           if (updated.resumeName || updated.resumeUrl) score += 10;
-          
-          if (typeof updates.completionPercentage === 'number') {
-            updated.completionPercentage = updates.completionPercentage;
-          } else {
-            updated.completionPercentage = Math.min(100, Math.max(score, c.completionPercentage || 20));
-          }
+
+          updated.completionPercentage =
+            typeof updates.completionPercentage === 'number'
+              ? updates.completionPercentage
+              : Math.min(100, Math.max(score, c.completionPercentage || 20));
+          computedUpdated = updated;
           return updated;
         }
         return c;
       })
     );
+
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified && computedUpdated) {
+      saveCandidateProfileToFirestore(fbUser.uid, computedUpdated).catch((err) => {
+        console.warn('Firestore candidate profile sync notice:', err);
+      });
+    }
+
     showToast('success', 'Profile Updated', 'Your ABHI JOBS profile changes have been saved.');
-    trackEvent('profile_updated', { candidateId: currentCandidate.id });
+    trackEvent('profile_updated', { candidateId: candId });
   };
 
   const saveJob = (jobId: string) => {
     if (!savedJobIds.includes(jobId)) {
       setSavedJobIds((prev) => [...prev, jobId]);
+      const fbUser = firebaseAuth.currentUser;
+      const job = jobs.find((j) => j.id === jobId);
+      if (fbUser && fbUser.emailVerified && job) {
+        setSavedJobInFirestore(fbUser.uid, job, true).catch(() => {});
+      }
       showToast('success', 'Job Saved', 'Added to your saved jobs portfolio.');
       trackEvent('job_saved', { jobId });
     }
@@ -1256,77 +1293,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const unsaveJob = (jobId: string) => {
     setSavedJobIds((prev) => prev.filter((id) => id !== jobId));
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified) {
+      setSavedJobInFirestore(fbUser.uid, { id: jobId, title: '', companyName: '' }, false).catch(() => {});
+    }
     showToast('info', 'Job Removed', 'Removed from saved jobs.');
   };
 
   const recordJobView = (jobId: string) => {
     if (!jobId) return;
-
-    // Update local state and history (most recent first, up to 20)
     setRecentlyViewedJobIds((prev) => [jobId, ...prev.filter((id) => id !== jobId)].slice(0, 20));
-
-    // If candidate is logged in with real Supabase UUID credentials, sync to Supabase
-    if (currentUser?.id) {
-      const isUserUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id);
-      const isJobUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId);
-
-      if (isUserUUID && isJobUUID) {
-        supabase
-          .from('recently_viewed_jobs')
-          .upsert(
-            {
-              job_seeker_id: currentUser.id,
-              job_id: jobId,
-              viewed_at: new Date().toISOString(),
-            },
-            { onConflict: 'job_seeker_id,job_id' }
-          )
-          .then(
-            ({ error }) => {
-              if (error) {
-                console.info('Recently viewed sync note:', error.message);
-              }
-            },
-            () => {}
-          );
-      }
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified) {
+      recordRecentlyViewedJobInFirestore(fbUser.uid, jobId).catch(() => {});
     }
   };
 
-  const applyToJob = async (jobId: string, coverNote?: string, selectedResume?: string): Promise<boolean> => {
+  const applyToJob = async (
+    jobId: string,
+    coverNote?: string,
+    selectedResume?: string
+  ): Promise<boolean> => {
     startGlobalLoading('Submitting application...');
     try {
       const job = jobs.find((j) => j.id === jobId);
       if (!job || !currentCandidate) {
-        showToast('error', 'Cannot apply', 'Please complete your profile first.');
+        showToast('error', 'Cannot apply', 'Please sign in and complete your candidate profile first.');
         return false;
       }
 
-      // Check if already applied
       const existing = applications.find(
-        (a) => a.jobId === jobId && a.candidateId === currentCandidate.id
+        (a) =>
+          a.jobId === jobId &&
+          (a.candidateId === currentCandidate.id || a.candidateId === currentCandidate.userId)
       );
       if (existing) {
         showToast('warning', 'Already Applied', 'You have already submitted an application for this role.');
         return false;
       }
 
-      // Calculate match score based on skills
-      const matchingSkills = (currentCandidate.skills || []).filter((skill) =>
-        typeof skill === 'string' &&
-        (job.preferredSkills || []).some((s) => typeof s === 'string' && s.toLowerCase().includes(skill.toLowerCase()))
+      const matchingSkills = (currentCandidate.skills || []).filter(
+        (skill) =>
+          typeof skill === 'string' &&
+          (job.preferredSkills || []).some(
+            (s) => typeof s === 'string' && s.toLowerCase().includes(skill.toLowerCase())
+          )
       );
       const score = Math.round(
         Math.min(98, 70 + (matchingSkills.length / Math.max(1, (job.preferredSkills || []).length)) * 28)
       );
 
-      const newApp: Application = {
-        id: 'app-' + Date.now(),
+      let newApp: Application = {
+        id: 'app_' + Date.now(),
         jobId,
         jobTitle: job.title,
         companyName: job.companyName,
         companyLogo: job.companyLogo,
-        candidateId: currentCandidate.id,
+        candidateId: currentUser?.id || currentCandidate.id,
         candidateName: currentCandidate.name,
         candidateEmail: currentCandidate.email,
         candidatePhone: currentCandidate.phone,
@@ -1334,7 +1357,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         candidateLocation: currentCandidate.location,
         candidateExperienceYears: currentCandidate.yearsOfExperience,
         candidateSkills: currentCandidate.skills,
-        resumeName: selectedResume || currentCandidate.resumeName || 'ABHI JOBS_Standard_Profile.pdf',
+        resumeName: selectedResume || currentCandidate.resumeName || 'ABHI_Structured_Resume',
         coverNote: coverNote || 'Submitted with my verified ABHI JOBS profile.',
         status: 'Applied',
         appliedDate: new Date().toISOString().substring(0, 10),
@@ -1342,64 +1365,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           {
             status: 'Applied',
             date: new Date().toISOString().substring(0, 10),
-            note: 'Application received by employer via ABHI JOBS 1-Click Apply',
+            note: 'Application received via ABHI JOBS',
           },
         ],
         matchScore: score,
       };
 
+      const fbUser = firebaseAuth.currentUser;
+      const employerRecord = companies.find((c) => c.id === job.employerId);
+      if (fbUser && fbUser.emailVerified) {
+        try {
+          newApp = await submitApplicationToFirestore({
+            job,
+            employerOwnerUid: employerRecord?.userId || job.employerId || fbUser.uid,
+            candidate: { ...currentCandidate, userId: fbUser.uid },
+            resumeName: newApp.resumeName,
+            coverNote: newApp.coverNote,
+          });
+        } catch (fsErr) {
+          console.warn('Firestore application submit notice:', fsErr);
+        }
+      }
+
       setApplications((prev) => [newApp, ...prev]);
 
-      // Sync application to Supabase cloud if table exists
-      try {
-        supabase.from('applications').insert([{
-          job_id: newApp.jobId,
-          candidate_name: newApp.candidateName,
-          candidate_email: newApp.candidateEmail,
-          candidate_phone: newApp.candidatePhone,
-          job_title: newApp.jobTitle,
-          company_name: newApp.companyName,
-          cover_note: newApp.coverNote,
-          resume_name: newApp.resumeName,
-          status: newApp.status,
-        }]).then(
-          (res) => {
-            if (res?.error) console.info('Supabase application sync info:', res.error.message);
-          },
-          () => {}
-        );
-      } catch {}
-
-      // Update job applicants count
-      setJobs((prev) =>
-        prev.map((j) => (j.id === jobId ? { ...j, applicantsCount: j.applicantsCount + 1 } : j))
-      );
-
-      // Notify Employer
-      const newNotif: NotificationItem = {
-        id: 'notif-' + Date.now(),
-        userId: job.employerId,
-        targetRole: 'employer',
-        title: 'New Applicant on ABHI JOBS',
-        message: `${currentCandidate.name} applied for "${job.title}" (${score}% match score).`,
-        type: 'application',
-        timestamp: 'Just now',
-        read: false,
-        link: '/employer/applications',
-      };
-      setNotifications((prev) => [newNotif, ...prev]);
-
-      // Confetti effect!
       try {
         confetti({
-          particleCount: 80,
-          spread: 70,
+          particleCount: 70,
+          spread: 65,
           origin: { y: 0.6 },
-          colors: ['#FF2B1A', '#061226', '#004D40', '#F79009'],
+          colors: ['#F47A24', '#102B4E', '#004D40'],
         });
-      } catch {
-        // fallback safe
-      }
+      } catch {}
 
       showToast(
         'success',
@@ -1417,14 +1414,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetApp = applications.find((a) => a.id === applicationId);
     if (!targetApp) return false;
 
-    // Security check: ensure only the owner or authenticated candidate can withdraw
-    const candidateId = currentCandidate?.id;
+    const candidateId = currentUser?.id || currentCandidate?.id;
     const userEmail = currentUser?.email?.toLowerCase();
     const isOwner =
       (candidateId && targetApp.candidateId === candidateId) ||
       (userEmail && targetApp.candidateEmail?.toLowerCase() === userEmail);
 
-    if (!isOwner && currentRole !== 'admin') {
+    if (!isOwner && !adminSession?.permissions?.canManageApplications) {
       showToast('error', 'Unauthorized', 'You can only withdraw your own applications.');
       return false;
     }
@@ -1447,83 +1443,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setApplications((prev) =>
       prev.map((app) =>
         app.id === applicationId
-          ? {
-              ...app,
-              status: 'Withdrawn' as ApplicationStatus,
-              timeline: updatedTimeline,
-            }
+          ? { ...app, status: 'Withdrawn' as ApplicationStatus, timeline: updatedTimeline }
           : app
       )
     );
 
-    // Notify Employer
-    const job = jobs.find((j) => j.id === targetApp.jobId);
-    if (job) {
-      const employerNotif: NotificationItem = {
-        id: 'notif-' + Date.now(),
-        userId: job.employerId,
-        targetRole: 'employer',
-        title: 'Application Withdrawn',
-        message: `${targetApp.candidateName} withdrew their application for "${targetApp.jobTitle}".`,
-        type: 'application',
-        timestamp: 'Just now',
-        read: false,
-        link: '/employer/applications',
-      };
-      setNotifications((prev) => [employerNotif, ...prev]);
+    if (firebaseAuth.currentUser?.emailVerified) {
+      updateApplicationStatusInFirestore({
+        applicationId,
+        status: 'Withdrawn',
+        timeline: updatedTimeline,
+      }).catch(() => {});
     }
 
-    showToast('info', 'Application Withdrawn', `Your application for "${targetApp.jobTitle}" has been safely withdrawn.`);
+    showToast('info', 'Application Withdrawn', `Your application for "${targetApp.jobTitle}" has been withdrawn.`);
     trackEvent('application_withdrawn', { applicationId, jobId: targetApp.jobId });
     return true;
   };
 
-  // Employer Actions
-  const createJob = (newJobData: Omit<Job, 'id' | 'postedDate' | 'applicantsCount' | 'viewsCount' | 'isVerifiedCompany'>): Job => {
-    const id = 'job-' + Date.now();
+  // ============================================================================
+  // EMPLOYER & JOB ACTIONS (SYNCED TO FIRESTORE)
+  // ============================================================================
+
+  const createJob = (
+    newJobData: Omit<Job, 'id' | 'postedDate' | 'applicantsCount' | 'viewsCount' | 'isVerifiedCompany'>
+  ): Job => {
+    const id = 'job_' + Date.now();
+    const canPublishDirectly =
+      Boolean(adminSession?.permissions?.canManageJobs) ||
+      currentEmployer?.verificationStatus === 'verified';
+
     const created: Job = {
       ...newJobData,
       id,
+      status: canPublishDirectly ? newJobData.status : 'draft',
       postedDate: new Date().toISOString().substring(0, 10),
       applicantsCount: 0,
-      viewsCount: 1,
-      isVerifiedCompany: currentEmployer?.verificationStatus === 'verified',
+      viewsCount: 0,
+      isVerifiedCompany: Boolean(currentEmployer?.verificationStatus === 'verified' || adminSession?.authorized),
     };
 
     setJobs((prev) => [created, ...prev]);
 
-    // Sync job to Supabase cloud if table exists
-    try {
-      supabase.from('jobs').insert([{
-        title: created.title,
-        company_name: created.companyName,
-        location: created.location,
-        department: created.department,
-        industry: created.industry,
-        work_mode: created.workMode,
-        employment_type: created.employmentType,
-        experience_level: created.experienceLevel,
-        salary_min: created.salary?.min || 0,
-        salary_max: created.salary?.max || 0,
-        overview: created.overview,
-        requirements: created.requirements,
-        responsibilities: created.responsibilities,
-        benefits: created.benefits,
-        status: created.status,
-      }]).then(
-        (res) => {
-          if (res?.error) console.info('Supabase jobs sync info:', res.error.message);
-        },
-        () => {}
-      );
-    } catch {}
-    showToast('success', 'Job Published!', `Your job opening "${created.title}" is now active.`);
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified) {
+      saveJobToFirestore({
+        job: created,
+        employerOwnerUid: currentEmployer?.userId || fbUser.uid,
+        isNew: true,
+      }).catch((err) => console.warn('Firestore job create notice:', err));
+    }
+
+    showToast(
+      'success',
+      created.status === 'published' ? 'Job Published!' : 'Job Saved as Draft',
+      created.status === 'published'
+        ? `Your job opening "${created.title}" is now live.`
+        : 'Your employer account is pending verification. This job has been saved as a draft.'
+    );
     trackEvent('job_posted', { jobId: id, title: created.title }, id);
     return created;
   };
 
   const updateJob = (jobId: string, updates: Partial<Job>) => {
-    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...updates } : j)));
+    let mergedJob: Job | null = null;
+    setJobs((prev) =>
+      prev.map((j) => {
+        if (j.id === jobId) {
+          mergedJob = { ...j, ...updates };
+          return mergedJob;
+        }
+        return j;
+      })
+    );
+    if (firebaseAuth.currentUser?.emailVerified && mergedJob) {
+      saveJobToFirestore({
+        job: mergedJob,
+        employerOwnerUid: currentEmployer?.userId || firebaseAuth.currentUser.uid,
+      }).catch(() => {});
+    }
     showToast('info', 'Job Updated', 'Job posting details have been refreshed.');
   };
 
@@ -1535,6 +1533,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateJobStatus = (jobId: string, status: Job['status']) => {
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status } : j)));
+    if (firebaseAuth.currentUser?.emailVerified) {
+      updateJobModerationInFirestore(jobId, { status }).catch(() => {});
+    }
     showToast('info', 'Status Changed', `Job listing is now ${status}.`);
   };
 
@@ -1566,56 +1567,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateEmployerProfile = (updates: Partial<EmployerProfile>) => {
     if (!currentEmployer) return;
+    // Strip privileged verification fields from self-service employer profile edits
+    const { verificationStatus: _vs, verified: _v, verifiedAt: _va, ...safeUpdates } = updates;
     setCompanies((prev) =>
-      prev.map((c) => (c.id === currentEmployer.id ? { ...c, ...updates } : c))
+      prev.map((c) => (c.id === currentEmployer.id ? { ...c, ...safeUpdates } : c))
     );
     showToast('success', 'Company Profile Saved', 'Your employer details have been updated.');
   };
 
-  const updateApplicationStatus = (applicationId: string, status: ApplicationStatus, note?: string) => {
+  const updateApplicationStatus = (
+    applicationId: string,
+    status: ApplicationStatus,
+    note?: string
+  ) => {
     const today = new Date().toISOString().substring(0, 10);
+    let nextTimeline: ApplicationTimelineEvent[] = [];
+
     setApplications((prev) =>
       prev.map((app) => {
         if (app.id === applicationId) {
-          const newTimeline = [...app.timeline, { status, date: today, note: note || `Status changed to ${status}` }];
-          return { ...app, status, timeline: newTimeline };
+          nextTimeline = [
+            ...app.timeline,
+            { status, date: today, note: note || `Status changed to ${status}` },
+          ];
+          return { ...app, status, timeline: nextTimeline };
         }
         return app;
       })
     );
 
-    // Notify Job Seeker
-    const targetApp = applications.find((a) => a.id === applicationId);
-    if (targetApp) {
-      let notifTitle = `Application Update: ${status}`;
-      let notifMessage = `${targetApp.companyName} updated your application for "${targetApp.jobTitle}" to ${status}.`;
-
-      if (status === 'Shortlisted') {
-        notifTitle = 'Shortlisted for Job!';
-        notifMessage = `Great news! ${targetApp.companyName} has shortlisted your profile for "${targetApp.jobTitle}".`;
-      } else if (status === 'Interview') {
-        notifTitle = 'Interview Stage Reached';
-        notifMessage = `${targetApp.companyName} advanced your application for "${targetApp.jobTitle}" to the interview stage.`;
-      } else if (status === 'Selected') {
-        notifTitle = 'Application Selected!';
-        notifMessage = `Congratulations! ${targetApp.companyName} has selected you for "${targetApp.jobTitle}".`;
-      } else if (status === 'Rejected') {
-        notifTitle = 'Application Status Update';
-        notifMessage = `${targetApp.companyName} has reviewed your application for "${targetApp.jobTitle}".`;
-      }
-
-      const notif: NotificationItem = {
-        id: 'notif-' + Date.now(),
-        userId: targetApp.candidateId,
-        targetRole: 'job_seeker',
-        title: notifTitle,
-        message: notifMessage,
-        type: 'application',
-        timestamp: 'Just now',
-        read: false,
-        link: '/applications',
-      };
-      setNotifications((prev) => [notif, ...prev]);
+    if (firebaseAuth.currentUser?.emailVerified && nextTimeline.length > 0) {
+      updateApplicationStatusInFirestore({
+        applicationId,
+        status,
+        timeline: nextTimeline,
+      }).catch(() => {});
     }
 
     showToast('success', 'Application Status Updated', `Application moved to "${status}".`);
@@ -1625,29 +1611,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const scheduleInterview = (interviewData: Omit<Interview, 'id'>): Interview => {
     const newInterview: Interview = {
       ...interviewData,
-      id: 'int-' + Date.now(),
+      id: 'int_' + Date.now(),
     };
 
     setInterviews((prev) => [newInterview, ...prev]);
+    updateApplicationStatus(
+      interviewData.applicationId,
+      'Interview',
+      `Interview scheduled for ${interviewData.date} at ${interviewData.time}`
+    );
 
-    // Also update application status to 'Interview'
-    updateApplicationStatus(interviewData.applicationId, 'Interview', `Interview scheduled for ${interviewData.date} at ${interviewData.time}`);
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified) {
+      scheduleInterviewInFirestore({
+        interview: interviewData,
+        employerOwnerUid: currentEmployer?.userId || fbUser.uid,
+        createdByUid: fbUser.uid,
+      }).catch((err) => console.warn('Firestore interview schedule notice:', err));
+    }
 
-    // Create Notification for job seeker
-    const notif: NotificationItem = {
-      id: 'notif-' + Date.now(),
-      userId: interviewData.candidateId,
-      targetRole: 'job_seeker',
-      title: 'Interview Scheduled!',
-      message: `${interviewData.companyName} scheduled a ${interviewData.type} interview on ${interviewData.date} at ${interviewData.time}.`,
-      type: 'interview',
-      timestamp: 'Just now',
-      read: false,
-      link: '/job-seeker/dashboard',
-    };
-    setNotifications((prev) => [notif, ...prev]);
-
-    showToast('success', 'Interview Confirmed', `Interview invitation sent to ${interviewData.candidateName}.`);
+    showToast('success', 'Interview Confirmed', `Interview scheduled for ${interviewData.candidateName}.`);
     trackEvent('interview_scheduled', { interviewId: newInterview.id });
     return newInterview;
   };
@@ -1673,17 +1656,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Admin Actions
+  // ============================================================================
+  // ADMIN ACTIONS (RBAC-CHECKED & FIRESTORE-SYNCED)
+  // ============================================================================
+
   const verifyEmployer = (employerId: string, status: 'verified' | 'rejected') => {
     const today = new Date().toISOString().substring(0, 10);
     setCompanies((prev) =>
-      prev.map((c) => (c.id === employerId ? { ...c, verificationStatus: status, verifiedAt: status === 'verified' ? today : undefined } : c))
+      prev.map((c) =>
+        c.id === employerId
+          ? {
+              ...c,
+              verificationStatus: status,
+              verified: status === 'verified',
+              verifiedAt: status === 'verified' ? today : undefined,
+            }
+          : c
+      )
     );
-    // Update jobs by this employer
     setJobs((prev) =>
       prev.map((j) => (j.employerId === employerId ? { ...j, isVerifiedCompany: status === 'verified' } : j))
     );
-    showToast(status === 'verified' ? 'success' : 'info', `Company ${status.toUpperCase()}`, 'Employer credentials verified and badge issued.');
+
+    if (firebaseAuth.currentUser?.emailVerified && adminSession?.permissions?.canManageEmployers) {
+      updateEmployerVerificationInFirestore({
+        employerId,
+        verificationStatus: status,
+        adminUid: firebaseAuth.currentUser.uid,
+      }).catch((err) => console.warn('Firestore employer verification notice:', err));
+    }
+
+    showToast(
+      status === 'verified' ? 'success' : 'info',
+      `Company ${status.toUpperCase()}`,
+      'Employer verification status updated.'
+    );
     trackEvent('employer_verification_action', { employerId, status });
   };
 
@@ -1694,6 +1701,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       const status: Job['status'] = action === 'approve' ? 'published' : 'paused';
       setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status } : j)));
+      if (firebaseAuth.currentUser?.emailVerified && adminSession?.permissions?.canManageJobs) {
+        updateJobModerationInFirestore(jobId, { status }).catch(() => {});
+      }
       showToast('info', 'Job Moderated', `Job status set to ${status}.`);
     }
     trackEvent('job_moderation', { jobId, action });
@@ -1707,7 +1717,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userId: cand.id,
         targetRole: 'candidate',
         title: 'Boost Your ABHI JOBS Profile Completion',
-        message: `Your profile is ${cand.completionPercentage}% complete. Complete your remaining steps to unlock 3x more recruiter views!`,
+        message: `Your profile is ${cand.completionPercentage}% complete. Complete your remaining steps to unlock more recruiter views.`,
         type: 'system',
         timestamp: 'Just now',
         read: false,
@@ -1726,40 +1736,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
     };
     setSupportTickets((prev) => [newTicket, ...prev]);
-    showToast('success', 'Ticket Submitted', 'Our recruiter support team will follow up within 24 business hours.');
+    showToast('success', 'Ticket Submitted', 'Our support team will follow up within 24 business hours.');
   };
 
   const updateSupportTicketStatus = (ticketId: string, status: SupportTicket['status']) => {
-    setSupportTickets((prev) =>
-      prev.map((t) => (t.id === ticketId ? { ...t, status } : t))
-    );
+    setSupportTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status } : t)));
     showToast('info', 'Support Ticket Updated', `Ticket status set to ${status}.`);
   };
 
-  // Recruitment Consultancy: Hiring Enquiry Submission
   const submitHiringEnquiry = (
     data: Omit<HiringEnquiry, 'id' | 'status' | 'createdAt'>
   ): HiringEnquiry => {
     const newEnquiry: HiringEnquiry = {
       ...data,
-      id: 'enq-' + Date.now(),
+      id: 'henq_' + Date.now(),
       status: 'New',
       createdAt: new Date().toISOString().split('T')[0],
     };
     setHiringEnquiries((prev) => [newEnquiry, ...prev]);
 
-    const adminNotif: NotificationItem = {
-      id: 'notif-' + Date.now(),
-      userId: 'user-admin-demo',
-      targetRole: 'admin',
-      title: 'New Hiring Enquiry Received',
-      message: `${data.companyName} submitted a requirement for ${data.jobTitle} (${data.vacancies} ${data.vacancies === 1 ? 'vacancy' : 'vacancies'}).`,
-      type: 'job',
-      timestamp: 'Just now',
-      read: false,
-      link: '/admin',
-    };
-    setNotifications((prev) => [adminNotif, ...prev]);
+    createHiringEnquiryInFirestore(data).catch((err) => {
+      console.warn('Firestore hiring enquiry notice:', err);
+    });
+
     showToast('success', 'Requirement Submitted', 'Our recruitment consultancy team will contact you shortly.');
     trackEvent('hiring_enquiry_submitted', { companyName: data.companyName, jobTitle: data.jobTitle });
     return newEnquiry;
@@ -1769,6 +1768,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHiringEnquiries((prev) =>
       prev.map((e) => (e.id === enquiryId ? { ...e, ...updates } : e))
     );
+    if (firebaseAuth.currentUser?.emailVerified && updates.status) {
+      updateHiringEnquiryAdminInFirestore(enquiryId, {
+        status: updates.status,
+        assignedRecruiter: updates.assignedRecruiter,
+        internalNotes: updates.internalNotes,
+      }).catch(() => {});
+    }
     showToast('success', 'Enquiry Updated', 'Hiring requirement details have been saved.');
   };
 
@@ -1777,23 +1783,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ): CourseEnquiry => {
     const newEnquiry: CourseEnquiry = {
       ...data,
-      id: 'cenq-' + Date.now(),
+      id: 'cenq_' + Date.now(),
       createdAt: new Date().toISOString().split('T')[0],
     };
     setCourseEnquiries((prev) => [newEnquiry, ...prev]);
 
-    const adminNotif: NotificationItem = {
-      id: 'notif-' + Date.now(),
-      userId: 'user-admin-demo',
-      targetRole: 'admin',
-      title: 'New Course Enquiry',
-      message: `${data.name} enquired about "${data.courseTitle}".`,
-      type: 'system',
-      timestamp: 'Just now',
-      read: false,
-      link: '/admin',
-    };
-    setNotifications((prev) => [adminNotif, ...prev]);
+    createCourseEnquiryInFirestore(data).catch((err) => {
+      console.warn('Firestore course enquiry notice:', err);
+    });
+
     showToast('success', 'Course Enquiry Submitted', 'Training advisor will follow up with syllabus and batch dates.');
     trackEvent('course_enquiry_submitted', { courseId: data.courseId });
     return newEnquiry;
@@ -1803,7 +1801,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const trimmed = noteText.trim();
     if (!trimmed) return;
     const note = {
-      id: 'note-' + Date.now(),
+      id: 'note_' + Date.now(),
       author: currentUser?.name || 'Recruitment Team',
       text: trimmed,
       createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -1815,12 +1813,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : app
       )
     );
-    showToast('success', 'Internal Note Added', 'Recruiter note saved to application record.');
+
+    const fbUser = firebaseAuth.currentUser;
+    if (fbUser && fbUser.emailVerified) {
+      const authorRole: 'employer' | 'recruitment_admin' | 'super_admin' =
+        adminSession?.role === 'super_admin'
+          ? 'super_admin'
+          : adminSession?.role === 'recruitment_admin'
+            ? 'recruitment_admin'
+            : 'employer';
+      addApplicationInternalNote({
+        applicationId,
+        authorUid: fbUser.uid,
+        authorName: currentUser?.name || fbUser.email || 'Recruiter',
+        authorRole,
+        text: trimmed,
+      }).catch((err) => console.warn('Firestore internal note notice:', err));
+    }
+
+    showToast('success', 'Internal Note Added', 'Private recruiter note saved (hidden from candidate).');
   };
 
   const exportCsvReport = (type: 'candidates' | 'employers' | 'jobs' | 'applications') => {
-    if (currentRole !== 'admin') {
-      showToast('error', 'Unauthorized', 'Administrator access is required to export system data.');
+    if (!adminSession?.authorized || !adminSession.permissions?.canExportCsv) {
+      showToast('error', 'Unauthorized', 'Verified Super Admin access is required to export system data.');
       return;
     }
 
@@ -1844,6 +1860,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications((prev) =>
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
+    if (firebaseAuth.currentUser?.emailVerified) {
+      markUserNotificationReadInFirestore(firebaseAuth.currentUser.uid, notificationId).catch(() => {});
+    }
   };
 
   const markAllNotificationsAsRead = () => {
@@ -1864,9 +1883,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetApp = applications.find((a) => a.id === applicationId);
     if (!targetApp) return;
 
-    // Check if we already sent an "Application Viewed" notification for this application recently
     const existingNotif = notifications.find(
-      (n) => n.userId === targetApp.candidateId && n.title === 'Application Viewed' && n.message.includes(targetApp.jobTitle)
+      (n) =>
+        n.userId === targetApp.candidateId &&
+        n.title === 'Application Viewed' &&
+        n.message.includes(targetApp.jobTitle)
     );
     if (existingNotif) return;
 
@@ -1891,6 +1912,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentRole,
         currentCandidate,
         currentEmployer,
+        adminSession,
+        firebaseEmailVerified,
         users,
         candidates,
         companies,
@@ -1910,14 +1933,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         globalLoadingMessage,
         startGlobalLoading,
         stopGlobalLoading,
-        loginAs,
+        refreshAdminSession,
         loginWithEmail,
+        sendPasswordReset,
         loginWithGoogle,
         loginWithFirebaseGooglePopup,
         registerJobSeeker,
         registerEmployer,
         logout,
-        switchRole,
         updateUserStatus,
         updateCurrentUser,
         deactivateCurrentUser,
@@ -1958,9 +1981,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recordApplicationView,
         showToast,
         removeToast,
-        supabaseConnected,
-        supabaseHealth,
-        refreshSupabaseStatus,
       }}
     >
       {children}

@@ -189,7 +189,7 @@ export const EXCEL_MODULES_05_TO_08: CourseModule[] = [
           {
             id: 'excel_m05_practice_workbook',
             title: 'ABHI-Excel-Module-05-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-05-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-05-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + Supplier Master + Purchase Lookup Practice + Completed Answer Sheet) · .xlsx',
@@ -383,7 +383,7 @@ export const EXCEL_MODULES_05_TO_08: CourseModule[] = [
           {
             id: 'excel_m06_practice_workbook',
             title: 'ABHI-Excel-Module-06-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-06-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-06-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + Purchase Order Data + Practice + Completed Table & Validation Reference) · .xlsx',
@@ -563,7 +563,7 @@ export const EXCEL_MODULES_05_TO_08: CourseModule[] = [
           {
             id: 'excel_m07_practice_workbook',
             title: 'ABHI-Excel-Module-07-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-07-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-07-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + Raw Supplier Data + Cleaning Practice + Cleaned Answer Sheet) · .xlsx',
@@ -726,7 +726,7 @@ export const EXCEL_MODULES_05_TO_08: CourseModule[] = [
           {
             id: 'excel_m08_practice_workbook',
             title: 'ABHI-Excel-Module-08-Practice-Workbook.xlsx',
-            url: '/api/learning/resources/excel-module-08-practice-workbook.xlsx',
+            url: '/downloads/workbooks/ABHI-Excel-Module-08-Practice-Workbook.xlsx',
             fileType: 'Workbook',
             sizeLabel:
               '4 Sheets (Instructions + Invoice Data + Practice + Completed Live CF Reference) · .xlsx',

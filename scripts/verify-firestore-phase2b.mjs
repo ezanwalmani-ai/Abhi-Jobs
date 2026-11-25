@@ -188,7 +188,7 @@ const REQUIRED_RULE_CHECKS = [
   ['Certificates block student writes', /match\s+\/certificates\/\{courseId\}[\s\S]*?allow\s+create:\s*if\s+isAdmin\(\)/],
   ['Public certificates single-doc lookup + zero student writes', /match\s+\/public_certificates\/\{certificateId\}\s*\{\s*allow\s+get:\s*if\s+isValidCertificateId\(certificateId\);\s*allow\s+list:\s*if\s+isAdmin\(\);/],
   ['Employer self-registration forced pending & unverified', /incoming\(\)\.verificationStatus\s*==\s*'pending'\s*&&\s*incoming\(\)\.verified\s*==\s*false/],
-  ['Jobs block candidate counter tampering (0 on create + locked on update)', /incoming\(\)\.applicantsCount\s*==\s*existing\(\)\.applicantsCount\s*&&\s*incoming\(\)\.viewsCount\s*==\s*existing\(\)\.viewsCount/],
+  ['Jobs block candidate counter tampering (0 on create + locked on update)', /(incoming\(\)|data)\.applicantsCount\s*==\s*(existing\(\)|prev)\.applicantsCount\s*&&\s*(incoming\(\)|data)\.viewsCount\s*==\s*(existing\(\)|prev)\.viewsCount/],
   ['Application internal_notes Master Gate blocks candidates', /match\s+\/internal_notes\/\{noteId\}\s*\{\s*allow\s+get:\s*if\s+isValidId\(applicationId\)\s*&&\s*isValidId\(noteId\)\s*&&\s*\(\s*isParentApplicationEmployer\(applicationId\)/],
   ['Resumes strictly owner-only', /match\s+\/resumes\/\{resumeId\}\s*\{\s*allow\s+get:\s*if\s+isOwner\(userId\)/],
   ['All 4 preserved collectionGroup audit rules intact', /match\s+\/\{path=\*\*\}\/course_enrolments\/\{courseId\}[\s\S]*?match\s+\/\{path=\*\*\}\/certificates\/\{courseId\}/],
