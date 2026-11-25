@@ -20,7 +20,7 @@ export interface GlobalLoadingFeedbackProps {
 /**
  * ABHI JOBS Global Visual Feedback System
  * Provides:
- * 1. A sleek, high-precision top progress bar with brand red (#FF2B1A) to deep teal (#004D40) gradient glow
+ * 1. A sleek, high-precision top progress bar with brand red (#F47A24) to deep teal (#004D40) gradient glow
  * 2. A refined, responsive loading overlay with smooth spring physics for asynchronous actions
  */
 export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
@@ -82,7 +82,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
           >
             {/* Base Bar Track */}
             <motion.div
-              className="h-full bg-gradient-to-r from-[#FF2B1A] via-[#FF6B4A] to-[#004D40] relative"
+              className="h-full bg-gradient-to-r from-[#F47A24] via-[#FF6B4A] to-[#004D40] relative"
               style={{
                 width: `${progress}%`,
                 boxShadow: '0 0 12px rgba(255, 43, 26, 0.7), 0 0 6px rgba(255, 43, 26, 0.4)',
@@ -102,7 +102,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
 
               {/* Glowing leading head particle */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#FF2B1A] rounded-full blur-xs opacity-90 shadow-[0_0_8px_#FF2B1A]" />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#F47A24] rounded-full blur-xs opacity-90 shadow-[0_0_8px_#F47A24]" />
             </motion.div>
           </div>
         )}
@@ -131,14 +131,14 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
               {/* Concentric Dual-Ring Branded Spinner */}
               <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
                 {/* Outer Red Ring */}
-                <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-[#FF2B1A] border-r-[#FF2B1A]/40 animate-spin" />
+                <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-[#F47A24] border-r-[#F47A24]/40 animate-spin" />
                 {/* Inner Teal Ring */}
                 <div
                   className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-[#004D40] border-l-[#004D40]/50 animate-spin"
                   style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}
                 />
                 {/* Center Core Dot */}
-                <div className="w-2.5 h-2.5 rounded-full bg-[#FF2B1A] shadow-xs animate-pulse" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#F47A24] shadow-xs animate-pulse" />
               </div>
 
               {/* Status Message */}
@@ -153,7 +153,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
 
               {/* Mini Indeterminate Loading Track */}
               <div className="w-24 mx-auto h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#FF2B1A] to-[#004D40] rounded-full animate-pulse" />
+                <div className="h-full bg-gradient-to-r from-[#F47A24] to-[#004D40] rounded-full animate-pulse" />
               </div>
             </motion.div>
           </motion.div>

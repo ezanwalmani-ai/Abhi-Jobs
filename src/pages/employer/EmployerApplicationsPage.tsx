@@ -106,7 +106,7 @@ export const EmployerApplicationsPage: React.FC<EmployerApplicationsPageProps> =
         {/* Applications List */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100 overflow-hidden">
           {applications.length === 0 ? (
-            <div className="p-12 text-center space-y-3">
+            <div className="p-6 text-center space-y-3">
               <Users className="w-10 h-10 text-slate-300 mx-auto" />
               <p className="text-sm font-semibold text-slate-700">No applications received yet.</p>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -114,7 +114,7 @@ export const EmployerApplicationsPage: React.FC<EmployerApplicationsPageProps> =
               </p>
             </div>
           ) : filteredApps.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-xs sm:text-sm">
+            <div className="p-6 text-center text-slate-500 text-xs sm:text-sm">
               No applications match your filter criteria.
             </div>
           ) : (
@@ -130,7 +130,7 @@ export const EmployerApplicationsPage: React.FC<EmployerApplicationsPageProps> =
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => matchedCandidate && setSelectedCandidateForProfile(matchedCandidate)}
-                        className="text-left font-bold text-slate-900 text-base hover:text-[#FF2B1A] transition-colors cursor-pointer"
+                        className="text-left font-bold text-slate-900 text-base hover:text-[#F47A24] transition-colors cursor-pointer"
                       >
                         {app.candidateName}
                       </button>
@@ -175,7 +175,7 @@ export const EmployerApplicationsPage: React.FC<EmployerApplicationsPageProps> =
 
                     <button
                       onClick={() => setSelectedAppForSchedule(app)}
-                      className="px-3 py-1.5 rounded-lg bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Interview</span>

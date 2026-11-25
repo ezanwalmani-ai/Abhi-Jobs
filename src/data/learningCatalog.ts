@@ -5,6 +5,8 @@ import {
   LearningCategory,
   LearningCourseItem,
 } from '../types/learning';
+import { EXCEL_MODULES_05_TO_08 } from './excelModules05To08Catalog';
+import { EXCEL_MODULES_09_TO_12 } from './excelModules09To12Catalog';
 
 export const LEARNING_CATEGORIES: LearningCategory[] = [
   {
@@ -156,78 +158,102 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
             writtenContent:
               'Microsoft Excel is a spreadsheet application used by businesses worldwide to organize, calculate, and analyze structured data inside workbooks and worksheets.',
             studyGuide: {
+              title: 'Study Guide',
+              subtitle:
+                'These topics cover the core concepts from Module 01. Select any topic below to view its explanation and workplace examples.',
               sections: [
                 {
-                  heading: '1. What Microsoft Excel Is',
-                  body: 'Microsoft Excel is a spreadsheet program designed for organizing, calculating, and analyzing data in a structured grid. Instead of keeping scattered notes, Excel stores information cleanly in tables where numbers and text can be sorted, filtered, and calculated quickly.',
+                  heading: 'What Microsoft Excel Is',
+                  shortDescription: 'How Excel organizes numbers and text inside a structured spreadsheet grid.',
+                  body: 'Microsoft Excel is a spreadsheet program used to organize, calculate, and analyze data in a structured grid. Instead of scattered notes, Excel stores records cleanly in tables that can be sorted, filtered, and calculated quickly.',
+                  example:
+                    'HR, Procurement, and Accounts teams store employee rosters, vendor quotes, and monthly expenses in Excel so numbers stay structured and easy to audit.',
                 },
                 {
-                  heading: '2. Why Businesses Use Excel',
-                  body: 'Companies of every size rely on Excel because it is fast, flexible, and widely understood across teams. It helps employees reduce manual errors, summarize large lists, prepare management reports, and make decisions backed by clear numbers.',
-                },
-                {
-                  heading: '3. Workbooks and Worksheets',
-                  body: 'An Excel file (saved as .xlsx) is called a Workbook. Inside a single workbook, you can keep one or more tabs at the bottom — each individual spreadsheet tab is called a Worksheet (for example: "Employees", "Attendance", or "Suppliers").',
-                },
-                {
-                  heading: '4. Rows, Columns, and Cells',
-                  body: 'Every worksheet is made of vertical Columns identified by letters across the top (A, B, C, ...), horizontal Rows identified by numbers down the left side (1, 2, 3, ...), and Cells — the single rectangular boxes formed where a column and a row intersect.',
-                },
-                {
-                  heading: '5. Cell Addresses (Examples: A1 and B5)',
-                  body: 'Every cell has a unique address (also called a cell reference) written with the column letter first and the row number second:',
+                  heading: 'Why Companies Use Excel',
+                  shortDescription: 'Core workplace reasons Excel remains essential across office roles.',
+                  body: 'Businesses of every size rely on Excel because it is fast, flexible, and universally understood across teams. It helps employees reduce manual errors, summarize large lists, prepare reports, and make decisions backed by accurate numbers.',
                   bullets: [
-                    'A1 refers to the very first cell in Column A, Row 1 (often used for the first column header).',
-                    'B5 refers to the cell located in Column B and Row 5.',
-                    'Cell references let formulas point to exact values so results update automatically whenever data changes.',
+                    'Replaces error-prone manual calculations with automatic formulas.',
+                    'Summarizes hundreds or thousands of records cleanly for managers.',
+                    'Works across departments without requiring specialized programming.',
                   ],
                 },
                 {
-                  heading: '6. Basic Excel Interface: Ribbon, Formula Bar & Name Box',
-                  body: 'Knowing three core interface areas makes navigating Excel effortless:',
+                  heading: 'Workbooks and Worksheets',
+                  shortDescription: 'The difference between an Excel file (.xlsx) and the tabs inside it.',
+                  body: 'An Excel file saved as .xlsx is called a Workbook. Inside one workbook, you can store one or more spreadsheet tabs along the bottom — each individual tab is called a Worksheet (such as "Employees", "Attendance", or "Suppliers").',
                   bullets: [
-                    'Ribbon: The top command bar organized into tabs (Home, Insert, Page Layout, Formulas, Data) containing formatting, chart, and data tools.',
-                    'Name Box: Located to the left of the Formula Bar — displays the active cell reference (such as A1 or B5) so you always know where your cursor is.',
-                    'Formula Bar: Located directly above the column letters — displays and lets you edit the text, number, or formula inside the selected cell.',
+                    'Workbook = the entire Excel file (e.g., Company_Records.xlsx).',
+                    'Worksheet = an individual sheet tab inside that workbook.',
                   ],
                 },
                 {
-                  heading: '7. Common Workplace Uses Across Departments',
-                  body: 'Excel is an everyday skill across virtually every office role:',
+                  heading: 'Rows, Columns, and Cells',
+                  shortDescription: 'Understanding vertical columns, horizontal rows, and individual cells.',
+                  body: 'Every worksheet is a grid built from vertical Columns identified by letters across the top (A, B, C, ...), horizontal Rows identified by numbers down the left side (1, 2, 3, ...), and Cells — the single rectangular boxes formed where a column and row intersect.',
+                  bullets: [
+                    'Columns run vertically and usually represent fields (Name, Department, Salary).',
+                    'Rows run horizontally and usually represent individual records (one employee or order).',
+                    'Each cell holds one piece of text, a number, a date, or a formula.',
+                  ],
+                },
+                {
+                  heading: 'Cell References (Addresses)',
+                  shortDescription: 'How Excel identifies every cell using its column letter and row number (e.g., A1, B5).',
+                  body: 'Every cell has a unique address called a cell reference, written with the column letter first and the row number second. Formulas point to cell references so calculations update automatically whenever values change.',
+                  bullets: [
+                    'A1 refers to Column A, Row 1 (commonly the first table header).',
+                    'B5 refers to Column B, Row 5.',
+                    'A range like A1:E5 refers to all cells from A1 through E5.',
+                  ],
+                  table: {
+                    title: 'Workplace Example: Employee Spreadsheet (HR)',
+                    subtitle:
+                      'Row 1 stores column headers (A1:E1). Each row holds one employee record — cell B5 holds the Name in Column B, Row 5.',
+                    columns: ['A · Employee ID', 'B · Name', 'C · Department', 'D · Joining Date', 'E · Location'],
+                    rows: [
+                      ['EMP-101', 'Aarav Nair', 'Operations', '2024-02-12', 'Dubai'],
+                      ['EMP-102', 'Meera Menon', 'Human Resources', '2024-04-01', 'Abu Dhabi'],
+                      ['EMP-103', 'Rohan Kapoor', 'Procurement', '2024-06-18', 'Sharjah'],
+                      ['EMP-104', 'Fatima Al-Mansoor', 'Accounts', '2024-09-05', 'Dubai'],
+                    ],
+                  },
+                },
+                {
+                  heading: 'The Excel Interface: Ribbon, Name Box & Formula Bar',
+                  shortDescription: 'Navigating the three core interface controls you use in every session.',
+                  body: 'Recognizing three core areas at the top of the Excel window makes navigating commands and inspecting data effortless.',
+                  bullets: [
+                    'Ribbon: Top command bar grouped into tabs (Home, Insert, Page Layout, Formulas, Data) holding formatting, chart, and data tools.',
+                    'Name Box: Left of the Formula Bar — displays the active cell address (such as A1 or B5) so you always know where your cursor is.',
+                    'Formula Bar: Directly above the column letters — displays and lets you edit the text, number, or formula stored inside the selected cell.',
+                  ],
+                },
+                {
+                  heading: 'Common Workplace Applications',
+                  shortDescription: 'How HR, Procurement, Accounts, Sales, and Operations use Excel daily.',
+                  body: 'Excel supports daily tracking, comparison, and reporting across virtually every business department.',
                   bullets: [
                     'HR: Employee directories, attendance logs, leave trackers, and onboarding checklists.',
                     'Procurement: Supplier lists, quotation comparisons, purchase order trackers, and delivery timelines.',
-                    'Accounts & Finance: Expense registers, invoice tracking, monthly budgets, and payment reconciliations.',
-                    'Sales: Lead pipelines, monthly sales targets, commission sheets, and customer follow-up trackers.',
-                    'Operations: Inventory counts, dispatch schedules, shift rosters, and daily KPI dashboards.',
+                    'Accounts & Finance: Expense registers, invoice tracking, monthly budgets, and reconciliations.',
+                    'Sales & Operations: Lead pipelines, sales targets, inventory counts, and dispatch schedules.',
                   ],
+                  table: {
+                    title: 'Workplace Example: Supplier List (Procurement)',
+                    subtitle:
+                      'Procurement teams organize supplier quotes in columns so prices and lead times can be compared accurately.',
+                    columns: ['A · Supplier ID', 'B · Supplier Name', 'C · Category', 'D · Price (AED)', 'E · Lead Time'],
+                    rows: [
+                      ['SUP-01', 'Gulf Office Supplies LLC', 'Stationery', '4,250', '2 Days'],
+                      ['SUP-02', 'Emirates Tech Trading', 'IT Hardware', '18,900', '4 Days'],
+                      ['SUP-03', 'Al Noor Packaging Co.', 'Packaging', '6,400', '3 Days'],
+                    ],
+                  },
                 },
               ],
-              examples: [
-                {
-                  title: 'Real-World Example 1: Employee Spreadsheet (HR)',
-                  subtitle:
-                    'Row 1 stores clear column headers (A1:E1). Each subsequent row holds one employee record — for example, cell B5 holds the Name in Column B, Row 5.',
-                  columns: ['A · Employee ID', 'B · Name', 'C · Department', 'D · Joining Date', 'E · Work Location'],
-                  rows: [
-                    ['EMP-101', 'Aarav Nair', 'Operations', '2024-02-12', 'Dubai'],
-                    ['EMP-102', 'Meera Menon', 'Human Resources', '2024-04-01', 'Abu Dhabi'],
-                    ['EMP-103', 'Rohan Kapoor', 'Procurement', '2024-06-18', 'Sharjah'],
-                    ['EMP-104', 'Fatima Al-Mansoor', 'Accounts', '2024-09-05', 'Dubai'],
-                  ],
-                },
-                {
-                  title: 'Real-World Example 2: Supplier List (Procurement)',
-                  subtitle:
-                    'Procurement teams organize supplier quotations in columns so unit prices and delivery times can be compared accurately side by side.',
-                  columns: ['A · Supplier ID', 'B · Supplier Name', 'C · Category', 'D · Quoted Price (AED)', 'E · Delivery Lead Time'],
-                  rows: [
-                    ['SUP-01', 'Gulf Office Supplies LLC', 'Stationery', '4,250', '2 Days'],
-                    ['SUP-02', 'Emirates Tech Trading', 'IT Hardware', '18,900', '4 Days'],
-                    ['SUP-03', 'Al Noor Packaging Co.', 'Packaging', '6,400', '3 Days'],
-                  ],
-                },
-              ],
+              examples: [],
             },
             exercise: {
               title: 'Practical Activity: Build Your First Employee Information Table',
@@ -301,256 +327,169 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
             writtenContent:
               'Clean data entry, readable formatting, well-organized worksheets, Freeze Panes, and proper print setup turn raw numbers into workplace-ready Excel spreadsheets.',
             studyGuide: {
-              title: 'Module 02 Study Guide: Data Entry, Formatting & Worksheets',
+              title: 'Study Guide',
               subtitle:
-                'Detailed beginner-friendly walkthroughs with step-by-step instructions, real workplace examples, common mistakes to avoid, and everyday keyboard shortcuts.',
+                'These topics cover the core concepts from Module 02. Select any topic below to view steps, workplace examples, and shortcuts.',
               sections: [
                 {
-                  heading: 'Topic A — Entering and Editing Data',
-                  body: 'Accurate data entry is the foundation of every reliable workplace spreadsheet. Excel automatically recognizes three core data types: text (left-aligned by default), numbers (right-aligned), and dates (stored internally as serial numbers so you can sort and calculate with them).',
+                  heading: 'Entering and Editing Data',
+                  shortDescription: 'Typing text, numbers, and dates, editing in place, AutoFill, and Undo/Redo.',
+                  body: 'Accurate data entry is the foundation of every reliable spreadsheet. Excel treats text as left-aligned, numbers as right-aligned, and dates as serial numbers that can be sorted and calculated.',
                   bullets: [
-                    'Entering text, numbers, and dates: Click any cell, type your value, and press Enter (moves down) or Tab (moves right).',
-                    'Editing existing cell contents: Double-click the cell, press F2, or click inside the Formula Bar to modify part of the text without retyping everything.',
-                    'Replacing information: Click the cell once and start typing directly — pressing Enter replaces the old content completely.',
-                    'Copying and pasting data: Duplicate repeated entries (such as department names or supplier categories) instead of retyping to prevent spelling inconsistencies.',
-                    'Using AutoFill for simple sequences: Drag the small green Fill Handle square at the bottom-right corner of a selected cell to fill sequential Employee IDs (EMP-101, EMP-102), months (Jan, Feb, Mar), or dates.',
-                    'Undo and Redo: Quickly reverse an accidental deletion or edit with Undo, or restore it with Redo.',
-                    'Clearing cell contents: Pressing Delete removes only the text/number inside a cell while keeping borders and colors; use Home -> Clear -> Clear All to remove both content and formatting.',
+                    'Enter values and press Enter (move down) or Tab (move right).',
+                    'Edit existing text without retyping by double-clicking, pressing F2, or clicking the Formula Bar.',
+                    'Drag the green Fill Handle (bottom-right corner of a cell) to AutoFill IDs (EMP-101, EMP-102), months, or dates.',
+                    'Press Delete to clear contents while keeping formatting; use Home -> Clear -> Clear All to remove both.',
                   ],
                   steps: [
-                    'Click cell A2 and type "EMP-101", then press Tab to move to B2 and type the employee name.',
-                    'To fix a typo in cell B2, select B2, press F2, edit the name, and press Enter.',
-                    'To continue Employee IDs down Column A, select A2:A3, hover over the bottom-right Fill Handle until it turns into a thin black +, and drag down to Row 7.',
-                    'If you accidentally overwrite a salary cell, press Ctrl + Z immediately to undo.',
+                    'Click A2, type "EMP-101", press Tab, and type the employee name in B2.',
+                    'Press F2 on any cell to fix a typo without overwriting the entire cell.',
+                    'Select A2:A3 and drag the Fill Handle down to generate sequential IDs.',
                   ],
                   example:
-                    'HR Employee Records: An HR coordinator enters EMP-101 and EMP-102 in Column A, drags the Fill Handle down to generate EMP-103 through EMP-120 in two seconds, and presses F2 to fix a spelling error in a job title without erasing the entire cell.',
+                    'HR Employee Records: Enter EMP-101 and EMP-102 in Column A, drag the Fill Handle to generate EMP-103 through EMP-120 in seconds, and press Ctrl + Z immediately if you overwrite a value by mistake.',
                   commonMistake:
-                    'Typing text like "6,500 AED" or "Rs. 6500" directly into a salary or expense cell. Mixing letters with numbers turns the cell into text so Excel cannot sum or average it. Enter plain numbers (6500) and apply Currency format instead.',
+                    'Typing text like "6,500 AED" inside a numeric salary cell turns it into text so Excel cannot sum or average it. Enter plain numbers (6500) and apply Currency format instead.',
                   shortcuts: [
-                    { keys: 'F2', action: 'Edit active cell in place' },
-                    { keys: 'Ctrl + C / Ctrl + V', action: 'Copy and Paste' },
-                    { keys: 'Ctrl + Z / Ctrl + Y', action: 'Undo and Redo' },
-                    { keys: 'Delete', action: 'Clear cell content (keeps formatting)' },
+                    { keys: 'F2', action: 'Edit active cell' },
+                    { keys: 'Ctrl + Z / Y', action: 'Undo / Redo' },
+                    { keys: 'Delete', action: 'Clear contents only' },
                   ],
                 },
                 {
-                  heading: 'Topic B — Formatting Text and Cells',
-                  body: 'Formatting makes a spreadsheet easy for managers, HR teams, and auditors to scan in seconds. Consistent fonts, restrained colors, clear borders, and smart alignment distinguish headings from data rows.',
+                  heading: 'Formatting Text, Cells, Borders & Alignment',
+                  shortDescription: 'Making tables readable with clean fonts, fill colors, borders, Wrap Text, and alignment.',
+                  body: 'Thoughtful formatting helps managers and auditors read a spreadsheet in seconds. Consistent typography, subtle borders, and clean alignment separate headers from data rows.',
                   bullets: [
-                    'Font type and size: Use clean workplace fonts (Calibri, Aptos, Arial, or Segoe UI) at 10–11pt for data rows and 11–12pt Bold for table headings.',
-                    'Bold, italic, and underline: Use Bold for column headers and total rows; use italics sparingly for notes or subtitles.',
-                    'Font colors and cell background (Fill) colors: Pair a dark Fill Color (like navy or teal) with white Bold text for headers, or soft pastel shading with dark text for subtle highlights.',
-                    'Applying borders: Add light All Borders around data tables and a thicker bottom border under headers or totals to guide the eye.',
-                    'Horizontal and vertical alignment: Left-align text, right-align numbers and currency, and apply Middle vertical alignment when row heights are taller.',
-                    'Wrap Text: Forces long headings or descriptions (like "Office Stationery & Supplies") onto multiple lines inside the same cell so nothing gets cut off.',
-                    'Merge & Center — and when to avoid it: Merge & Center combines several cells into one centered title banner above a table, but NEVER merge cells inside a data table because merged cells break sorting, filtering, and formulas.',
-                  ],
-                  steps: [
-                    'Select your header row (A1:F1) on the Employee Details sheet.',
-                    'On the Home tab, click Bold (Ctrl + B), pick a dark navy Fill Color, and set Font Color to White.',
-                    'Click Wrap Text so multi-word headers like "Monthly Salary" stack cleanly if a column is narrow.',
-                    'Select the entire table (A1:F7) and click Borders -> All Borders.',
+                    'Use clean fonts (Calibri, Aptos, Arial) at 10–11pt for data and 11–12pt Bold for headers.',
+                    'Pair a dark header fill with white bold text and light All Borders around data cells.',
+                    'Left-align text, right-align numbers, and enable Wrap Text for long headers or categories.',
+                    'Use Merge & Center only for standalone titles above a table — never merge cells inside a data table.',
                   ],
                   example:
-                    'Supplier List & Monthly Expenses: A procurement buyer applies navy Fill Color with white bold text to Row 1, turns on Wrap Text for the "Expense Category" column, and keeps every data cell unmerged so the finance manager can sort expenses from highest to lowest.',
+                    'Supplier List & Monthly Expenses: Navy headers with white bold text, Wrap Text on "Expense Category", and zero merged data rows allow finance managers to sort expenses cleanly.',
+                  table: {
+                    title: 'Formatted Table Example: Employee Details',
+                    subtitle: 'Bold header row, clean alignment, Date format in Column E, and Currency format in Column F.',
+                    columns: ['Employee ID', 'Employee Name', 'Department', 'Job Title', 'Joining Date', 'Monthly Salary'],
+                    rows: [
+                      ['EMP-101', 'Aarav Nair', 'Operations', 'Operations Coordinator', '12-Feb-2024', '$6,800.00'],
+                      ['EMP-102', 'Meera Menon', 'Human Resources', 'HR Executive', '01-Apr-2024', '$7,200.00'],
+                      ['EMP-103', 'Rohan Kapoor', 'Procurement', 'Junior Buyer', '18-Jun-2024', '$6,500.00'],
+                      ['EMP-104', 'Fatima Al-Mansoor', 'Accounts & Finance', 'Accounts Payable Officer', '05-Sep-2024', '$8,400.00'],
+                    ],
+                  },
                   commonMistake:
-                    'Merging cells inside table columns (such as merging three rows that share the same Department name). Merged data cells cause errors when sorting, filtering, or using formulas later — repeat the department name on each row instead.',
+                    'Merging cells inside table columns breaks sorting, filtering, and formulas later — repeat the department name on every row instead.',
                   shortcuts: [
-                    { keys: 'Ctrl + B', action: 'Toggle Bold' },
-                    { keys: 'Ctrl + I', action: 'Toggle Italic' },
-                    { keys: 'Ctrl + U', action: 'Toggle Underline' },
-                    { keys: 'Alt + H + W', action: 'Toggle Wrap Text (Windows)' },
+                    { keys: 'Ctrl + B', action: 'Bold' },
+                    { keys: 'Alt + H + W', action: 'Wrap Text (Windows)' },
                   ],
                 },
                 {
-                  heading: 'Topic C — Number Formatting',
-                  body: 'Number formatting controls how numbers and dates look on screen and in print without changing the underlying math value. Understanding the difference between a cell’s stored value and its displayed format prevents costly calculation errors.',
+                  heading: 'Number, Currency, Percentage & Date Formats',
+                  shortDescription: 'Controlling how numbers and dates display without changing their underlying values.',
+                  body: 'Number formatting changes how values look on screen and in print while preserving the exact numeric value Excel uses in formulas.',
                   bullets: [
-                    'General format: Default format with no specific number styling (displays numbers as typed).',
-                    'Number format: Adds thousand separators (e.g. 12,450.00) and controls decimal precision — ideal for inventory quantities or counts.',
-                    'Currency format: Displays money with a currency symbol, comma separators, and decimals (e.g. $6,800.00 or AED 6,800.00).',
-                    'Percentage format: Multiplies the stored decimal by 100 and displays a % sign (a stored value of 0.15 displays as 15%).',
-                    'Date format: Displays calendar dates cleanly (e.g. 12-Feb-2024 or 02/12/2024) while allowing Excel to sort chronologically.',
-                    'Decimal places: Use the Increase Decimal and Decrease Decimal buttons on the Home tab to standardize precision across a column.',
-                    'Stored value vs. displayed format: A cell storing 1450.487 displayed with 0 decimal places shows 1,450 — yet Excel still uses the full stored value 1450.487 in formulas!',
+                    'Number: Adds thousand separators and consistent decimals for counts or quantities.',
+                    'Currency: Displays money with symbol, commas, and decimals (e.g., $6,800.00).',
+                    'Percentage: Multiplies a stored decimal by 100 and appends % (0.15 displays as 15%).',
+                    'Date: Formats calendar dates consistently (e.g., 12-Feb-2024) while keeping chronological sorting intact.',
+                    'Stored vs. displayed: 1450.487 displayed with 0 decimals shows 1,450, but Excel still calculates using 1450.487.',
                   ],
-                  steps: [
-                    'Select the Monthly Salary column values (F2:F7) on Employee Details.',
-                    'Go to Home -> Number group -> open the format dropdown and choose Currency.',
-                    'Select the Joining Date column (E2:E7) and choose Short Date or Long Date.',
-                    'Use Increase Decimal or Decrease Decimal to keep all currency cells consistent (e.g. 2 decimal places).',
-                  ],
-                  example:
-                    'Expense Tracking & Inventory: In Monthly Expenses, entering 1450.5 and applying Currency displays $1,450.50 while storing 1450.5 numerically. In Inventory Management, a 12.5% discount is stored as 0.125 and formatted as Percentage.',
+                  table: {
+                    title: 'Formatted Table Example: Monthly Expenses',
+                    subtitle: 'Date formatting in Column C and Currency formatting in Column D keep expense ledgers clean.',
+                    columns: ['Expense ID', 'Expense Category', 'Expense Date', 'Amount', 'Status'],
+                    rows: [
+                      ['EXP-201', 'Office Stationery & Supplies', '02-Mar-2026', '$1,450.50', 'Paid'],
+                      ['EXP-202', 'Cloud Software Subscriptions', '05-Mar-2026', '$3,200.00', 'Paid'],
+                      ['EXP-203', 'Warehouse Packaging Stock', '09-Mar-2026', '$4,850.00', 'Pending'],
+                      ['EXP-204', 'Staff Training & Workshops', '14-Mar-2026', '$2,750.00', 'Paid'],
+                    ],
+                  },
                   commonMistake:
-                    'Formatting a column as Percentage AFTER typing 15 instead of 0.15 — Excel displays 1500%! Either type "15%" directly, or enter 0.15 and then apply Percentage format.',
+                    'Typing 15 and then applying Percentage format displays 1500%. Enter 0.15 first or type "15%" directly.',
                   shortcuts: [
-                    { keys: 'Ctrl + Shift + $', action: 'Apply Currency format' },
-                    { keys: 'Ctrl + Shift + %', action: 'Apply Percentage format' },
-                    { keys: 'Ctrl + Shift + #', action: 'Apply Date format' },
-                    { keys: 'Ctrl + 1', action: 'Open Format Cells dialog' },
+                    { keys: 'Ctrl + Shift + $', action: 'Currency format' },
+                    { keys: 'Ctrl + Shift + %', action: 'Percentage format' },
+                    { keys: 'Ctrl + 1', action: 'Open Format Cells' },
                   ],
                 },
                 {
-                  heading: 'Topic D — Adjusting Rows and Columns',
-                  body: 'Well-proportioned columns and rows eliminate cut-off labels and cramped text. When a column is too narrow for a formatted number or date, Excel displays ### instead of the value.',
+                  heading: 'Adjusting Row Heights & Column Widths',
+                  shortDescription: 'Using AutoFit, fixing ### display issues, and safely hiding or unhiding columns.',
+                  body: 'Proper column widths and row heights prevent cut-off labels and cramped rows. When a column is too narrow for a formatted number or date, Excel displays ### — your data is still safe.',
                   bullets: [
-                    'Changing column width: Drag the vertical line between column letters (e.g. between B and C) left or right.',
-                    'Changing row height: Drag the horizontal line between row numbers (e.g. between 1 and 2) to give headers extra vertical space.',
-                    'AutoFit: Double-click the border between column letters (or use Home -> Format -> AutoFit Column Width) to instantly size a column to fit its longest value.',
-                    'Hiding and unhiding rows and columns: Right-click a column letter or row number -> Hide to temporarily tuck away sensitive or helper columns (like internal cost columns) without deleting data; select the neighboring columns on both sides -> Right-click -> Unhide to bring them back.',
-                  ],
-                  steps: [
-                    'Select columns A through F by dragging across the column letters at the top.',
-                    'Double-click the right edge of any selected column header to AutoFit all six columns at once.',
-                    'Right-click Row 1 -> Row Height -> enter 24 -> click OK to give your header row clean visual breathing room.',
-                    'Practice hiding Column F (Right-click F -> Hide), then select Columns E and G -> Right-click -> Unhide.',
+                    'AutoFit: Double-click the divider between two column letters to fit the longest cell automatically.',
+                    'Row Height: Right-click Row 1 -> Row Height -> 24pt to give table headings breathing room.',
+                    'Hide / Unhide: Right-click a column letter -> Hide to temporarily tuck away sensitive columns without deleting data; select neighboring columns -> Right-click -> Unhide to restore.',
                   ],
                   example:
-                    'Inventory & Supplier Lists: After applying Currency format to supplier quotations, Column D shows "###". Double-clicking the divider between D and E triggers AutoFit and immediately reveals "18,900.00".',
-                  commonMistake:
-                    'Thinking "###" means an error deleted your data, or deleting a column you only wanted out of view for a meeting. "###" simply means the column is too narrow — AutoFit fixes it immediately, and Hide safely conceals columns without losing data.',
+                    'Supplier Quotes: After applying Currency format, Column D shows "###". Double-clicking the border between D and E triggers AutoFit and immediately reveals "18,900.00".',
                   shortcuts: [
-                    { keys: 'Alt + H + O + I', action: 'AutoFit Column Width (Windows)' },
-                    { keys: 'Alt + H + O + A', action: 'AutoFit Row Height (Windows)' },
-                    { keys: 'Ctrl + 0', action: 'Hide selected column' },
-                    { keys: 'Ctrl + 9', action: 'Hide selected row' },
+                    { keys: 'Alt + H + O + I', action: 'AutoFit Column Width' },
+                    { keys: 'Ctrl + 0 / 9', action: 'Hide selected column / row' },
                   ],
                 },
                 {
-                  heading: 'Topic E — Managing Worksheets',
-                  body: 'A single Excel workbook can hold many worksheets (tabs along the bottom). Splitting related workplace data into dedicated worksheets keeps files organized, clean, and easy for colleagues to navigate.',
+                  heading: 'Managing Worksheets',
+                  shortDescription: 'Adding, renaming, color-coding, moving, copying, and deleting sheet tabs.',
+                  body: 'Splitting related datasets into clearly named worksheets keeps one workbook tidy and easy for coworkers to navigate.',
                   bullets: [
-                    'Adding worksheets: Click the + (New Sheet) button at the bottom tab bar, or Right-click any sheet tab -> Insert -> Worksheet.',
-                    'Renaming worksheets: Double-click a sheet tab (or Right-click -> Rename), type a clear name like "Employee Details", and press Enter. Only the sheet name changes — all data remains untouched.',
-                    'Changing worksheet tab colors: Right-click a tab -> Tab Color to color-code departments or workflows (e.g. blue for HR, green for Expenses).',
-                    'Moving worksheets: Click and drag a sheet tab left or right along the tab bar to reorder your workbook logically.',
-                    'Copying worksheets: Right-click a tab -> Move or Copy -> tick "Create a copy" to duplicate a formatted monthly template (e.g. copying "March Expenses" to create "April Expenses").',
-                    'Deleting worksheets: Right-click an unneeded sheet tab -> Delete (note: deleting a worksheet with data is permanent and cannot be undone with Ctrl + Z!).',
-                    'Why multiple worksheets are useful: Separates distinct datasets (Employees, Departments, Expenses) in one shared workbook without mixing unrelated column structures.',
+                    'Add a sheet with the + button (or Shift + F11); double-click any tab to rename it clearly.',
+                    'Right-click a tab -> Tab Color to color-code departments (e.g., blue for HR, green for Expenses).',
+                    'Drag tabs to reorder, or Right-click -> Move or Copy -> "Create a copy" to duplicate a monthly template.',
+                    'Deleting a worksheet with data is permanent and cannot be undone with Ctrl + Z.',
                   ],
-                  steps: [
-                    'Click the + icon at the bottom of Excel to insert a new worksheet.',
-                    'Double-click "Sheet1", type "Employee Details", and press Enter.',
-                    'Right-click the "Employee Details" tab -> Tab Color -> pick Navy Blue.',
-                    'Drag tabs left or right so they appear in order: Employee Details, Department List, Monthly Expenses.',
-                  ],
-                  example:
-                    'Operations & HR Workbooks: Instead of sending three separate email attachments, an HR officer shares one workbook containing "Employee Details", "Department List", and "Monthly Expenses" — each clearly named and color-coded.',
-                  commonMistake:
-                    'Leaving tabs named Sheet1, Sheet2, Sheet3, or accidentally deleting a worksheet thinking Ctrl + Z will bring it back. Always name tabs clearly and double-check before clicking Delete on a worksheet.',
+                  table: {
+                    title: 'Multi-Sheet Example: Department List Tab',
+                    subtitle: 'Keeping lookup reference lists on their own tab separates master data from transaction rows.',
+                    columns: ['Department ID', 'Department Name', 'Department Manager'],
+                    rows: [
+                      ['DEPT-01', 'Operations', 'Khalid Al-Suwaidi'],
+                      ['DEPT-02', 'Human Resources', 'Priya Sharma'],
+                      ['DEPT-03', 'Procurement', 'Tariq Mahmood'],
+                      ['DEPT-04', 'Accounts & Finance', 'Lina George'],
+                    ],
+                  },
                   shortcuts: [
-                    { keys: 'Shift + F11', action: 'Insert a new worksheet' },
-                    { keys: 'Ctrl + Page Down', action: 'Switch to next worksheet' },
-                    { keys: 'Ctrl + Page Up', action: 'Switch to previous worksheet' },
+                    { keys: 'Shift + F11', action: 'Insert new worksheet' },
+                    { keys: 'Ctrl + PgDn / PgUp', action: 'Switch next / previous sheet' },
                   ],
                 },
                 {
-                  heading: 'Topic F — Freeze Panes',
-                  body: 'When a workplace spreadsheet has dozens or hundreds of rows, scrolling down makes Row 1 headings disappear so you lose track of which column is which. Freeze Panes locks chosen header rows or identifier columns visibly on screen while the rest of the sheet scrolls.',
+                  heading: 'Freeze Panes',
+                  shortDescription: 'Keeping header rows and key identifier columns visible while scrolling large tables.',
+                  body: 'Freeze Panes locks selected rows or columns on screen so you never lose sight of column titles or IDs when scrolling through large datasets.',
                   bullets: [
-                    'Freezing the top row: Go to View -> Freeze Panes -> Freeze Top Row to keep Row 1 headers pinned while scrolling down.',
-                    'Freezing the first column: Go to View -> Freeze Panes -> Freeze First Column to keep Column A (such as Employee ID or Supplier Name) visible while scrolling right.',
-                    'Freezing selected rows and columns together: Click the single cell immediately BELOW the rows you want frozen and immediately TO THE RIGHT of the columns you want frozen (for example, click B2 to freeze both Row 1 and Column A), then select View -> Freeze Panes -> Freeze Panes.',
-                    'When Freeze Panes is useful: Essential for large employee directories, multi-month expense trackers, and wide inventory sheets with 10+ columns.',
-                  ],
-                  steps: [
-                    'Open the Employee Details worksheet with your column headings in Row 1.',
-                    'Click the View tab on the Ribbon.',
-                    'Click Freeze Panes -> Freeze Top Row.',
-                    'Scroll down the worksheet and confirm Row 1 stays locked at the top. To remove it anytime, click View -> Freeze Panes -> Unfreeze Panes.',
+                    'View -> Freeze Panes -> Freeze Top Row locks Row 1 while scrolling down.',
+                    'View -> Freeze Panes -> Freeze First Column locks Column A while scrolling right.',
+                    'To freeze both rows and columns, click the single cell immediately below the rows and right of the columns you want frozen (e.g., B2 freezes Row 1 and Column A), then choose Freeze Panes.',
                   ],
                   example:
-                    'Inventory Management: A warehouse supervisor manages 600 inventory SKUs across 14 columns. Selecting cell C2 and applying Freeze Panes keeps Row 1 (column titles) and Columns A–B (SKU Code and Product Name) visible no matter how far down or right they scroll.',
+                    'Inventory Sheet: Clicking C2 and applying Freeze Panes locks Row 1 (headers) and Columns A–B (SKU Code and Product Name) across 600+ rows and 14 columns.',
                   commonMistake:
-                    'Clicking the wrong active cell before choosing Freeze Panes -> Freeze Panes (for instance clicking A1 instead of B2), which freezes the middle of the screen awkwardly. If that happens, click View -> Freeze Panes -> Unfreeze Panes and retry.',
-                  shortcuts: [
-                    { keys: 'Alt + W + F + R', action: 'Freeze Top Row (Windows)' },
-                    { keys: 'Alt + W + F + F', action: 'Toggle Freeze / Unfreeze Panes (Windows)' },
-                  ],
+                    'Clicking the wrong cell before choosing Freeze Panes freezes the middle of the sheet. Use View -> Freeze Panes -> Unfreeze Panes to reset cleanly.',
                 },
                 {
-                  heading: 'Topic G — Saving and Printing',
-                  body: 'Knowing how to save in the right file format and configure print settings ensures your work is never lost and prints cleanly onto pages without splitting one stray column onto a second sheet.',
+                  heading: 'Saving (.xlsx vs .csv) & Print Setup',
+                  shortDescription: 'Choosing the right file format and fitting tables cleanly onto printed pages.',
+                  body: 'Saving in the right format protects your formulas and formatting, while Print Preview prevents stray columns from spilling onto extra pages.',
                   bullets: [
-                    'Saving Excel workbooks: Save early and often with Ctrl + S so power cuts or closed tabs never erase your progress.',
-                    'Save As: Creates a new copy under a different filename, folder, or file type (for example saving a monthly version like "Monthly_Expenses_March_2026.xlsx").',
-                    'Choosing file locations: Save work files in clearly structured folders (e.g. Documents -> HR Reports -> 2026) or synced cloud storage (OneDrive / Google Drive).',
-                    'XLSX vs. CSV formats: .xlsx is the standard Excel workbook format — it preserves multiple worksheets, colors, borders, currency formats, frozen panes, and formulas. .csv (Comma-Separated Values) saves ONLY one worksheet as plain text with zero formatting or formulas (used mainly for importing data into software systems).',
-                    'Page orientation: Choose Portrait for tall, narrow lists and Landscape for wider workplace tables with 5+ columns.',
-                    'Print Area: Select specific cells -> Page Layout -> Print Area -> Set Print Area to print only that table instead of scratch notes elsewhere on the sheet.',
-                    'Print Preview: Always inspect File -> Print (Ctrl + P) before printing so you can spot cut-off columns or awkward page breaks.',
-                    'Fitting a worksheet onto a printed page: In Print Preview -> Scaling, choose "Fit All Columns on One Page" or "Fit Sheet on One Page" for crisp single-page handouts.',
+                    '.xlsx preserves multiple worksheets, formatting, Freeze Panes, and formulas; .csv stores only one plain-text sheet with zero formatting or formulas.',
+                    'Use Landscape orientation for wide tables (5+ columns) and set Print Area to exclude scratch notes.',
+                    'In Print Preview (Ctrl + P) -> Scaling, select "Fit All Columns on One Page" for clean handouts.',
                   ],
-                  steps: [
-                    'Press Ctrl + S to save your workbook as an .xlsx file in a dedicated folder.',
-                    'Press Ctrl + P to open Print Preview.',
-                    'Change Portrait Orientation to Landscape Orientation.',
-                    'Under Scaling, choose "Fit All Columns on One Page" and verify every column fits cleanly inside the preview.',
-                  ],
-                  example:
-                    'Accounts & Management Reports: Before a Monday morning review, an accounts assistant sets Landscape orientation, sets Print Area around the Monthly Expenses table, selects "Fit All Columns on One Page" in Print Preview, and saves the master workbook as .xlsx.',
                   commonMistake:
-                    'Saving a multi-sheet formatted workbook as .csv — CSV strips all borders, colors, currency formatting, and drops every other worksheet! Always keep your master file in .xlsx format.',
+                    'Saving a formatted multi-sheet workbook as .csv strips all styling and discards every other worksheet.',
                   shortcuts: [
-                    { keys: 'Ctrl + S', action: 'Save active workbook' },
-                    { keys: 'F12', action: 'Open Save As dialog (Windows)' },
-                    { keys: 'Ctrl + P', action: 'Open Print & Print Preview' },
+                    { keys: 'Ctrl + S', action: 'Save workbook' },
+                    { keys: 'Ctrl + P', action: 'Print Preview' },
                   ],
                 },
               ],
-              examples: [
-                {
-                  title: 'Worksheet 1 Preview: Employee Details',
-                  subtitle:
-                    'Target structure for the Practical Activity — formatted headers in Row 1, Date formatting in Column E, Currency formatting in Column F, and Top Row frozen.',
-                  columns: [
-                    'A · Employee ID',
-                    'B · Employee Name',
-                    'C · Department',
-                    'D · Job Title',
-                    'E · Joining Date',
-                    'F · Monthly Salary',
-                  ],
-                  rows: [
-                    ['EMP-101', 'Aarav Nair', 'Operations', 'Operations Coordinator', '12-Feb-2024', '$6,800.00'],
-                    ['EMP-102', 'Meera Menon', 'Human Resources', 'HR Executive', '01-Apr-2024', '$7,200.00'],
-                    ['EMP-103', 'Rohan Kapoor', 'Procurement', 'Junior Buyer', '18-Jun-2024', '$6,500.00'],
-                    ['EMP-104', 'Fatima Al-Mansoor', 'Accounts & Finance', 'Accounts Payable Officer', '05-Sep-2024', '$8,400.00'],
-                  ],
-                },
-                {
-                  title: 'Worksheet 2 Preview: Department List',
-                  subtitle:
-                    'Dedicated reference worksheet keeping department IDs, names, and managers organized cleanly inside the same workbook.',
-                  columns: ['A · Department ID', 'B · Department Name', 'C · Department Manager'],
-                  rows: [
-                    ['DEPT-01', 'Operations', 'Khalid Al-Suwaidi'],
-                    ['DEPT-02', 'Human Resources', 'Priya Sharma'],
-                    ['DEPT-03', 'Procurement', 'Tariq Mahmood'],
-                    ['DEPT-04', 'Accounts & Finance', 'Lina George'],
-                  ],
-                },
-                {
-                  title: 'Worksheet 3 Preview: Monthly Expenses',
-                  subtitle:
-                    'Workplace expense ledger using Wrap Text on categories, Date formatting, Currency formatting, and clean status labels.',
-                  columns: [
-                    'A · Expense ID',
-                    'B · Expense Category',
-                    'C · Expense Date',
-                    'D · Amount',
-                    'E · Payment Status',
-                  ],
-                  rows: [
-                    ['EXP-201', 'Office Stationery & Supplies', '02-Mar-2026', '$1,450.50', 'Paid'],
-                    ['EXP-202', 'Cloud Software Subscriptions', '05-Mar-2026', '$3,200.00', 'Paid'],
-                    ['EXP-203', 'Warehouse Packaging Stock', '09-Mar-2026', '$4,850.00', 'Pending'],
-                    ['EXP-204', 'Staff Training & Workshops', '14-Mar-2026', '$2,750.00', 'Paid'],
-                  ],
-                },
-              ],
+              examples: [],
             },
             exercise: {
               title: 'Build a Professional Employee Information Workbook',
@@ -648,257 +587,155 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
             writtenContent:
               'Excel formulas turn static tables into automatic calculators. Master the equals sign, operators, parentheses, relative/absolute/mixed cell references, formula copying, and common formula errors.',
             studyGuide: {
-              title: 'Module 03 Study Guide: Formula Fundamentals & Cell References',
+              title: 'Study Guide',
               subtitle:
-                'Complete beginner-friendly guide covering Excel formulas, operators, precedence, cell reference types, formula copying, and troubleshooting errors.',
+                'These topics cover the core concepts from Module 03. Select any topic below to view formulas, reference rules, and worked examples.',
               sections: [
                 {
-                  heading: 'Lesson 1 — What Is an Excel Formula?',
-                  body: 'A formula is an instruction you type into a cell so Excel calculates a result automatically. Every Excel formula normally begins with an equals sign (=). Without the equals sign, Excel treats your typing as plain text instead of running a calculation.',
+                  heading: 'Formula Structure & the Equals Sign',
+                  shortDescription: 'How every Excel calculation starts with = and displays results dynamically.',
+                  body: 'A formula is an instruction typed into a cell so Excel calculates a result automatically. Every formula starts with an equals sign (=); without it, Excel treats your entry as plain text.',
+                  formula: '=10+20   (returns 30)\n=50-10   (returns 40)\n=5*4     (returns 20)\n=100/5   (returns 20)',
                   bullets: [
-                    '=10+20 calculates 30 (Addition)',
-                    '=50-10 calculates 40 (Subtraction)',
-                    '=5*4 calculates 20 (Multiplication)',
-                    '=100/5 calculates 20 (Division)',
-                    'The worksheet cell displays the calculated answer, while the Formula Bar shows the underlying formula you wrote.',
+                    'The cell displays the calculated answer while the Formula Bar shows the formula behind it.',
+                    'Press Enter to confirm a formula, Esc to cancel edits safely, or F2 to edit in place.',
                   ],
-                  steps: [
-                    'Click an empty cell where you want the calculated answer to appear.',
-                    'Type the equals sign (=) first so Excel knows a formula is starting.',
-                    'Enter numbers or cell references with mathematical operators (for example, =10+20).',
-                    'Press Enter to calculate and display the result.',
+                  commonMistake:
+                    'Typing 10+20 without a leading equals sign (=) simply displays the text "10+20" instead of calculating 30.',
+                },
+                {
+                  heading: 'Mathematical Operators',
+                  shortDescription: 'Using +, -, *, /, and ^ for everyday business calculations.',
+                  body: 'Excel uses five standard arithmetic operators. Notice that multiplication uses the asterisk (*) and division uses the forward slash (/).',
+                  formula: '=A1+B1   |   =A1-B1   |   =A1*B1   |   =A1/B1   |   =A1^2',
+                  table: {
+                    title: 'Mathematical Operators Quick Reference (A1 = 10, B1 = 2)',
+                    subtitle: 'Core arithmetic operators used in payroll, procurement, and sales sheets.',
+                    columns: ['Operator', 'Meaning', 'Formula Example', 'Result'],
+                    rows: [
+                      ['+', 'Addition', '=A1+B1', '12'],
+                      ['-', 'Subtraction', '=A1-B1', '8'],
+                      ['*', 'Multiplication', '=A1*B1', '20'],
+                      ['/', 'Division', '=A1/B1', '5'],
+                      ['^', 'Power (Exponent)', '=A1^2', '100'],
+                    ],
+                  },
+                  commonMistake:
+                    'Typing the letter "x" for multiplication (such as =5x4) instead of the asterisk (*) triggers a formula error.',
+                },
+                {
+                  heading: 'Using Cell References Instead of Hardcoded Numbers',
+                  shortDescription: 'Pointing formulas at cell addresses so totals update automatically when data changes.',
+                  body: 'Instead of typing fixed numbers inside a formula, reference the cells holding those values. Whenever a quantity, price, or salary changes, Excel recalculates every dependent cell automatically.',
+                  formula: '=B2*C2',
+                  example:
+                    'Procurement Order Sheet: If Laptop quantity is in B2 (2) and unit price is in C2 (40,000), entering =B2*C2 in D2 returns 80,000 — and automatically updates to 120,000 if B2 changes to 3.',
+                  table: {
+                    title: 'Worked Example: Item Order Sheet',
+                    subtitle: 'Cell references calculate line totals automatically across rows.',
+                    columns: ['A (Item)', 'B (Qty)', 'C (Price)', 'D (Formula)', 'D (Result)'],
+                    rows: [
+                      ['Laptop', '2', '40000', '=B2*C2', '80000'],
+                      ['Monitor', '4', '12000', '=B3*C3', '48000'],
+                      ['Keyboard', '6', '1500', '=B4*C4', '9000'],
+                    ],
+                  },
+                  commonMistake:
+                    'Hardcoding =2*40000 instead of =B2*C2 leaves invoices out of date whenever quantities or quotes change.',
+                },
+                {
+                  heading: 'Operator Precedence & Parentheses',
+                  shortDescription: 'Controlling calculation order so Excel evaluates addition before multiplication when needed.',
+                  body: 'Excel follows mathematical order of operations: Parentheses first, then Powers (^), then Multiplication (*) and Division (/), and finally Addition (+) and Subtraction (-).',
+                  formula: '=10+5*2    -> 20  (multiplies 5*2 first)\n=(10+5)*2  -> 30  (adds 10+5 first)',
+                  example:
+                    'Bonus Tax Calculation: To apply 10% tax on combined Basic Salary (B2) and Allowance (C2), write =(B2+C2)*0.10. Without parentheses, Excel would only multiply C2 by 0.10.',
+                  commonMistake:
+                    'Assuming Excel always calculates strictly from left to right. Wrap sums or differences in parentheses before multiplying or dividing.',
+                },
+                {
+                  heading: 'Relative Cell References',
+                  shortDescription: 'Default references (B2, C2) that shift automatically when copied down or across.',
+                  body: 'By default, every Excel cell reference is relative. When you copy a formula to another row or column, Excel adjusts the row numbers or column letters automatically.',
+                  formula: 'In D2: =B2*C2  ->  Copied to D3: =B3*C3  ->  Copied to D4: =B4*C4',
+                  example:
+                    'Payroll Sheets: Write =B2+C2-D2 once in E2 and copy down 250 employee rows — each row automatically calculates using its own Basic Salary, Allowance, and Deduction.',
+                },
+                {
+                  heading: 'Absolute Cell References ($)',
+                  shortDescription: 'Locking a fixed cell like a tax rate or exchange rate using dollar signs ($B$1).',
+                  body: 'When every row must multiply by one fixed cell (such as a VAT rate stored in B1), place $ before both the column letter and row number ($B$1) so the reference never shifts when copied.',
+                  formula: '=$B$1*C2   (copied to Row 3 -> =$B$1*C3)',
+                  bullets: [
+                    '$B$1 locks both column B and row 1.',
+                    'Press F4 in the Formula Bar to cycle through A1 -> $A$1 -> A$1 -> $A1.',
                   ],
                   example:
-                    'A petty-cash coordinator types =250+175 into cell B8 to verify two quick office receipts. Cell B8 displays 425 while the Formula Bar retains =250+175.',
+                    'VAT Calculation: Store 5% (0.05) in B1 and subtotals in C2:C50. Entering =$B$1*C2 in D2 and copying down calculates 5% tax accurately for all 50 rows.',
                   commonMistake:
-                    'Forgetting the leading equals sign (=) — typing 10+20 without = simply displays the text "10+20" and never calculates 30.',
+                    'Copying =B1*C2 without $ signs shifts B1 to B2, B3, B4 — pulling blank cells or wrong numbers.',
                   shortcuts: [
-                    { keys: 'Enter', action: 'Confirm formula and move down' },
-                    { keys: 'Esc', action: 'Cancel formula edit safely' },
-                    { keys: 'F2', action: 'Edit active formula in cell' },
+                    { keys: 'F4', action: 'Cycle relative / absolute / mixed reference' },
                   ],
                 },
                 {
-                  heading: 'Lesson 2 — Mathematical Operators',
-                  body: 'Excel uses five standard mathematical operators to perform everyday business calculations. Notice that multiplication uses the asterisk (*) and division uses the forward slash (/) rather than the symbols written on paper.',
-                  bullets: [
-                    '+ (Addition): Adds two or more values — Example: =A1+B1',
-                    '- (Subtraction): Subtracts one value from another — Example: =A1-B1',
-                    '* (Multiplication): Multiplies values — Example: =A1*B1',
-                    '/ (Division): Divides the first value by the second — Example: =A1/B1',
-                    '^ (Power / Exponent): Raises a number to a power — Example: =A1^2 (squares the value in A1)',
-                  ],
-                  steps: [
-                    'Select the result cell and type =.',
-                    'Click or type the first cell reference (such as A1).',
-                    'Type the mathematical operator (+, -, *, /, or ^).',
-                    'Click or type the second cell reference (such as B1) and press Enter.',
-                  ],
-                  example:
-                    'Sales & Payroll: Add Basic Salary and Allowance with =B2+C2, subtract Deductions with =E2-D2, calculate line totals with =B2*C2, compute unit cost with =D2/B2, or square a side length for area with =A2^2.',
-                  commonMistake:
-                    'Typing the letter "x" for multiplication (such as =5x4) instead of the asterisk (*), which causes Excel to show a formula error.',
+                  heading: 'Mixed Cell References',
+                  shortDescription: 'Locking only the column ($A1) or only the row (A$1) for two-way tables.',
+                  body: 'A mixed reference locks either the column or the row while letting the other part adjust when copied. Read $ as "lock the piece immediately after me."',
+                  formula: '=$A2*(1-B$1)   (locks column A prices and row 1 discount rates)',
+                  table: {
+                    title: 'Relative, Absolute & Mixed Reference Comparison',
+                    subtitle: 'How $ controls what stays locked when copying formulas.',
+                    columns: ['Reference', 'Type', 'Column Locked?', 'Row Locked?', 'Common Use'],
+                    rows: [
+                      ['A1', 'Relative', 'No', 'No', 'Row-by-row totals (=B2*C2)'],
+                      ['$A$1', 'Absolute', 'Yes', 'Yes', 'Fixed tax/rate cell (=$B$1*C2)'],
+                      ['$A1', 'Mixed', 'Yes', 'No', 'Locked price column copied right'],
+                      ['A$1', 'Mixed', 'No', 'Yes', 'Locked rate header row copied down'],
+                    ],
+                  },
                 },
                 {
-                  heading: 'Lesson 3 — Using Cell References',
-                  body: 'Instead of typing fixed numbers directly into formulas (hardcoding), reference the cells that hold those numbers. When a price, quantity, or salary changes later, Excel updates every dependent formula automatically without manual retyping.',
+                  heading: 'Copying Formulas Safely',
+                  shortDescription: 'Filling formulas across rows quickly and verifying copied references.',
+                  body: 'Once your first row formula is verified, copy it across the table using the Fill Handle, Ctrl + D, or Ctrl + C / Ctrl + V, then spot-check the Formula Bar on copied rows.',
                   bullets: [
-                    'Suppose Row 2 holds: A2 = Laptop, B2 = 2 (Quantity), C2 = 40000 (Price).',
-                    'Typing =B2*C2 in cell D2 multiplies the value in B2 (2) by the value in C2 (40000) to produce 80000.',
-                    'If the Laptop quantity in B2 changes from 2 to 3, D2 automatically updates from 80000 to 120000.',
-                    'Cell references reduce typing mistakes and keep workplace reports auditable.',
+                    'Double-click the green Fill Handle to auto-fill down adjacent populated rows.',
+                    'Spot-check the second row and final row in the Formula Bar after copying.',
                   ],
-                  steps: [
-                    'Enter clean numeric data in separate columns (Quantity in B2, Price in C2).',
-                    'Click cell D2 and type =.',
-                    'Click cell B2 (or type B2), type *, then click cell C2 (or type C2).',
-                    'Press Enter and test updating B2 to confirm D2 recalculates automatically.',
-                  ],
-                  example:
-                    'Procurement Order Sheet: If Laptop quantity is in B2 (2) and unit price is in C2 (40000), entering =B2*C2 in D2 calculates the line total (80000) dynamically whenever quantities or vendor quotes change.',
-                  commonMistake:
-                    'Typing =2*40000 instead of =B2*C2. If the quantity changes to 5 next week, a hardcoded formula stays stuck at 80000 and silently produces an inaccurate invoice.',
-                },
-                {
-                  heading: 'Lesson 4 — Operator Precedence & Parentheses',
-                  body: 'Excel follows standard mathematical calculation order (operator precedence): Parentheses first, then Powers (^), then Multiplication (*) and Division (/) from left to right, and finally Addition (+) and Subtraction (-) from left to right.',
-                  bullets: [
-                    'Without parentheses: =10+5*2 calculates 5*2 first (10), then adds 10 -> Result is 20 (NOT 30).',
-                    'With parentheses: =(10+5)*2 calculates 10+5 first (15), then multiplies by 2 -> Result is 30.',
-                    'Use parentheses whenever you want addition or subtraction to run before multiplication or division.',
-                    'Clear parentheses also make complex workplace formulas much easier for colleagues to verify.',
-                  ],
-                  steps: [
-                    'Identify which part of your calculation must happen first (for example, adding Basic Salary + Bonus before applying a tax rate).',
-                    'Wrap that inner calculation inside parentheses: =(B2+C2)*0.10.',
-                    'Check that every opening parenthesis "(" has a matching closing parenthesis ")".',
-                    'Press Enter and sanity-check the result against a quick mental estimate.',
-                  ],
-                  example:
-                    'Bonus Tax Calculation: To compute a 10% deduction on combined Basic Salary (B2) and Allowance (C2), write =(B2+C2)*0.10. Writing =B2+C2*0.10 without parentheses would only apply 10% to C2 and add full B2.',
-                  commonMistake:
-                    'Assuming Excel calculates strictly left to right. Always wrap sums or differences in parentheses before multiplying or dividing.',
-                },
-                {
-                  heading: 'Lesson 5 — Relative Cell References',
-                  body: 'By default, every cell reference in Excel (like B2 or C2) is a relative reference. That means Excel remembers the position relative to the formula cell — so when you copy a formula to another row or column, the references adjust automatically.',
-                  bullets: [
-                    'If cell D2 contains =B2*C2 and you copy it one row down into D3, Excel automatically changes it to =B3*C3.',
-                    'Copying it down to D4 becomes =B4*C4, D5 becomes =B5*C5, and so on.',
-                    'Copying =B2+C2 one column to the right updates it to =C2+D2.',
-                    'Relative references let you write one accurate formula and apply it across hundreds or thousands of rows in seconds.',
-                  ],
-                  steps: [
-                    'Write your first row formula cleanly in D2 (for example, =B2*C2).',
-                    'Select D2 and copy it down to D3:D10 using the fill handle.',
-                    'Click D3 and inspect the Formula Bar to confirm it now reads =B3*C3.',
-                  ],
-                  example:
-                    'Payroll & Sales Tables: An HR executive with 250 employees writes =B2+C2-D2 once in E2 and copies it down to E251. Relative references automatically match each employee’s own row.',
-                  commonMistake:
-                    'Retyping formulas manually row by row (E2, E3, E4...) instead of letting relative references adjust automatically when copied.',
-                },
-                {
-                  heading: 'Lesson 6 — Absolute Cell References ($)',
-                  body: 'Sometimes a formula needs to point to one fixed cell — such as a single tax rate, commission percentage, or exchange rate stored at the top of a sheet. Placing dollar signs ($) before both the column letter and row number (for example, $B$1) locks that reference so it never shifts when copied.',
-                  bullets: [
-                    '$B$1 locks BOTH column B and row 1 (fully absolute reference).',
-                    'Example: =$B$1*C2 — when copied down to row 3, it becomes =$B$1*C3; row 4 becomes =$B$1*C4.',
-                    'Cell B1 stays pinned while C2 adjusts cleanly for every item row.',
-                    'Press the F4 key while your cursor is on a cell reference in the Formula Bar to cycle through A1 -> $A$1 -> A$1 -> $A1.',
-                  ],
-                  steps: [
-                    'Store the shared constant (such as Tax Rate 5% or Currency Rate) in a clearly labelled cell like B1.',
-                    'Click the first result cell and type =B1*C2.',
-                    'Place your cursor on B1 and press F4 (or type dollar signs manually) so it reads =$B$1*C2.',
-                    'Copy the formula downward and verify every row still references $B$1.',
-                  ],
-                  example:
-                    'VAT / Tax Rate Calculation: Cell B1 stores the 5% tax rate (0.05) and Column C lists item subtotals (C2:C50). Entering =$B$1*C2 in D2 and copying down calculates 5% tax accurately for all 50 items.',
-                  commonMistake:
-                    'Writing =B1*C2 without $ signs and copying down — Row 3 becomes =B2*C3 and Row 4 becomes =B3*C4, pulling blank cells or wrong numbers from column B!',
+                  table: {
+                    title: 'Worked Example: Employee Salary Sheet',
+                    subtitle: 'Net Salary uses =B2+C2-D2 copied down to Row 6, plus =SUM(E2:E6) in Row 7.',
+                    columns: ['Employee', 'Basic', 'Allowance', 'Deduction', 'Net Salary Formula'],
+                    rows: [
+                      ['Rahul', '25,000', '5,000', '2,000', '=B2+C2-D2 (28,000)'],
+                      ['Priya', '30,000', '6,000', '2,500', '=B3+C3-D3 (33,500)'],
+                      ['Ahmed', '22,000', '4,000', '1,500', '=B4+C4-D4 (24,500)'],
+                      ['Sneha', '28,000', '5,000', '2,000', '=B5+C5-D5 (31,000)'],
+                      ['Arjun', '35,000', '7,000', '3,000', '=B6+C6-D6 (39,000)'],
+                      ['Total', '140,000', '27,000', '11,000', '=SUM(E2:E6) (156,000)'],
+                    ],
+                  },
                   shortcuts: [
-                    { keys: 'F4', action: 'Cycle reference type (A1 / $A$1 / A$1 / $A1)' },
+                    { keys: 'Ctrl + D', action: 'Fill formula down' },
+                    { keys: 'Ctrl + `', action: 'Show all formulas on sheet' },
                   ],
                 },
                 {
-                  heading: 'Lesson 7 — Mixed Cell References',
-                  body: 'A mixed cell reference locks ONLY the column OR ONLY the row — leaving the other part free to adjust when copied. Mixed references are ideal for two-way pricing grids, discount matrices, and multi-month budget tables.',
+                  heading: 'Common Formula Errors & Troubleshooting',
+                  shortDescription: 'Reading and fixing #DIV/0!, #VALUE!, #NAME?, and #REF! errors quickly.',
+                  body: 'Formula error codes start with # and point directly to what went wrong so you can fix the formula instead of rebuilding the sheet.',
                   bullets: [
-                    'A1 — Fully relative (both column and row adjust when copied).',
-                    '$A$1 — Fully absolute (neither column nor row changes when copied).',
-                    '$A1 — Mixed: Locked column A, flexible row (column A stays fixed when copied right; row changes when copied down).',
-                    'A$1 — Mixed: Flexible column, locked row 1 (row 1 stays fixed when copied down; column changes when copied right).',
-                  ],
-                  steps: [
-                    'Decide which direction must stay locked when copying: lock the column with $ before the letter ($A2) or lock the row with $ before the number (B$1).',
-                    'In a pricing grid where item base prices sit in Column A ($A2) and discount percentages sit across Row 1 (B$1), enter =$A2*(1-B$1) in cell B2.',
-                    'Copy B2 both across columns and down rows — one single formula fills the entire table.',
+                    '#DIV/0! — Dividing by zero or a blank cell. Fix: Enter a valid non-zero divisor.',
+                    '#VALUE! — Math attempted on text (e.g., =25000+"Five"). Fix: Ensure referenced cells contain clean numbers.',
+                    '#NAME? — Misspelled function name or unquoted text (e.g., =SMU instead of =SUM). Fix: Check spelling.',
+                    '#REF! — Formula points to a deleted row, column, or sheet. Fix: Undo (Ctrl + Z) or update the cell reference.',
                   ],
                   example:
-                    'Multi-Tier Discount Table: Base prices are listed down Column A (A2:A10) and discount rates (5%, 10%, 15%) sit across Row 1 (B1:D1). Formula =$A2*B$1 calculates every product’s discount across all tiers with a single copy-paste.',
-                  commonMistake:
-                    'Placing the $ sign on the wrong side (writing A$1 when you needed $A1). Read the $ sign as "lock the piece immediately after me": $A locks column A; $1 locks row 1.',
-                },
-                {
-                  heading: 'Lesson 8 — Copying Formulas Safely',
-                  body: 'Once you verify your first formula works, Excel gives you fast, accurate ways to copy it across rows or columns. Always inspect a few copied cells afterward to make sure references adjusted as intended.',
-                  bullets: [
-                    'Drag the fill handle: Click the small green square at the bottom-right corner of the active cell and drag down or right.',
-                    'Double-click the fill handle: When adjacent columns already contain contiguous data, double-clicking the fill handle fills down automatically to the last populated row.',
-                    'Copy and paste: Press Ctrl + C on the source formula cell, highlight the target range, and press Ctrl + V.',
-                    'Check formulas after copying: Click a couple of copied cells (such as the second row and final row) and check the Formula Bar.',
-                  ],
-                  steps: [
-                    'Select the verified formula cell (for example, E2 containing =B2+C2-D2).',
-                    'Hover over the bottom-right corner until the pointer turns into a thin black plus sign (+).',
-                    'Drag down to E6 (or double-click the fill handle to auto-fill down adjacent employee rows).',
-                    'Click E3 and E6 to verify they read =B3+C3-D3 and =B6+C6-D6, then verify the numbers look reasonable.',
-                  ],
-                  example:
-                    'Monthly Payroll Run: Instead of typing 50 separate formulas, an HR assistant writes =B2+C2-D2 in E2, double-clicks the fill handle to populate E2:E51 instantly, and spot-checks Row 2, Row 25, and Row 51.',
-                  commonMistake:
-                    'Dragging from the cell border (four-way arrow) instead of the fill handle (thin +), which MOVES the cell instead of copying the formula.',
-                  shortcuts: [
-                    { keys: 'Ctrl + C', action: 'Copy formula cell' },
-                    { keys: 'Ctrl + V', action: 'Paste formula into selected cells' },
-                    { keys: 'Ctrl + D', action: 'Fill formula down from top selected cell' },
-                    { keys: 'Ctrl + `', action: 'Toggle Show Formulas view across sheet' },
-                  ],
-                },
-                {
-                  heading: 'Lesson 9 — Common Formula Errors & Troubleshooting',
-                  body: 'Formula errors begin with a hash symbol (#) and tell you exactly what went wrong. Learning the four most common beginner errors helps you fix broken spreadsheets quickly and confidently.',
-                  bullets: [
-                    '#DIV/0! — Dividing by zero or an empty cell (for example, =B2/C2 when C2 is 0 or blank). Fix: Check the divisor cell and enter a valid non-zero number.',
-                    '#VALUE! — Wrong data type used in a calculation (for example, adding a number to a text word like =25000+"Five"). Fix: Ensure all referenced cells contain clean numbers, not text.',
-                    '#NAME? — Excel does not recognize a function name or misspelled reference (for example, typing =SMU(B2:B6) instead of =SUM(B2:B6)). Fix: Check spelling of functions and cell addresses.',
-                    '#REF! — Invalid cell reference, usually caused by deleting a row, column, or sheet that a formula depended on. Fix: Undo immediately (Ctrl + Z) or rebuild the reference to the correct cell.',
-                  ],
-                  steps: [
-                    'Click the cell showing the error (such as #DIV/0! or #VALUE!).',
-                    'Look at the Formula Bar to inspect every cell reference and function name highlighted in color.',
-                    'Trace each referenced cell on the grid to see if it is blank, zero, text, or deleted (#REF!).',
-                    'Correct the cell data or formula spelling and press Enter to confirm the error disappears.',
-                  ],
-                  example:
-                    'Expense Per Head Report: Cell D4 shows #DIV/0! because team headcount in C4 was left blank. Entering the headcount (12) immediately resolves the error and displays the accurate cost per employee.',
-                  commonMistake:
-                    'Deleting a formula cell instead of reading the error code, or typing commas/currency words like "Rs 25000" inside a numeric cell (which triggers #VALUE!).',
+                    'Expense Per Head: Cell D4 shows #DIV/0! because team headcount in C4 is blank. Entering 12 resolves the error immediately.',
                 },
               ],
-              examples: [
-                {
-                  title: 'Example 1: Mathematical Operators Quick Reference',
-                  subtitle:
-                    'Core Excel arithmetic operators assuming A1 = 10 and B1 = 2.',
-                  columns: ['Operator', 'Meaning', 'Formula Example', 'Calculated Result'],
-                  rows: [
-                    ['+', 'Addition', '=A1+B1', '12'],
-                    ['-', 'Subtraction', '=A1-B1', '8'],
-                    ['*', 'Multiplication', '=A1*B1', '20'],
-                    ['/', 'Division', '=A1/B1', '5'],
-                    ['^', 'Power (Exponent)', '=A1^2', '100'],
-                  ],
-                },
-                {
-                  title: 'Example 2: Using Cell References & Relative Copying (Item Order Sheet)',
-                  subtitle:
-                    'Entering =B2*C2 in D2 and copying downward adjusts row references automatically for every line item.',
-                  columns: ['A (Item)', 'B (Quantity)', 'C (Price)', 'D (Formula)', 'D (Result)'],
-                  rows: [
-                    ['Laptop', '2', '40000', '=B2*C2', '80000'],
-                    ['Monitor', '4', '12000', '=B3*C3', '48000'],
-                    ['Keyboard', '6', '1500', '=B4*C4', '9000'],
-                  ],
-                },
-                {
-                  title: 'Example 3: Relative, Absolute & Mixed Reference Comparison',
-                  subtitle:
-                    'How the $ symbol controls which part of a reference stays locked when copied across rows or columns.',
-                  columns: ['Reference', 'Type', 'Column Locked?', 'Row Locked?', 'Common Use'],
-                  rows: [
-                    ['A1', 'Relative', 'No', 'No', 'Row-by-row totals (=B2*C2)'],
-                    ['$A$1', 'Absolute', 'Yes', 'Yes', 'Fixed tax or discount cell (=$B$1*C2)'],
-                    ['$A1', 'Mixed', 'Yes', 'No', 'Locked price column copied right'],
-                    ['A$1', 'Mixed', 'No', 'Yes', 'Locked rate header row copied down'],
-                  ],
-                },
-                {
-                  title: 'Example 4: Practical Activity Target Preview — Employee Salary Sheet',
-                  subtitle:
-                    'Net Salary uses =B2+C2-D2 copied down through Row 6, followed by a Total Net Salary formula in Row 7.',
-                  columns: ['Employee Name', 'Basic Salary', 'Allowance', 'Deduction', 'Net Salary Formula'],
-                  rows: [
-                    ['Rahul', '25,000', '5,000', '2,000', '=B2+C2-D2  (28,000)'],
-                    ['Priya', '30,000', '6,000', '2,500', '=B3+C3-D3  (33,500)'],
-                    ['Ahmed', '22,000', '4,000', '1,500', '=B4+C4-D4  (24,500)'],
-                    ['Sneha', '28,000', '5,000', '2,000', '=B5+C5-D5  (31,000)'],
-                    ['Arjun', '35,000', '7,000', '3,000', '=B6+C6-D6  (39,000)'],
-                    ['Total', '140,000', '27,000', '11,000', '=SUM(E2:E6)  (156,000)'],
-                  ],
-                },
-              ],
+              examples: [],
             },
             exercise: {
               title: 'Calculate Employee Salaries and Monthly Expenses',
@@ -948,18 +785,267 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
         ],
       },
       {
-        id: 'excel_m04_upcoming',
+        id: 'excel_m04_essential_functions',
         order: 4,
-        title: 'Module 04: Next Module in Curriculum',
-        level: 'Beginner',
+        title: 'Essential Excel Functions',
+        level: 'Beginner to Intermediate',
         summary:
-          'Locked until you complete Module 03 and pass the Module 03 Quiz with 70% or higher.',
-        lessons: [],
+          'Learn how to use essential Excel functions — SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, SUMIF, IF, basic text functions, and date functions — for reporting, data analysis, and everyday workplace tasks.',
+        learningObjectives: [
+          'Understand Excel functions and their syntax.',
+          'Use SUM and AVERAGE.',
+          'Use MIN and MAX.',
+          'Count cells using COUNT and COUNTA.',
+          'Use COUNTIF and SUMIF.',
+          'Use IF for logical decisions.',
+          'Use basic text functions.',
+          'Use date functions.',
+          'Combine functions in practical workplace reports.',
+          'Troubleshoot common function errors.',
+        ],
         quizPlanned: true,
-        quizRequired: false,
+        quizRequired: true,
         passPercentage: 70,
-        isUpcomingPlaceholder: true,
+        lessons: [
+          {
+            id: 'excel_m04_lesson_01',
+            courseId: 'excel_for_job_seekers',
+            moduleId: 'excel_m04_essential_functions',
+            order: 1,
+            title: 'Module 04: Essential Excel Functions',
+            description:
+              'Master core workplace Excel functions including SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, SUMIF, IF, text functions, date functions, and error troubleshooting.',
+            estimatedMinutes: 55,
+            videoUrl: 'https://www.youtube.com/watch?v=Jl0Qk63z2ZY',
+            videos: [
+              {
+                id: 'excel_m04_video_01',
+                title: 'Excel Formulas and Functions Tutorial',
+                publisher: 'Kevin Stratvert',
+                youtubeVideoId: 'Jl0Qk63z2ZY',
+                embedUrl: 'https://www.youtube.com/embed/Jl0Qk63z2ZY',
+                durationSeconds: 737,
+                description:
+                  'Hands-on walkthrough covering addition, subtraction, multiplication, division, SUM, MIN, MAX, COUNT, COUNTA, AVERAGE, IF, COUNTIF, and SUMIF in Microsoft Excel.',
+                order: 1,
+              },
+            ],
+            writtenContent:
+              'Excel functions replace slow manual calculations with reliable, reusable workplace reports. Master syntax, SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, SUMIF, IF, text functions, date functions, and troubleshooting.',
+            studyGuide: {
+              title: 'Study Guide',
+              subtitle:
+                'These topics cover the core functions from Module 04. Select any topic below to view syntax, examples, and common troubleshooting tips.',
+              sections: [
+                {
+                  heading: 'Understanding Excel Functions & Syntax',
+                  shortDescription: 'How pre-built functions work, arguments inside parentheses, and AutoSum.',
+                  body: 'A function is a built-in named operation (such as SUM or AVERAGE) used inside a formula. Every function follows three parts: the equals sign (=), the function name, and parentheses holding its arguments.',
+                  formula: '=SUM(A1:A5)',
+                  bullets: [
+                    'Formula vs. Function: =B2+C2-D2 is a manual formula; =SUM(A1:A5) uses the SUM function.',
+                    'Type = followed by the first letters of a function and press Tab to accept Excel’s suggestion.',
+                    'Press Alt + = beneath a numeric column to insert AutoSum instantly.',
+                  ],
+                  shortcuts: [
+                    { keys: 'Alt + =', action: 'Insert AutoSum' },
+                    { keys: 'Tab', action: 'Accept suggested function' },
+                  ],
+                },
+                {
+                  heading: 'SUM Function',
+                  shortDescription: 'Adding numeric ranges, individual cells, or multiple columns quickly.',
+                  body: 'SUM adds all numeric values in one or more ranges or cell references. It is the most widely used function across finance, HR, procurement, and sales reporting.',
+                  formula: '=SUM(B2:B10)   |   =SUM(B2,B5,B8)   |   =SUM(B2:B10,D2:D10)',
+                  example:
+                    'Procurement Report: With 8 purchase orders in D2:D9, =SUM(D2:D9) returns Total Purchase Amount (₹2,45,000) instantly.',
+                  commonMistake:
+                    'Including the total cell itself inside the range (typing =SUM(D2:D10) inside D10) causes a circular reference.',
+                },
+                {
+                  heading: 'AVERAGE Function',
+                  shortDescription: 'Calculating the mean while understanding how Excel handles blanks versus zeros.',
+                  body: 'AVERAGE calculates the arithmetic mean of numeric cells in a range. Blank cells and text are ignored automatically, while cells containing 0 ARE included in the calculation.',
+                  formula: '=AVERAGE(B2:B10)',
+                  example:
+                    'Purchase Analysis: Across 8 purchase orders totaling ₹2,45,000 in D2:D9, =AVERAGE(D2:D9) returns ₹30,625 per order.',
+                  commonMistake:
+                    'Typing 0 into empty future months artificially pulls the average down — leave unavailable entries blank instead.',
+                },
+                {
+                  heading: 'MIN and MAX Functions',
+                  shortDescription: 'Identifying the lowest and highest numbers in any range instantly.',
+                  body: 'MIN returns the smallest numeric value in a range and MAX returns the largest — ideal for spotting lowest supplier quotes, peak expenses, or maximum salaries.',
+                  formula: '=MIN(B2:B10)\n=MAX(B2:B10)',
+                  example:
+                    'Vendor Comparison: On D2:D9, =MAX(D2:D9) finds the highest purchase (₹65,000) and =MIN(D2:D9) finds the lowest (₹8,000).',
+                  commonMistake:
+                    'Including the Total row inside MAX (e.g., =MAX(D2:D10)) returns the Total instead of the highest individual transaction.',
+                },
+                {
+                  heading: 'COUNT and COUNTA Functions',
+                  shortDescription: 'Counting numeric cells only (COUNT) versus all non-empty cells (COUNTA).',
+                  body: 'COUNT counts only cells containing numbers (including dates), ignoring text. COUNTA counts every non-empty cell — text, IDs, numbers, and dates.',
+                  formula: '=COUNT(A2:A20)   (numbers only)\n=COUNTA(A2:A20)  (all non-empty cells)',
+                  example:
+                    'Purchase & HR Logs: Use =COUNTA(A2:A9) on text Purchase IDs (PO001–PO008) to return 8 records; =COUNT(A2:A9) on text IDs returns 0.',
+                  commonMistake:
+                    'Using COUNT on a text column like Employee Name or Purchase ID and getting 0 instead of the record count.',
+                },
+                {
+                  heading: 'COUNTIF Function',
+                  shortDescription: 'Counting cells that satisfy a single text or numeric condition.',
+                  body: 'COUNTIF counts how many cells in a range match a criterion — such as completed purchase orders, pending deliveries, or employees in a department.',
+                  formula: '=COUNTIF(C2:C20,"Completed")\n=COUNTIF(D2:D9,">40000")',
+                  example:
+                    'Order Tracking: =COUNTIF(E2:E9,"Completed") counts all 5 completed orders in the Module 04 Purchase Data table.',
+                  commonMistake:
+                    'Forgetting double quotes around text criteria (writing Completed instead of "Completed") produces a #NAME? error.',
+                },
+                {
+                  heading: 'SUMIF Function',
+                  shortDescription: 'Adding values in one column only where another column meets a condition.',
+                  body: 'SUMIF adds numeric values conditionally using three arguments in order: criteria_range, criteria, and sum_range.',
+                  formula: '=SUMIF(A2:A10,"IT",B2:B10)',
+                  bullets: [
+                    'Criteria range: Column containing the category or department (e.g., B2:B9).',
+                    'Criteria: Condition to match (e.g., "IT").',
+                    'Sum range: Matching-height numeric column to total (e.g., D2:D9).',
+                  ],
+                  example:
+                    'Department Spend: =SUMIF(B2:B9,"IT",D2:D9) sums all IT orders to return ₹2,00,000.',
+                  commonMistake:
+                    'Selecting misaligned ranges (such as B2:B9 with D2:D10) shifts rows and produces wrong totals.',
+                },
+                {
+                  heading: 'IF Function (Logical Decisions)',
+                  shortDescription: 'Returning one result when a test is TRUE and another when it is FALSE.',
+                  body: 'IF evaluates a logical test and returns value_if_true or value_if_false automatically — ideal for budget flags, payment labels, and approval tiers.',
+                  formula: '=IF(B2>=50000,"High","Low")\n=IF(D2>40000,"High Value","Standard Value")',
+                  bullets: [
+                    'Operators: =, <> (not equal), >, <, >=, <=.',
+                    'Wrap text outputs in double quotes ("Paid", "Over Budget"), but leave numeric thresholds unquoted (40000).',
+                  ],
+                  example:
+                    'Purchase Tiers: =IF(D2>40000,"High Value","Standard Value") flags PO001, PO003, and PO008 automatically.',
+                },
+                {
+                  heading: 'Basic Text Functions',
+                  shortDescription: 'Extracting codes and cleaning extra spaces with LEFT, RIGHT, MID, LEN, and TRIM.',
+                  body: 'Text functions clean exported strings and extract structured prefix/suffix IDs from combined codes like "PO001" or "EMP-2045".',
+                  formula: '=LEFT(A2,3)   |   =RIGHT(A2,4)   |   =MID(A2,2,3)\n=LEN(A2)      |   =TRIM(A2)',
+                  bullets: [
+                    'LEFT / RIGHT / MID extract specific character positions from a cell.',
+                    'LEN counts total characters including spaces — great for spotting hidden trailing spaces.',
+                    'TRIM strips leading, trailing, and duplicate spaces so COUNTIF and SUMIF match reliably.',
+                  ],
+                  example:
+                    'Cleaning Supplier Exports: =TRIM(C2) turns "  ABC   Technologies  " into "ABC Technologies".',
+                },
+                {
+                  heading: 'Date Functions',
+                  shortDescription: 'Tracking current dates and extracting day, month, and year parts for reports.',
+                  body: 'Excel stores dates as serial numbers so you can calculate invoice age and group transactions by month or year.',
+                  formula: '=TODAY()   |   =NOW()\n=DAY(A2)   |   =MONTH(A2)   |   =YEAR(A2)',
+                  bullets: [
+                    'TODAY() and NOW() refresh automatically whenever Excel recalculates.',
+                    'DAY, MONTH, and YEAR extract numeric date components for monthly summaries.',
+                    'Subtract an invoice date from TODAY() (=TODAY()-A2) to measure overdue days.',
+                  ],
+                  commonMistake:
+                    'Using =TODAY() for a fixed historical invoice date causes that date to change tomorrow. Use Ctrl + ; for a static date.',
+                },
+                {
+                  heading: 'Combining Functions in Practical Reports',
+                  shortDescription: 'Bringing SUM, AVERAGE, MIN, MAX, COUNTA, COUNTIF, SUMIF, and IF together.',
+                  body: 'Real workplace dashboards combine multiple functions on a single clean transaction table so managers see totals, averages, extremes, counts, and flags simultaneously.',
+                  table: {
+                    title: 'Worked Report: Purchase & Expense Summary (Rows 2–9)',
+                    subtitle: 'Expected formulas and calculated outputs for the 8-record Purchase Data table.',
+                    columns: ['Metric', 'Cell', 'Formula', 'Result'],
+                    rows: [
+                      ['Total Purchase Amount', 'B13', '=SUM(D2:D9)', '₹2,45,000'],
+                      ['Average Purchase Amount', 'B14', '=AVERAGE(D2:D9)', '₹30,625'],
+                      ['Highest / Lowest Purchase', 'B15 / B16', '=MAX(D2:D9) / =MIN(D2:D9)', '₹65,000 / ₹8,000'],
+                      ['Total Purchase Records', 'B17', '=COUNTA(A2:A9)', '8'],
+                      ['Completed Purchases', 'B18', '=COUNTIF(E2:E9,"Completed")', '5'],
+                      ['Total IT Purchases', 'B19', '=SUMIF(B2:B9,"IT",D2:D9)', '₹2,00,000'],
+                      ['Value Classification', 'F2:F9', '=IF(D2>40000,"High Value","Standard Value")', '3 High Value'],
+                    ],
+                  },
+                },
+                {
+                  heading: 'Troubleshooting Common Function Errors',
+                  shortDescription: 'Diagnosing #NAME?, #VALUE!, #DIV/0!, missing quotes, and range mistakes.',
+                  body: 'Inspecting the Formula Bar and colored range borders quickly resolves almost every function error.',
+                  bullets: [
+                    '#NAME? — Misspelled function (=AVARAGE) or unquoted text criterion (=COUNTIF(E2:E9,Completed)).',
+                    '#VALUE! — Invalid data type passed to a math or date function.',
+                    '#DIV/0! — Dividing by zero or running AVERAGE on a range with no numeric values.',
+                    'Wrong range or mismatched parentheses — Verify colored grid borders cover all data rows (excluding Totals) and every ( has a matching ).',
+                  ],
+                  example:
+                    'Quick Fix: Changing =SUMIF(B2:B9,IT,D2:D9) to =SUMIF(B2:B9,"IT",D2:D9) immediately clears #NAME? and returns ₹2,00,000.',
+                },
+              ],
+              examples: [],
+            },
+            exercise: {
+              title: 'Purchase and Expense Report Using Excel Functions',
+              instructions:
+                'Download the real `.xlsx` Practice Workbook below (works free in Microsoft Excel, Excel for the Web, Google Sheets, or LibreOffice Calc). Open the "Function Practice" worksheet containing all 8 purchase records (PO001–PO008 in A2:E9) with blank cells ready for your formulas.\n\nEnter these exact formulas in the specified blank cells on the "Function Practice" sheet:\n1. Cell B13 (Total Purchase Amount — SUM): =SUM(D2:D9)\n2. Cell B14 (Average Purchase Amount — AVERAGE): =AVERAGE(D2:D9)\n3. Cell B15 (Highest Purchase Amount — MAX): =MAX(D2:D9)\n4. Cell B16 (Lowest Purchase Amount — MIN): =MIN(D2:D9)\n5. Cell B17 (Number of Purchase Records — COUNTA): =COUNTA(A2:A9)\n6. Cell B18 (Number of Completed Purchases — COUNTIF): =COUNTIF(E2:E9,"Completed")\n7. Cell B19 (Total IT Purchases — SUMIF): =SUMIF(B2:B9,"IT",D2:D9)\n8. Cell F2 (Value Classification — IF): =IF(D2>40000,"High Value","Standard Value") — then copy F2 down to F9 using the fill handle.\n\nVerify all results match the "Completed Answer Sheet" tab only after attempting every formula yourself.',
+              deliverable:
+                'A completed Function Practice sheet with working SUM, AVERAGE, MAX, MIN, COUNTA, COUNTIF, SUMIF, and IF formulas matching the Completed Answer Sheet (Total ₹2,45,000; Average ₹30,625; IT Total ₹2,00,000; Completed 5).',
+            },
+            attachments: [
+              {
+                id: 'excel_m04_practice_workbook',
+                title: 'ABHI-Excel-Module-04-Practice-Workbook.xlsx',
+                url: '/api/learning/resources/excel-module-04-practice-workbook.xlsx',
+                fileType: 'Workbook',
+                sizeLabel:
+                  '4 Sheets (Instructions + Purchase Data + Function Practice + Completed Answer Sheet) · .xlsx',
+              },
+              {
+                id: 'excel_m04_instruction_sheet',
+                title: 'Module 04 Practical Activity — Instruction Sheet',
+                url: '',
+                fileType: 'PDF',
+                sizeLabel: 'Printable Formula Guide · PDF',
+                worksheetContent: [
+                  'PRACTICAL ACTIVITY: PURCHASE AND EXPENSE REPORT USING EXCEL FUNCTIONS',
+                  '',
+                  'Free Tools Supported: Microsoft Excel, Excel for the Web (free), Google Sheets, or LibreOffice Calc.',
+                  '',
+                  'PURCHASE DATA (Rows 2–9, Columns A–E):',
+                  'PO001 | IT      | ABC Technologies    | 45000 | Completed',
+                  'PO002 | HR      | Office Supplies Co. | 12000 | Pending',
+                  'PO003 | IT      | Tech Solutions      | 65000 | Completed',
+                  'PO004 | Finance | Paper World         |  8000 | Completed',
+                  'PO005 | HR      | Office Supplies Co. | 15000 | Pending',
+                  'PO006 | IT      | Global Computers    | 38000 | Pending',
+                  'PO007 | Finance | Paper World         | 10000 | Completed',
+                  'PO008 | IT      | ABC Technologies    | 52000 | Completed',
+                  '',
+                  'EXACT FORMULAS TO ENTER ON THE "Function Practice" SHEET:',
+                  '1. Cell B13 (SUM):     =SUM(D2:D9)',
+                  '2. Cell B14 (AVERAGE): =AVERAGE(D2:D9)',
+                  '3. Cell B15 (MAX):     =MAX(D2:D9)',
+                  '4. Cell B16 (MIN):     =MIN(D2:D9)',
+                  '5. Cell B17 (COUNTA):  =COUNTA(A2:A9)',
+                  '6. Cell B18 (COUNTIF): =COUNTIF(E2:E9,"Completed")',
+                  '7. Cell B19 (SUMIF):   =SUMIF(B2:B9,"IT",D2:D9)',
+                  '8. Cell F2:F9 (IF):    =IF(D2>40000,"High Value","Standard Value")',
+                  '',
+                  'Compare your finished workbook against the "Completed Answer Sheet" tab in the downloaded .xlsx file.',
+                ].join('\n'),
+              },
+            ],
+          },
+        ],
       },
+      ...EXCEL_MODULES_05_TO_08,
+      ...EXCEL_MODULES_09_TO_12,
     ],
   },
 ];

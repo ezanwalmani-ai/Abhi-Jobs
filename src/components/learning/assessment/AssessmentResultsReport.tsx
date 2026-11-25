@@ -81,7 +81,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: EASE_PREMIUM }}
-          className="bg-[#102B4E] text-white rounded-2xl p-6 sm:p-10 space-y-6"
+          className="bg-[#102B4E] text-white rounded-2xl p-5 sm:p-6 space-y-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
             <span>
@@ -132,7 +132,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
         </motion.section>
 
         {/* 2. Candidate Profile + Education & Experience Summary */}
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8">
+        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
             {/* Candidate Profile Summary */}
             <div className="space-y-4">
@@ -224,7 +224,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
         </section>
 
         {/* 3. Skill Assessment Results & Practical Domain Breakdown */}
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-8">
+        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
             {/* Self-Evaluated Skills */}
             <div className="lg:col-span-7 space-y-4">
@@ -362,7 +362,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
 
         {/* 4. Strengths & Areas Requiring Improvement */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
             <h2 className="font-display text-lg font-bold text-[#102B4E]">Strengths</h2>
             <ul className="space-y-3">
               {report.strengths.map((item, idx) => (
@@ -374,7 +374,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
             </ul>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
             <h2 className="font-display text-lg font-bold text-[#102B4E]">
               Areas Requiring Improvement
             </h2>
@@ -390,7 +390,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
         </section>
 
         {/* 5. Recommended Courses */}
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-6">
+        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-[#F47A24]">Personalised Learning Path</p>
@@ -440,7 +440,7 @@ export const AssessmentResultsReport: React.FC<AssessmentResultsReportProps> = (
         </section>
 
         {/* 6. Suggested Next Steps & Consent Record */}
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-6">
+        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6">
           <h2 className="font-display text-xl font-extrabold text-[#102B4E]">
             Suggested Next Steps
           </h2>

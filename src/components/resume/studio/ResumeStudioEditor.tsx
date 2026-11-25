@@ -1743,7 +1743,7 @@ export const ResumeStudioEditor: React.FC<ResumeStudioEditorProps> = ({
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.22, ease: EASE_PREMIUM }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[calc(100vw-1.5rem)] xl:max-w-6xl max-h-[92vh] bg-[#F6F8FB] rounded-3xl border border-[#E5EAF0] shadow-2xl flex flex-col overflow-hidden"
+              className="w-full max-w-[calc(100vw-1.5rem)] xl:max-w-6xl max-h-[92vh] bg-[#F6F8FB] rounded-xl border border-[#E5EAF0] shadow-2xl flex flex-col overflow-hidden"
             >
               <div className="px-5 py-4 bg-white border-b border-[#E5EAF0] flex items-center justify-between gap-3 shrink-0">
                 <div>

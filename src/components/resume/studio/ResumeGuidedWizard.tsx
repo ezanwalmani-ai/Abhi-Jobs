@@ -316,7 +316,7 @@ export const ResumeGuidedWizard: React.FC<ResumeGuidedWizardProps> = ({
           className={
             step === 8
               ? ''
-              : 'bg-white rounded-3xl border border-[#E5EAF0] p-5 sm:p-8 shadow-2xs space-y-6'
+              : 'bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-6'
           }
         >
           {/* STEP 1 — Personal Information */}
@@ -613,7 +613,7 @@ export const ResumeGuidedWizard: React.FC<ResumeGuidedWizardProps> = ({
               </div>
 
               {resume.experiences.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#F6F8FB] border border-dashed border-[#CBD5E1] text-center space-y-3">
+                <div className="p-5 sm:p-6 rounded-2xl bg-[#F6F8FB] border border-dashed border-[#CBD5E1] text-center space-y-3">
                   <p className="text-sm font-semibold text-[#102B4E]">
                     No work experience added yet
                   </p>
@@ -1094,7 +1094,7 @@ export const ResumeGuidedWizard: React.FC<ResumeGuidedWizardProps> = ({
               </div>
 
               {resume.education.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#F6F8FB] border border-dashed border-[#CBD5E1] text-center space-y-2">
+                <div className="p-5 sm:p-6 rounded-2xl bg-[#F6F8FB] border border-dashed border-[#CBD5E1] text-center space-y-2">
                   <p className="text-sm font-semibold text-[#102B4E]">No education records yet</p>
                   <p className="text-xs text-[#778397]">
                     Click "Add Education" above to enter your degree and institution.

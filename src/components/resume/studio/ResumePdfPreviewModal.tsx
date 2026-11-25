@@ -93,7 +93,7 @@ export const ResumePdfPreviewModal: React.FC<ResumePdfPreviewModalProps> = ({
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.25, ease: EASE_PREMIUM }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[calc(100vw-1.5rem)] lg:max-w-5xl bg-white rounded-3xl border border-[#E5EAF0] shadow-2xl overflow-hidden max-h-[93vh] flex flex-col"
+            className="w-full max-w-[calc(100vw-1.5rem)] lg:max-w-5xl bg-white rounded-xl border border-[#E5EAF0] shadow-2xl overflow-hidden max-h-[93vh] flex flex-col"
           >
             {/* Header */}
             <div className="px-5 sm:px-6 py-4 bg-[#102B4E] text-white flex items-center justify-between gap-4 border-b-2 border-[#F47A24] shrink-0">

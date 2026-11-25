@@ -13,7 +13,7 @@ export const ResumeEmptyState: React.FC<ResumeEmptyStateProps> = ({
   hasProfileData,
 }) => {
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-14 text-center max-w-2xl mx-auto shadow-sm space-y-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 text-center max-w-2xl mx-auto shadow-sm space-y-6">
       <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#004D40] flex items-center justify-center mx-auto shadow-inner">
         <FileText className="w-8 h-8 text-[#004D40]" />
       </div>

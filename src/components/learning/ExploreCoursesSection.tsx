@@ -1,29 +1,42 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Search, CheckCircle2, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { LEARNING_CATEGORIES, LEARNING_CATALOGUE_COURSES } from '../../data/learningCatalog';
 import {
-  CourseDifficultyLevel,
   CourseEnrolmentRecord,
   LearningCategoryId,
   LearningCourseItem,
 } from '../../types/learning';
 import { EASE_PREMIUM, VIEWPORT_ONCE } from '../../lib/motion';
+import { CourseCatalogueCard } from './CourseCatalogueCard';
+import { matchesDifficultyFilter } from '../../utils/courseCatalogueState';
+
+type DifficultyFilterOption = 'all' | 'Beginner' | 'Intermediate' | 'Advanced';
 
 interface ExploreCoursesSectionProps {
   enrolments: CourseEnrolmentRecord[];
+  courses?: LearningCourseItem[];
+  enrollingCourseId?: string | null;
   onViewCourse: (course: LearningCourseItem) => void;
+  onEnrolCourse?: (course: LearningCourseItem) => void;
+  onStartLearning?: (course: LearningCourseItem) => void;
   onContinueLearning?: (course: LearningCourseItem) => void;
+  onReviewCourse?: (course: LearningCourseItem) => void;
 }
 
 export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
   enrolments,
+  courses = LEARNING_CATALOGUE_COURSES,
+  enrollingCourseId = null,
   onViewCourse,
+  onEnrolCourse,
+  onStartLearning,
   onContinueLearning,
+  onReviewCourse,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | LearningCategoryId>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | CourseDifficultyLevel>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilterOption>('all');
 
   const enrolmentByCourseId = useMemo(() => {
     const map = new Map<string, CourseEnrolmentRecord>();
@@ -33,11 +46,11 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
 
   const visibleCourses = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return LEARNING_CATALOGUE_COURSES.filter((course) => {
+    return courses.filter((course) => {
+      if (course.status === 'draft') return false;
       const matchesCat =
         selectedCategory === 'all' || course.categoryId === selectedCategory;
-      const matchesLevel =
-        selectedDifficulty === 'all' || course.level === selectedDifficulty;
+      const matchesLevel = matchesDifficultyFilter(course.level, selectedDifficulty);
       const matchesSearch =
         !q ||
         course.title.toLowerCase().includes(q) ||
@@ -46,64 +59,69 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
         course.skillsDeveloped.some((skill) => skill.toLowerCase().includes(q));
       return matchesCat && matchesLevel && matchesSearch;
     });
-  }, [searchQuery, selectedCategory, selectedDifficulty]);
+  }, [courses, searchQuery, selectedCategory, selectedDifficulty]);
+
+  const publishedCoursesCount = useMemo(
+    () => courses.filter((c) => c.status !== 'draft').length,
+    [courses]
+  );
 
   const hasActiveFilters =
     Boolean(searchQuery.trim()) ||
     selectedCategory !== 'all' ||
     selectedDifficulty !== 'all';
 
-  const isCatalogueEmpty = LEARNING_CATALOGUE_COURSES.length === 0;
+  const isCatalogueEmpty = publishedCoursesCount === 0;
 
   return (
     <section
       id="explore-courses"
       aria-labelledby="explore-courses-heading"
-      className="py-16 sm:py-24 bg-white border-b border-[#E5EAF0] scroll-mt-20"
+      className="py-10 sm:py-12 bg-white border-b border-[#E5EAF0] scroll-mt-20"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-7">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={VIEWPORT_ONCE}
-          transition={{ duration: 0.45, ease: EASE_PREMIUM }}
-          className="flex flex-col lg:flex-row lg:items-end justify-between gap-4"
+          transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+          className="flex flex-col lg:flex-row lg:items-end justify-between gap-3"
         >
-          <div className="space-y-3 max-w-2xl">
-            <p className="text-xs sm:text-sm font-semibold text-[#F47A24]">
+          <div className="space-y-1.5 max-w-2xl">
+            <p className="text-xs font-semibold tracking-wide text-[#F47A24]">
               Course Catalogue
             </p>
             <h2
               id="explore-courses-heading"
-              className="font-display text-2xl sm:text-4xl font-extrabold text-[#102B4E] tracking-tight leading-tight [text-wrap:balance]"
+              className="font-display text-2xl sm:text-[28px] font-bold text-[#102B4E] tracking-tight leading-snug [text-wrap:balance]"
             >
               Learn Something That Moves You Forward
             </h2>
           </div>
 
           {!isCatalogueEmpty && (
-            <p className="text-xs sm:text-sm text-[#778397] max-w-sm lg:text-right">
+            <p className="text-xs sm:text-[13px] text-[#566479] max-w-sm lg:text-right tabular-nums">
               Showing{' '}
-              <span className="font-semibold text-[#102B4E] tabular-nums">
+              <span className="font-semibold text-[#102B4E]">
                 {visibleCourses.length}
               </span>{' '}
               of{' '}
-              <span className="font-semibold text-[#102B4E] tabular-nums">
-                {LEARNING_CATALOGUE_COURSES.length}
+              <span className="font-semibold text-[#102B4E]">
+                {publishedCoursesCount}
               </span>{' '}
-              free career courses across six focus areas.
+              {publishedCoursesCount === 1 ? 'course' : 'courses'} from Learn with ABHI
             </p>
           )}
         </motion.div>
 
         {isCatalogueEmpty ? (
-          <div className="rounded-2xl border border-[#E5EAF0] bg-[#FAFBFD] p-10 sm:p-16 text-center space-y-3">
-            <h3 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
+          <div className="rounded-xl border border-[#E5EAF0] bg-[#FAFBFD] p-6 text-center space-y-2.5">
+            <h3 className="font-display text-lg font-bold text-[#102B4E]">
               No courses available yet. New courses are coming soon.
             </h3>
             <p className="text-sm text-[#566479] max-w-md mx-auto leading-relaxed">
-              We are preparing a fresh library of free career development courses for Learn with ABHI. In the meantime, you can take the Career Readiness Assessment above.
+              We are preparing a fresh library of career development courses for Learn with ABHI. In the meantime, you can take the Career Readiness Assessment above.
             </p>
           </div>
         ) : (
@@ -119,7 +137,7 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search courses by title, category, or skill..."
                   aria-label="Search courses"
-                  className="w-full min-h-[44px] pl-10 pr-9 py-2.5 rounded-xl border border-[#D4DCE6] bg-white text-sm text-[#102B4E] placeholder:text-[#778397] focus:outline-none focus:border-[#102B4E]"
+                  className="w-full min-h-[44px] pl-10 pr-9 py-2.5 rounded-lg border border-[#D4DCE6] bg-white text-sm text-[#102B4E] placeholder:text-[#778397] focus:outline-none focus:border-[#102B4E]"
                 />
                 {searchQuery && (
                   <button
@@ -137,16 +155,16 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
               <div
                 role="group"
                 aria-label="Filter by difficulty level"
-                className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] self-start md:self-auto"
+                className="inline-flex flex-wrap items-center gap-1 p-1 rounded-lg bg-[#F6F8FB] border border-[#E5EAF0] self-start md:self-auto"
               >
-                {(['all', 'Beginner', 'Intermediate'] as const).map((level) => {
+                {(['all', 'Beginner', 'Intermediate', 'Advanced'] as const).map((level) => {
                   const active = selectedDifficulty === level;
                   return (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setSelectedDifficulty(level)}
-                      className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                      className={`min-h-[38px] px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                         active
                           ? 'bg-[#102B4E] text-white'
                           : 'text-[#566479] hover:text-[#102B4E]'
@@ -170,7 +188,7 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
                 role="tab"
                 aria-selected={selectedCategory === 'all'}
                 onClick={() => setSelectedCategory('all')}
-                className={`min-h-[40px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
+                className={`min-h-[40px] px-3.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
                   selectedCategory === 'all'
                     ? 'bg-[#102B4E] text-white'
                     : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
@@ -188,7 +206,7 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
                     role="tab"
                     aria-selected={active}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`min-h-[40px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
+                    className={`min-h-[40px] px-3.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
                       active
                         ? 'bg-[#102B4E] text-white'
                         : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
@@ -200,13 +218,13 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
               })}
             </div>
 
-            {/* Course Catalogue Grid or Filtered Empty State */}
+            {/* Responsive Coursera-Inspired Course Catalogue Grid */}
             {visibleCourses.length === 0 ? (
-              <div className="rounded-2xl border border-[#E5EAF0] bg-[#FAFBFD] p-10 sm:p-14 text-center space-y-4">
+              <div className="rounded-xl border border-[#E5EAF0] bg-[#FAFBFD] p-6 text-center space-y-3.5">
                 <h3 className="font-display text-lg font-bold text-[#102B4E]">
                   No courses match your current filters
                 </h3>
-                <p className="text-sm text-[#778397] max-w-md mx-auto">
+                <p className="text-sm text-[#566479] max-w-md mx-auto">
                   Try clearing your search term or switching back to all categories and difficulty levels.
                 </p>
                 {hasActiveFilters && (
@@ -217,93 +235,29 @@ export const ExploreCoursesSection: React.FC<ExploreCoursesSectionProps> = ({
                       setSelectedCategory('all');
                       setSelectedDifficulty('all');
                     }}
-                    className="min-h-[42px] px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
+                    className="min-h-[40px] px-4 py-2 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-sm font-semibold cursor-pointer transition-colors"
                   >
                     Reset Filters
                   </button>
                 )}
               </div>
             ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleCourses.map((course, idx) => {
-              const enrolment = enrolmentByCourseId.get(course.id);
-              const isEnrolled = Boolean(enrolment);
-              const progressPct = enrolment?.progressPercent ?? 0;
-              return (
-                <motion.article
-                  key={course.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={VIEWPORT_ONCE}
-                  transition={{ duration: 0.3, delay: Math.min(idx, 5) * 0.04, ease: EASE_PREMIUM }}
-                  className="group bg-[#FAFBFD] hover:bg-white rounded-2xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-6 sm:p-7 flex flex-col justify-between gap-6 transition-all duration-200"
-                >
-                  <div className="space-y-3.5">
-                    {/* Clean Unboxed Metadata Line (Zero Pill Clutter) */}
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#778397]">
-                      <span className="font-semibold text-[#102B4E]">{course.categoryName}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{course.level}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-semibold text-[#F47A24]">Free</span>
-                    </div>
-
-                    <h3 className="font-display text-lg sm:text-xl font-bold text-[#102B4E] leading-snug">
-                      {course.title}
-                    </h3>
-
-                    <p className="text-sm text-[#566479] leading-relaxed">
-                      {course.shortDescription}
-                    </p>
-
-                    {isEnrolled && (
-                      <div className="pt-1 space-y-1.5">
-                        <div className="h-1.5 w-full rounded-full bg-[#E5EAF0] overflow-hidden">
-                          <div
-                            className="h-full bg-[#F47A24] rounded-full transition-all duration-300"
-                            style={{ width: `${progressPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-4 border-t border-[#E5EAF0] flex items-center justify-between gap-3">
-                    <div className="text-xs text-[#778397] space-y-0.5 min-w-0">
-                      <p className="font-medium text-[#253449] truncate">
-                        {course.estimatedDuration}
-                      </p>
-                      {isEnrolled && (
-                        <p className="inline-flex items-center gap-1 font-semibold text-emerald-700 tabular-nums">
-                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                          <span>
-                            {progressPct > 0 ? `${progressPct}% complete` : 'Enrolled'}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        isEnrolled && onContinueLearning
-                          ? onContinueLearning(course)
-                          : onViewCourse(course)
-                      }
-                      className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] ${
-                        isEnrolled
-                          ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
-                          : 'bg-white border border-[#D4DCE6] hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white'
-                      }`}
-                    >
-                      <span>{isEnrolled ? 'Continue Learning' : 'View Course'}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.article>
-              );
-            })}
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                {visibleCourses.map((course, idx) => (
+                  <CourseCatalogueCard
+                    key={course.id}
+                    course={course}
+                    enrolment={enrolmentByCourseId.get(course.id) || null}
+                    index={idx}
+                    isEnrolling={enrollingCourseId === course.id}
+                    onViewCourse={onViewCourse}
+                    onEnrolCourse={onEnrolCourse}
+                    onStartLearning={onStartLearning}
+                    onContinueLearning={onContinueLearning}
+                    onReviewCourse={onReviewCourse}
+                  />
+                ))}
+              </div>
             )}
           </>
         )}

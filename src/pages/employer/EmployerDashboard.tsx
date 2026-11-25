@@ -66,33 +66,33 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="min-h-screen bg-[#F6F8FB] py-6 sm:py-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Welcome Header */}
-        <div className="bg-[#061226] border border-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-[#102B4E] border border-[#1E3A5F] rounded-xl p-5 sm:p-6 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[11px] font-bold text-white">
-                <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-white/10 border border-white/15 text-[11px] font-semibold text-white">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#F47A24]" />
                 Verified Employer Portal
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold mt-2">{orgName} &bull; Recruitment Hub</h1>
+            <h1 className="font-display text-xl sm:text-2xl font-bold mt-2">{orgName} &bull; Recruitment Hub</h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
               Manage open positions, review verified candidates, and organize interview stages.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => navigate('/candidates')}
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold backdrop-blur-sm transition-colors cursor-pointer"
+              className="px-4 py-2.5 min-h-[42px] rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm font-semibold backdrop-blur-sm transition-colors cursor-pointer"
             >
               Search Talent Directory
             </button>
             <button
               onClick={() => navigate('/employer/post-job')}
-              className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 min-h-[42px] rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Post New Job</span>
@@ -168,33 +168,33 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
         </StaggerGroup>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-2 border-b border-[#E5EAF0] pb-2.5 overflow-x-auto">
           <button
             onClick={() => setActiveTab('applicants')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'applicants'
-                ? 'bg-[#061226] text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-[#102B4E] text-white shadow-xs'
+                : 'text-[#566479] hover:text-[#102B4E] hover:bg-white'
             }`}
           >
             Candidate Applications ({applications.length})
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'jobs'
-                ? 'bg-[#061226] text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-[#102B4E] text-white shadow-xs'
+                : 'text-[#566479] hover:text-[#102B4E] hover:bg-white'
             }`}
           >
             My Job Postings ({employerJobs.length})
           </button>
           <button
             onClick={() => setActiveTab('interviews')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'interviews'
-                ? 'bg-[#061226] text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-[#102B4E] text-white shadow-xs'
+                : 'text-[#566479] hover:text-[#102B4E] hover:bg-white'
             }`}
           >
             Interview Calendar ({interviews.length})
@@ -246,7 +246,7 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
 
             {/* Applications List */}
             {filteredApps.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-xs text-slate-500">
+              <div className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E5EAF0] text-sm text-[#778397]">
                 No candidate applications match this criteria.
               </div>
             ) : (
@@ -361,7 +361,7 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                       <span className="font-semibold text-slate-700">{job.applicantsCount} Applicants</span>
                       <button
                         onClick={() => navigate(`/jobs/${job.id}`)}
-                        className="text-[#004D40] hover:text-[#061226] font-bold"
+                        className="text-[#102B4E] hover:text-[#F47A24] font-semibold cursor-pointer transition-colors"
                       >
                         View Posting
                       </button>
@@ -370,15 +370,15 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-xs text-slate-500 space-y-3">
-                <Briefcase className="w-10 h-10 text-slate-400 mx-auto" />
-                <h4 className="text-base font-bold text-slate-900">No opportunities posted yet</h4>
-                <p className="text-slate-500 max-w-sm mx-auto">
+              <div className="bg-white rounded-xl p-5 sm:p-6 text-center border border-[#E5EAF0] text-xs sm:text-sm text-[#778397] space-y-3">
+                <Briefcase className="w-9 h-9 text-[#9AA6B8] mx-auto" />
+                <h4 className="text-base font-bold text-[#102B4E]">No opportunities posted yet</h4>
+                <p className="text-[#778397] max-w-sm mx-auto">
                   You haven't posted any job openings. Publish your first opening to attract skill-verified applicants.
                 </p>
                 <button
                   onClick={() => navigate('/employer/post-job')}
-                  className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white font-bold cursor-pointer transition-colors"
+                  className="px-5 py-2.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white font-semibold cursor-pointer transition-colors"
                 >
                   + Post New Job
                 </button>
@@ -389,7 +389,7 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
 
         {/* TAB 3: INTERVIEW CALENDAR */}
         {activeTab === 'interviews' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl p-5 sm:p-6 border border-[#E5EAF0] shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900">Upcoming Candidate Interviews</h3>
             {interviews.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">No interviews currently scheduled.</p>

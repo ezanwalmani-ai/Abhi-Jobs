@@ -9,10 +9,10 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ navigate, onReplayIntro }) => {
   return (
     <footer className="bg-[#081D36] text-white border-t border-[#102B4E]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-white/10">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-8 border-b border-white/10">
           {/* Brand Column */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-5 space-y-3">
             <button
               type="button"
               onClick={() => navigate('/')}
@@ -22,21 +22,21 @@ export const Footer: React.FC<FooterProps> = ({ navigate, onReplayIntro }) => {
               <AbhiJobsLogo
                 variant="horizontal"
                 theme="dark"
-                size="md"
+                size="sm"
                 showTagline={true}
               />
             </button>
-            <p className="text-slate-300 text-sm leading-relaxed max-w-sm">
+            <p className="text-slate-300 text-[13.5px] leading-relaxed max-w-sm">
               ABHI JOBS is a recruitment consultancy and career platform connecting qualified candidates with vetted hiring opportunities across technology, finance, engineering, and business operations.
             </p>
           </div>
 
           {/* Platform Links */}
-          <div className="md:col-span-3 space-y-3">
+          <div className="md:col-span-3 space-y-2.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F47A24]">
               Platform
             </h4>
-            <ul className="space-y-2.5 text-sm text-slate-300">
+            <ul className="space-y-2 text-sm text-slate-300">
               <li>
                 <button
                   type="button"
@@ -77,11 +77,11 @@ export const Footer: React.FC<FooterProps> = ({ navigate, onReplayIntro }) => {
           </div>
 
           {/* Company & Legal */}
-          <div className="md:col-span-4 space-y-3">
+          <div className="md:col-span-4 space-y-2.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F47A24]">
               Company &amp; Support
             </h4>
-            <ul className="space-y-2.5 text-sm text-slate-300">
+            <ul className="space-y-2 text-sm text-slate-300">
               <li>
                 <button
                   type="button"
@@ -114,7 +114,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, onReplayIntro }) => {
         </div>
 
         {/* Bottom Copyright Row */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
           <p>© {new Date().getFullYear()} ABHI JOBS. All rights reserved.</p>
           <div className="flex items-center gap-4">
             {onReplayIntro && (

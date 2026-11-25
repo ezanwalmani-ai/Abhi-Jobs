@@ -33,13 +33,13 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
           <ScrollReveal direction="up" delay={0.05} distance={18}>
             <motion.div
               whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
-              className="bg-white rounded-2xl border border-[#E4E7EC] p-8 shadow-xs hover:shadow-md hover:border-[#FF2B1A]/40 transition-all duration-200 flex flex-col justify-between group text-left h-full"
+              className="bg-white rounded-2xl border border-[#E4E7EC] p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-[#F47A24]/40 transition-all duration-200 flex flex-col justify-between group text-left h-full"
             >
               <div>
-                <div className="w-14 h-14 rounded-xl bg-red-50 text-[#FF2B1A] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-xl bg-red-50 text-[#F47A24] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                   <User className="w-7 h-7 stroke-[2.2]" />
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-[#FF2B1A] mb-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-[#F47A24] mb-3">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   For Candidates
                 </div>
@@ -52,15 +52,15 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
 
                 <ul className="mt-6 space-y-3">
                   <li className="flex items-center gap-2.5 text-sm text-[#101828] font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-[#FF2B1A] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0" />
                     Find verified career opportunities
                   </li>
                   <li className="flex items-center gap-2.5 text-sm text-[#101828] font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-[#FF2B1A] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0" />
                     Track applications in real-time
                   </li>
                   <li className="flex items-center gap-2.5 text-sm text-[#101828] font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-[#FF2B1A] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0" />
                     Build your career and grow skills
                   </li>
                 </ul>
@@ -69,7 +69,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
               <div className="mt-8 pt-6 border-t border-[#E4E7EC]">
                 <button
                   onClick={() => navigate('/register/job-seeker')}
-                  className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <span>Continue as Job Seeker</span>
                   <ArrowRight className="w-4 h-4" />
@@ -82,7 +82,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
           <ScrollReveal direction="up" delay={0.1} distance={18}>
             <motion.div
               whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
-              className="bg-white rounded-2xl border border-[#E4E7EC] p-8 shadow-xs hover:shadow-md hover:border-[#004D40]/40 transition-all duration-200 flex flex-col justify-between group text-left h-full"
+              className="bg-white rounded-2xl border border-[#E4E7EC] p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-[#004D40]/40 transition-all duration-200 flex flex-col justify-between group text-left h-full"
             >
               <div>
                 <div className="w-14 h-14 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
@@ -118,7 +118,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
               <div className="mt-8 pt-6 border-t border-[#E4E7EC]">
                 <button
                   onClick={() => navigate('/register/employer')}
-                  className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#061226] hover:bg-[#0d1e3d] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#102B4E] hover:bg-[#0d1e3d] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <span>Continue as Employer</span>
                   <ArrowRight className="w-4 h-4" />
@@ -133,7 +133,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ navigate }
           Already have an account?{' '}
           <button
             onClick={() => navigate('/login')}
-            className="font-semibold text-[#FF2B1A] hover:underline cursor-pointer"
+            className="font-semibold text-[#F47A24] hover:underline cursor-pointer"
           >
             Sign In here
           </button>

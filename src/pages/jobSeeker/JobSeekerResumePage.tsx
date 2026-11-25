@@ -351,7 +351,7 @@ export const JobSeekerResumePage: React.FC<JobSeekerResumePageProps> = ({ naviga
 
   return (
     <div className="min-h-screen bg-[#F6F8FB] py-5 sm:py-7 px-3 sm:px-6 lg:px-8 overflow-x-clip">
-      <div className="max-w-[1440px] mx-auto space-y-5">
+      <div className="max-w-[1200px] mx-auto space-y-5">
         {/* Draft Recovery Banner */}
         <AnimatePresence>
           {recoverableDraft && view === 'landing' && (

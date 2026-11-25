@@ -156,9 +156,9 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
 
       {/* PHASE 1: ASSESSMENT INTRO / OVERVIEW */}
       {phase === 'intro' && (
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-8">
-          <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
+        <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6">
+          <div className="space-y-2.5 border-b border-[#E5EAF0] pb-5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#778397] tabular-nums">
               <span className="font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
                 {isFinal ? (
                   <Award className="w-4 h-4" />
@@ -175,11 +175,11 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
               <span>Retakes allowed</span>
             </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
+            <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
               {assessment.title}
             </h1>
 
-            <p className="text-sm sm:text-base text-[#566479] leading-[1.7] max-w-[68ch]">
+            <p className="text-sm sm:text-[15px] text-[#566479] leading-[1.65] max-w-[68ch]">
               {assessment.description}
             </p>
           </div>
@@ -470,7 +470,7 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
       {/* PHASE 3: ASSESSMENT RESULTS & POST-SUBMISSION EXPLANATIONS */}
       {phase === 'results' && latestResult && (
         <div className="space-y-6">
-          <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-6">
+          <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6">
             {/* Explicit Pass / Fail Status Header */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-[#E5EAF0] pb-6">
               <div className="space-y-2">
@@ -516,7 +516,7 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
               <div className="shrink-0 sm:text-right">
                 <p className="text-xs font-semibold text-[#778397]">Score</p>
                 <p
-                  className={`font-display text-4xl sm:text-5xl font-extrabold tabular-nums ${
+                  className={`font-display text-4xl sm:text-[36px] font-extrabold tabular-nums ${
                     latestResult.passed ? 'text-emerald-700' : 'text-[#102B4E]'
                   }`}
                 >
@@ -598,7 +598,7 @@ export const CourseAssessmentRunner: React.FC<CourseAssessmentRunnerProps> = ({
 
           {/* Question-by-Question Answer Explanations */}
           {latestResult.questionResults && latestResult.questionResults.length > 0 && (
-            <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-5">
+            <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-5">
               <div className="space-y-1 border-b border-[#E5EAF0] pb-4">
                 <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
                   Answer Review &amp; Explanations

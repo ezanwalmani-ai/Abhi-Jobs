@@ -72,7 +72,7 @@ export const AnimatedSectionHeading: React.FC<AnimatedSectionHeadingProps> = ({
         )}
 
         <h2
-          className={`font-display text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-balance ${
+          className={`font-display text-[22px] sm:text-[26px] lg:text-[28px] font-bold tracking-tight mt-1 leading-snug text-balance ${
             light ? 'text-white' : 'text-[#102B4E]'
           }`}
         >
@@ -84,9 +84,9 @@ export const AnimatedSectionHeading: React.FC<AnimatedSectionHeadingProps> = ({
           initial={shouldReduceMotion ? { scaleX: 1 } : { scaleX: 0 }}
           whileInView={{ scaleX: 1 }}
           viewport={{ once: true, amount: 'some' }}
-          transition={{ duration: 0.5, delay: 0.12, ease: EASE_PREMIUM }}
+          transition={{ duration: 0.4, delay: 0.1, ease: EASE_PREMIUM }}
           style={{ transformOrigin: align === 'center' ? 'center' : 'left' }}
-          className={`mt-2.5 h-[2px] w-10 rounded-full bg-[#F47A24]/80 ${
+          className={`mt-2 h-[2px] w-9 rounded-full bg-[#F47A24]/80 ${
             align === 'center' ? 'mx-auto' : ''
           }`}
         />
@@ -96,9 +96,9 @@ export const AnimatedSectionHeading: React.FC<AnimatedSectionHeadingProps> = ({
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 'some' }}
-            transition={{ duration: 0.42, delay: 0.08, ease: EASE_PREMIUM }}
-            className={`text-sm sm:text-base mt-3 leading-relaxed ${
-              light ? 'text-slate-300' : 'text-[#778397]'
+            transition={{ duration: 0.38, delay: 0.06, ease: EASE_PREMIUM }}
+            className={`text-sm sm:text-[15px] mt-2.5 leading-relaxed ${
+              light ? 'text-slate-300' : 'text-[#566479]'
             }`}
           >
             {subtitle}

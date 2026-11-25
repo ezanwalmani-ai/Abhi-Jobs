@@ -201,7 +201,7 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
         <form onSubmit={handleSave} className="space-y-6">
           
           {/* Section 1: Basic Information */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
               <User className="w-4 h-4 text-[#004D40]" />
               <span>Basic &amp; Contact Details</span>
@@ -290,7 +290,7 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
           </div>
 
           {/* Section 2: Key Skills & Badges */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-[#004D40]" />
@@ -334,7 +334,7 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
                   <button
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
-                    className="text-[#004D40] hover:text-[#061226] cursor-pointer"
+                    className="text-[#004D40] hover:text-[#102B4E] cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -344,7 +344,7 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
           </div>
 
           {/* Section 3: Professional Experience & Education */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
               <GraduationCap className="w-4 h-4 text-[#004D40]" />
               <span>Education &amp; Background</span>
@@ -402,7 +402,7 @@ export const JobSeekerProfilePage: React.FC<JobSeekerProfilePageProps> = ({ navi
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isSaving ? 'Saving...' : 'Save Profile Changes'}</span>

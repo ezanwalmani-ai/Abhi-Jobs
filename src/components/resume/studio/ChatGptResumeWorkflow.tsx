@@ -182,7 +182,7 @@ export const ChatGptResumeWorkflow: React.FC<ChatGptResumeWorkflowProps> = ({
       </div>
 
       {/* Intro Banner */}
-      <div className="bg-white rounded-3xl border border-[#E5EAF0] p-6 sm:p-8 shadow-2xs space-y-3">
+      <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F47A24]/10 text-[#102B4E] text-xs font-bold">
           <MessageSquareText className="w-3.5 h-3.5 text-[#F47A24]" />
           <span>Guided Copy-Prompt &amp; Paste-Back Workflow</span>
@@ -197,7 +197,7 @@ export const ChatGptResumeWorkflow: React.FC<ChatGptResumeWorkflowProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* STEP A — Prepare Personalized ChatGPT Prompt */}
-        <div className="lg:col-span-6 bg-white rounded-3xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-5">
+        <div className="lg:col-span-6 bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-5">
           <div className="flex items-center gap-3 pb-3 border-b border-[#F0F3F7]">
             <span className="w-8 h-8 rounded-xl bg-[#102B4E] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
               A
@@ -352,7 +352,7 @@ export const ChatGptResumeWorkflow: React.FC<ChatGptResumeWorkflowProps> = ({
         </div>
 
         {/* STEP B — Paste Your Resume Content */}
-        <div className="lg:col-span-6 bg-white rounded-3xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-5">
+        <div className="lg:col-span-6 bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-5">
           <div className="flex items-center gap-3 pb-3 border-b border-[#F0F3F7]">
             <span className="w-8 h-8 rounded-xl bg-[#F47A24] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
               B

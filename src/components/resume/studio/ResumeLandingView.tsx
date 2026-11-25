@@ -62,7 +62,7 @@ export const ResumeLandingView: React.FC<ResumeLandingViewProps> = ({
   return (
     <div className="space-y-8">
       {/* 1. Premium Hero Introduction */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#102B4E] text-white p-6 sm:p-10 lg:p-12 shadow-lg">
+      <section className="relative overflow-hidden rounded-xl bg-[#102B4E] text-white p-5 sm:p-6 shadow-lg">
         {/* Subtle geometric accent */}
         <div
           aria-hidden="true"
@@ -188,7 +188,7 @@ export const ResumeLandingView: React.FC<ResumeLandingViewProps> = ({
         </div>
 
         {resumes.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 sm:p-12 text-center space-y-4 shadow-2xs">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-7 text-center space-y-4 shadow-2xs">
             <div className="w-14 h-14 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] text-[#102B4E] mx-auto flex items-center justify-center">
               <FileText className="w-7 h-7 text-[#F47A24]" />
             </div>
@@ -348,7 +348,7 @@ export const ResumeLandingView: React.FC<ResumeLandingViewProps> = ({
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.2, ease: EASE_PREMIUM }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[calc(100vw-2rem)] sm:max-w-md bg-white rounded-3xl p-6 border border-[#E5EAF0] shadow-2xl space-y-5"
+              className="w-full max-w-[calc(100vw-2rem)] sm:max-w-md bg-white rounded-xl p-6 border border-[#E5EAF0] shadow-2xl space-y-5"
             >
               <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
                 <AlertTriangle className="w-6 h-6" />

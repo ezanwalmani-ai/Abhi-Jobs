@@ -285,7 +285,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
   if (!currentUser) {
     return (
       <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl text-center space-y-6">
+        <div className="max-w-md w-full bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xl text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 text-[#004D40] flex items-center justify-center mx-auto">
             <UserCheck className="w-8 h-8 text-[#004D40]" />
           </div>
@@ -311,7 +311,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
           <div className="flex flex-col gap-3 pt-2">
             <button
               onClick={() => navigate('/login')}
-              className="w-full min-h-[44px] py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full min-h-[44px] py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Sign In as Job Seeker</span>
               <ArrowRight className="w-4 h-4" />
@@ -324,7 +324,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
             </button>
             <button
               onClick={() => navigate('/jobs')}
-              className="text-xs text-[#004D40] hover:text-[#FF2B1A] font-semibold pt-1 cursor-pointer"
+              className="text-xs text-[#004D40] hover:text-[#F47A24] font-semibold pt-1 cursor-pointer"
             >
               Browse Open Jobs Without Signing In →
             </button>
@@ -338,7 +338,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
   if (hasError) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-6">
+        <div className="max-w-md w-full bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xl text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
             <AlertCircle className="w-8 h-8" />
           </div>
@@ -352,7 +352,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
           <button
             onClick={handleRetry}
-            className="w-full min-h-[44px] px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all cursor-pointer"
+            className="w-full min-h-[44px] px-6 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-bold shadow-xs transition-all cursor-pointer"
           >
             Retry
           </button>
@@ -365,7 +365,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-pulse">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-pulse">
           {/* Header Skeleton */}
           <div className="space-y-3 pb-2 border-b border-slate-200">
             <div className="w-36 h-6 bg-slate-200 rounded-full" />
@@ -405,7 +405,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-[1200px] mx-auto px-3.5 sm:px-6 lg:px-8 space-y-8">
         
         {/* Page Header (Requirement 4 & 5) */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
@@ -442,7 +442,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
             <button
               onClick={() => navigate('/jobs')}
-              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Briefcase className="w-4 h-4 shrink-0" />
               <span>Find Jobs</span>
@@ -456,7 +456,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
         {totalSavedCount === 0 ? (
           /* Proper Empty State (Requirement 8): ZERO saved jobs */
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xs max-w-3xl mx-auto">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 text-center space-y-6 shadow-2xs max-w-3xl mx-auto">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-teal-50 border border-teal-100 text-[#004D40] mx-auto flex items-center justify-center">
               <Bookmark className="w-8 h-8 sm:w-10 sm:h-10 text-[#004D40]" />
             </div>
@@ -473,7 +473,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => navigate('/jobs')}
-                className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 <span>Find Jobs</span>
@@ -515,7 +515,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search your saved jobs by title, company, location, or skills..."
                     aria-label="Search your saved jobs"
-                    className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-hidden focus:border-[#061226] transition-all placeholder:text-slate-400 min-h-[44px]"
+                    className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-hidden focus:border-[#102B4E] transition-all placeholder:text-slate-400 min-h-[44px]"
                   />
                   {searchQuery && (
                     <button
@@ -535,7 +535,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                   <select
                     value={filterEmploymentType}
                     onChange={(e) => setFilterEmploymentType(e.target.value)}
-                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
+                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                     aria-label="Filter by Employment Type"
                   >
                     <option value="All">All Types</option>
@@ -550,7 +550,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                   <select
                     value={filterWorkMode}
                     onChange={(e) => setFilterWorkMode(e.target.value)}
-                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
+                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                     aria-label="Filter by Work Mode"
                   >
                     <option value="All">All Modes</option>
@@ -563,7 +563,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
+                    className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                     aria-label="Filter by Status"
                   >
                     <option value="All">All Statuses</option>
@@ -576,7 +576,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                     <select
                       value={filterLocation}
                       onChange={(e) => setFilterLocation(e.target.value)}
-                      className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
+                      className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                       aria-label="Filter by Location"
                     >
                       <option value="All">All Locations</option>
@@ -596,7 +596,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
-                      className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#061226] cursor-pointer min-h-[44px]"
+                      className="w-full lg:w-auto px-3 py-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium focus:bg-white focus:outline-hidden focus:border-[#102B4E] cursor-pointer min-h-[44px]"
                       aria-label="Sort saved jobs"
                     >
                       <option value="recently_saved">Recently Saved</option>
@@ -627,7 +627,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
             {/* Empty Filter State (filters returned 0 results) */}
             {filteredSavedJobs.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center space-y-4 shadow-2xs">
+              <div className="bg-white rounded-xl border border-slate-200 p-6 text-center space-y-4 shadow-2xs">
                 <Search className="w-10 h-10 text-slate-300 mx-auto" />
                 <div className="space-y-1">
                   <h3 className="text-lg font-bold text-slate-900">No matching saved jobs found</h3>
@@ -734,7 +734,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                               {/* Title with link */}
                               <h2
                                 onClick={() => navigate(`/jobs/${job.id}`)}
-                                className="text-base sm:text-lg font-bold text-slate-900 hover:text-[#FF2B1A] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
+                                className="text-base sm:text-lg font-bold text-slate-900 hover:text-[#F47A24] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
                                 title={job.title}
                               >
                                 {job.title}

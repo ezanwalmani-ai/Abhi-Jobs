@@ -6,7 +6,14 @@ export type LearningCategoryId =
   | 'career-development'
   | 'workplace-skills';
 
-export type CourseDifficultyLevel = 'Beginner' | 'Intermediate';
+export type CourseDifficultyLevel =
+  | 'Beginner'
+  | 'Beginner to Intermediate'
+  | 'Intermediate'
+  | 'Intermediate to Advanced'
+  | 'Advanced'
+  | 'Job-Ready'
+  | 'Advanced / Job-Ready';
 
 export type CourseProgressStatus = 'enrolled' | 'in_progress' | 'completed';
 
@@ -46,8 +53,12 @@ export interface LessonVideoItem {
   publisher?: string;
   /** Valid 11-character YouTube video ID (e.g. QiSCaEHQ7Yo, k1VUZEVuDJ8) */
   youtubeVideoId: string;
+  /** Explicit YouTube watch URL (e.g. https://www.youtube.com/watch?v=TDphx23AtqM) */
+  watchUrl?: string;
   /** Explicit embed base URL when required (e.g. https://www.youtube.com/embed/QiSCaEHQ7Yo) */
   embedUrl?: string;
+  /** Live verification status of the YouTube video */
+  verificationStatus?: 'verified' | 'needs_correction' | 'unverified';
   description: string;
   durationSeconds: number;
   durationLabel?: string;
@@ -65,10 +76,16 @@ export interface StudyGuideShortcut {
 
 export interface StudyGuideSection {
   heading: string;
+  /** Concise 1-line summary shown on the collapsed topic row */
+  shortDescription?: string;
   body: string;
+  /** Optional formula or syntax block shown inside the expanded topic */
+  formula?: string;
   bullets?: string[];
   steps?: string[];
   example?: string;
+  /** Optional inline table example directly tied to this topic */
+  table?: StudyGuideTableExample;
   commonMistake?: string;
   shortcuts?: StudyGuideShortcut[];
 }
@@ -158,7 +175,10 @@ export interface LearningCourseMetadata {
   fullDescription: string;
   level: CourseDifficultyLevel;
   estimatedDuration: string;
-  isFree: true;
+  isFree: boolean;
+  priceLabel?: string;
+  thumbnailUrl?: string;
+  offersCertificate?: boolean;
   sequentialUnlock: boolean;
   passPercentage: number;
   certificateTemplateId: string;
@@ -181,7 +201,10 @@ export interface LearningCourseItem {
   fullDescription: string;
   level: CourseDifficultyLevel;
   estimatedDuration: string;
-  isFree: true;
+  isFree: boolean;
+  priceLabel?: string;
+  thumbnailUrl?: string;
+  offersCertificate?: boolean;
   sequentialUnlock: boolean;
   passPercentage?: number;
   certificateTemplateId?: string;

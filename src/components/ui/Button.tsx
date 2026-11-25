@@ -16,9 +16,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 /**
  * Unified ABHI JOBS Button System
  * Strictly enforces:
- * - Primary: #FF2B1A (Red-Orange)
+ * - Primary: #F47A24 (Red-Orange)
  * - Secondary: #FFFFFF with #E4E7EC border
- * - Dark: #061226 (Navy)
+ * - Dark: #102B4E (Navy)
  * - Ghost: transparent with subtle slate hover
  * - Minimum 44px height for standard touch targets (accessibility)
  */
@@ -36,25 +36,25 @@ export const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   const baseStyles =
-    'group inline-flex items-center justify-center font-bold transition-all duration-200 cursor-pointer select-none hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:translate-y-0';
+    'group inline-flex items-center justify-center font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer select-none active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
 
   // Official ABHI JOBS Corporate Palette Variants
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
-      'bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white border border-[#F47A24] hover:border-[#DE6816] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2',
+      'bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white border border-[#F47A24] hover:border-[#DE6816] shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2',
     secondary:
-      'bg-white hover:bg-[#F6F8FB] active:bg-[#EDF1F7] text-[#102B4E] border border-[#E5EAF0] hover:border-[#102B4E]/30 shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
+      'bg-white hover:bg-[#F6F8FB] active:bg-[#EDF1F7] text-[#102B4E] border border-[#D4DCE6] hover:border-[#102B4E]/40 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
     ghost:
-      'bg-transparent hover:bg-[#F6F8FB] active:bg-[#E5EAF0] text-[#253449] hover:text-[#102B4E] border border-transparent hover:-translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/30 focus-visible:ring-offset-2',
+      'bg-transparent hover:bg-[#F6F8FB] active:bg-[#E5EAF0] text-[#253449] hover:text-[#102B4E] border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/30 focus-visible:ring-offset-2',
     dark:
-      'bg-[#102B4E] hover:bg-[#081D36] active:bg-[#051427] text-white border border-[#102B4E] shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
+      'bg-[#102B4E] hover:bg-[#081D36] active:bg-[#051427] text-white border border-[#102B4E] shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
   };
 
-  // Sizing definitions ensuring accessibility touch targets (>= 44px for md/lg)
+  // Classic medium-sized button dimensions (14-15px primary text, comfortable touch targets)
   const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-xs rounded-xl min-h-[36px] gap-1.5 font-semibold',
-    md: 'px-4 py-2.5 text-xs sm:text-sm rounded-xl min-h-[44px] gap-2 font-bold',
-    lg: 'px-6 py-3 text-sm sm:text-base rounded-2xl min-h-[48px] gap-2.5 font-bold',
+    sm: 'px-3.5 py-2 text-[13px] rounded-lg min-h-[38px] gap-1.5',
+    md: 'px-4 py-2 text-[14px] rounded-lg min-h-[42px] gap-2',
+    lg: 'px-5 py-2.5 text-[15px] rounded-xl min-h-[44px] gap-2',
   };
 
   const widthStyle = fullWidth ? 'w-full' : '';

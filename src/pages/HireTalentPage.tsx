@@ -132,14 +132,14 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
     <div className="min-h-screen bg-[#F6F8FB] text-[#253449]">
       {/* HERO SECTION */}
       <section className="bg-[#102B4E] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-22">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: EASE_PREMIUM }}
-            className="max-w-3xl space-y-6"
+            transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+            className="max-w-2xl space-y-4"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#F47A24]">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F47A24]">
               ABHI JOBS Recruitment Consultancy
             </p>
             <HeroTextReveal
@@ -147,34 +147,34 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
               as="h1"
               highlightWords={['People']}
               highlightClassName="text-[#F47A24]"
-              staggerMs={70}
-              delay={0.08}
-              distance={24}
-              className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.12] text-white"
+              staggerMs={65}
+              delay={0.06}
+              distance={18}
+              className="font-display text-[30px] sm:text-[36px] lg:text-[40px] font-extrabold tracking-tight leading-[1.15] text-white [text-wrap:balance]"
             />
             <motion.p
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.3, ease: EASE_PREMIUM }}
-              className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl"
+              transition={{ duration: 0.4, delay: 0.24, ease: EASE_PREMIUM }}
+              className="text-[15px] sm:text-base text-slate-300 leading-relaxed max-w-xl"
             >
               ABHI JOBS helps businesses identify, screen, and connect with qualified talent to meet their hiring requirements.
             </motion.p>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.42, delay: 0.38, ease: EASE_PREMIUM }}
-              className="pt-2"
+              transition={{ duration: 0.38, delay: 0.32, ease: EASE_PREMIUM }}
+              className="pt-1"
             >
               <motion.button
                 type="button"
-                whileHover={{ y: -2 }}
+                whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={scrollToForm}
-                className="group inline-flex items-center gap-2 px-6 py-3.5 min-h-[46px] rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <span>Submit Your Hiring Requirement</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                <ArrowRight className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-0.5" />
               </motion.button>
             </motion.div>
           </motion.div>
@@ -182,32 +182,32 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
       </section>
 
       {/* WHAT WE DO */}
-      <section className="py-16 sm:py-20 bg-white border-b border-[#E5EAF0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-12 bg-white border-b border-[#E5EAF0]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSectionHeading
             kicker="Our Recruitment Process"
             title="What We Do"
-            className="mb-12"
+            className="mb-7"
           />
 
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6" stagger={0.08}>
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-5" stagger={0.06}>
             {SERVICES.map((service) => {
               const Icon = service.icon;
               return (
                 <StaggerItem key={service.title}>
-                  <div className="h-full bg-[#F6F8FB] rounded-2xl border border-[#E5EAF0] hover:border-[#102B4E]/30 hover:-translate-y-1 transition-all duration-250 p-6 sm:p-7 space-y-4">
+                  <div className="h-full bg-[#FAFBFD] rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/30 transition-all duration-200 p-5 sm:p-6 space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="w-11 h-11 rounded-xl bg-[#102B4E] text-white flex items-center justify-center">
-                        <Icon className="w-5 h-5" />
+                      <div className="w-10 h-10 rounded-lg bg-[#102B4E] text-white flex items-center justify-center">
+                        <Icon className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold font-mono tabular-nums text-[#778397]">
                         {service.step}
                       </span>
                     </div>
-                    <h3 className="font-display text-lg font-bold text-[#102B4E]">
+                    <h3 className="font-display text-[18px] font-bold text-[#102B4E]">
                       {service.title}
                     </h3>
-                    <p className="text-sm text-[#778397] leading-relaxed">
+                    <p className="text-sm text-[#566479] leading-relaxed">
                       {service.description}
                     </p>
                   </div>
@@ -219,22 +219,22 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
       </section>
 
       {/* INDUSTRIES WE RECRUIT FOR */}
-      <section className="py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-12">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSectionHeading
             kicker="Domain Expertise"
             title="Industries We Recruit For"
-            className="mb-10"
+            className="mb-7"
           />
 
-          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" stagger={0.06}>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" stagger={0.05}>
             {INDUSTRIES.map((ind) => {
               const Icon = ind.icon;
               return (
                 <StaggerItem key={ind.name}>
-                  <div className="bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/30 hover:-translate-y-0.5 transition-all duration-200 p-5 flex items-center gap-4 shadow-2xs">
-                    <div className="w-10 h-10 rounded-lg bg-[#FFF4EC] text-[#F47A24] flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5" />
+                  <div className="bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/30 transition-colors duration-150 p-4 sm:p-5 flex items-center gap-3.5 shadow-2xs">
+                    <div className="w-9 h-9 rounded-lg bg-[#FFF4EC] text-[#F47A24] flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-semibold text-[#102B4E]">{ind.name}</span>
                   </div>
@@ -246,15 +246,15 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
       </section>
 
       {/* HIRING ENQUIRY FORM */}
-      <section ref={formRef} className="pb-20 pt-4">
+      <section ref={formRef} className="pb-12 pt-2">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] shadow-sm p-6 sm:p-10">
-            <div className="mb-8 space-y-2">
+          <div className="bg-white rounded-xl border border-[#E5EAF0] shadow-xs p-5 sm:p-6">
+            <div className="mb-6 space-y-1.5">
               <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#F47A24]">
                 <Building2 className="w-4 h-4" />
                 <span>Hiring Requirement Intake</span>
               </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#102B4E]">
+              <h2 className="font-display text-xl sm:text-[26px] font-bold text-[#102B4E]">
                 Submit Your Hiring Requirement
               </h2>
               <p className="text-sm text-[#778397]">
@@ -267,17 +267,17 @@ export const HireTalentPage: React.FC<HireTalentPageProps> = ({ navigate }) => {
                 initial={{ opacity: 0, scale: 0.97, y: 8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: EASE_PREMIUM }}
-                className="p-8 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-center space-y-4"
+                className="p-6 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] text-center space-y-3.5"
               >
                 <motion.div
                   initial={{ scale: 0.6 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 360, damping: 22 }}
-                  className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto"
+                  className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto"
                 >
-                  <CheckCircle2 className="w-6 h-6" />
+                  <CheckCircle2 className="w-5 h-5" />
                 </motion.div>
-                <h3 className="font-display text-xl font-bold text-[#102B4E]">
+                <h3 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
                   Hiring Requirement Received
                 </h3>
                 <p className="text-sm text-[#778397] max-w-md mx-auto">

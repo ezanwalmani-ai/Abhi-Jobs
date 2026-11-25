@@ -47,7 +47,7 @@ export const AssessmentIntroView: React.FC<AssessmentIntroViewProps> = ({
     : 0;
 
   return (
-    <div className="min-h-[75vh] bg-[#F6F8FB] py-10 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[75vh] bg-[#F6F8FB] py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <button
           type="button"
@@ -62,7 +62,7 @@ export const AssessmentIntroView: React.FC<AssessmentIntroViewProps> = ({
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: EASE_PREMIUM }}
-          className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 lg:p-12 space-y-8"
+          className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-8"
         >
           {/* Header & Intro Copy */}
           <div className="space-y-4">

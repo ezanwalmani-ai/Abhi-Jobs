@@ -393,12 +393,12 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
   // 1. Unauthenticated State
   if (!currentUser) {
     return (
-      <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-[#F6F8FB]">
+      <div className="min-h-[75vh] flex items-center justify-center px-4 py-10 bg-[#F6F8FB]">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE_PREMIUM }}
-          className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 border border-[#E5EAF0] shadow-sm text-center space-y-6"
+          className="max-w-md w-full bg-white rounded-xl p-6 border border-[#E5EAF0] shadow-xs text-center space-y-5"
         >
           <div className="w-14 h-14 rounded-2xl bg-[#102B4E]/5 border border-[#102B4E]/10 text-[#102B4E] flex items-center justify-center mx-auto">
             <UserCheck className="w-7 h-7 text-[#102B4E]" />
@@ -446,12 +446,12 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
   // 2. Error State
   if (hasError) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-[#F6F8FB]">
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-10 bg-[#F6F8FB]">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: EASE_PREMIUM }}
-          className="max-w-md w-full bg-white rounded-3xl p-8 border border-[#E5EAF0] shadow-sm text-center space-y-5"
+          className="max-w-md w-full bg-white rounded-xl p-6 border border-[#E5EAF0] shadow-xs text-center space-y-5"
         >
           <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
             <AlertCircle className="w-7 h-7" />
@@ -510,24 +510,24 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] py-8 sm:py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7">
+    <div className="min-h-screen bg-[#F6F8FB] py-6 sm:py-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* 1. Page Introduction */}
-        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-[#E5EAF0]">
+        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#E5EAF0]">
           <div className="space-y-1.5 min-w-0">
             <HeroTextReveal
               as="h1"
               text="My Applications"
               highlightWords={['Applications']}
               highlightClassName="text-[#F47A24]"
-              className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#102B4E] tracking-tight"
+              className="font-display text-2xl sm:text-[32px] lg:text-[36px] font-extrabold text-[#102B4E] tracking-tight"
               delay={0.04}
             />
             <motion.p
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.14, ease: EASE_PREMIUM }}
-              className="text-sm sm:text-base text-[#778397] max-w-2xl leading-relaxed"
+              className="text-sm sm:text-[15px] text-[#778397] max-w-2xl leading-relaxed"
             >
               Keep track of your job applications and stay updated on your career journey.
             </motion.p>
@@ -538,7 +538,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#E5EAF0] bg-white hover:border-[#102B4E]/25 text-[#253449] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              className="min-h-[40px] px-3.5 py-2 rounded-lg border border-[#E5EAF0] bg-white hover:border-[#102B4E]/25 text-[#253449] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
               title="Refresh applications"
             >
               <RotateCcw
@@ -550,7 +550,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
             <button
               type="button"
               onClick={() => navigate('/jobs')}
-              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              className="min-h-[40px] px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
             >
               <Briefcase className="w-4 h-4 shrink-0" />
               <span>Explore Jobs</span>
@@ -766,10 +766,10 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: EASE_PREMIUM }}
-              className="bg-white rounded-3xl border border-[#E5EAF0] px-6 py-12 sm:py-16 text-center shadow-2xs"
+              className="bg-white rounded-xl border border-[#E5EAF0] px-6 py-10 sm:py-12 text-center shadow-2xs"
             >
-              <div className="w-16 h-16 rounded-2xl bg-[#102B4E]/[0.05] border border-[#102B4E]/10 text-[#102B4E] mx-auto flex items-center justify-center mb-5">
-                <Briefcase className="w-8 h-8 text-[#F47A24]" />
+              <div className="w-14 h-14 rounded-xl bg-[#102B4E]/[0.05] border border-[#102B4E]/10 text-[#102B4E] mx-auto flex items-center justify-center mb-4">
+                <Briefcase className="w-7 h-7 text-[#F47A24]" />
               </div>
 
               <div className="max-w-md mx-auto space-y-2">
@@ -781,11 +781,11 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
                 </p>
               </div>
 
-              <div className="mt-7 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <button
                   type="button"
                   onClick={() => navigate('/jobs')}
-                  className="min-h-[46px] px-7 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-sm font-bold shadow-xs transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="min-h-[44px] px-6 py-2.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-sm font-semibold shadow-xs transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Explore Jobs</span>
                   <ArrowRight className="w-4 h-4" />
@@ -798,7 +798,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: EASE_PREMIUM }}
-              className="bg-white rounded-2xl border border-[#E5EAF0] p-10 text-center space-y-4 shadow-2xs"
+              className="bg-white rounded-xl border border-[#E5EAF0] p-7 text-center space-y-4 shadow-2xs"
             >
               <div className="w-12 h-12 rounded-2xl bg-[#F6F8FB] border border-[#E5EAF0] text-[#778397] mx-auto flex items-center justify-center">
                 <Search className="w-5 h-5" />
@@ -1039,7 +1039,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
                 transition={{ duration: 0.28, ease: EASE_PREMIUM }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#E5EAF0] overflow-hidden max-h-[90vh] flex flex-col"
+                className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl bg-white rounded-xl shadow-2xl border border-[#E5EAF0] overflow-hidden max-h-[90vh] flex flex-col"
               >
                 {/* Modal Header */}
                 <div className="px-5 sm:px-6 py-5 bg-[#102B4E] text-white flex items-start justify-between gap-4 shrink-0 border-b-2 border-[#F47A24]">
@@ -1464,7 +1464,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
               transition={{ duration: 0.24, ease: EASE_PREMIUM }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[calc(100vw-2rem)] sm:max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#E5EAF0] space-y-5"
+              className="relative w-full max-w-[calc(100vw-2rem)] sm:max-w-md bg-white rounded-xl p-6 sm:p-7 shadow-2xl border border-[#E5EAF0] space-y-5"
             >
               <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
                 <AlertCircle className="w-6 h-6" />

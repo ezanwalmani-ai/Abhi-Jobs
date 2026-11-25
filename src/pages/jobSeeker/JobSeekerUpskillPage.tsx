@@ -117,7 +117,7 @@ export const JobSeekerUpskillPage: React.FC<JobSeekerUpskillPageProps> = ({ navi
     <div className="min-h-screen bg-[#F6F8FB] text-[#253449]">
       {/* Header Banner */}
       <section className="bg-[#102B4E] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18">
           <div className="max-w-3xl space-y-4">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#F47A24]">
               Learn with ABHI
@@ -133,7 +133,7 @@ export const JobSeekerUpskillPage: React.FC<JobSeekerUpskillPageProps> = ({ navi
       </section>
 
       {/* Search & Category Filter Bar */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
         <div className="bg-white rounded-2xl border border-[#E5EAF0] shadow-sm p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-[#778397] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -166,9 +166,9 @@ export const JobSeekerUpskillPage: React.FC<JobSeekerUpskillPageProps> = ({ navi
       </section>
 
       {/* Course Catalogue Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-10">
         {filteredCourses.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-12 text-center space-y-3">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 text-center space-y-3">
             <GraduationCap className="w-10 h-10 text-[#102B4E]/40 mx-auto" />
             <h3 className="font-display text-lg font-bold text-[#102B4E]">
               No matching courses found

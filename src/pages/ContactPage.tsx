@@ -43,11 +43,11 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 sm:py-16">
+    <div className="min-h-screen bg-slate-50 py-10 sm:py-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <ScrollReveal direction="up" distance={16}>
           <div className="text-center space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#FF2B1A]">Support &amp; Enterprise Inquiries</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F47A24]">Support &amp; Enterprise Inquiries</span>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-[#101828]">Get in Touch with ABHI JOBS</h1>
             <p className="text-xs sm:text-sm text-[#667085] max-w-xl mx-auto">
               Have questions about candidate verification, corporate recruitment partnerships, or career mentorship? We are here to assist.
@@ -59,7 +59,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
           {/* Contact Form */}
           <div className="lg:col-span-7">
             <ScrollReveal direction="up" delay={0.06} distance={18}>
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E4E7EC] shadow-xs">
+              <div className="bg-white rounded-xl p-5 sm:p-6 border border-[#E4E7EC] shadow-xs">
                 <h2 className="text-lg font-bold text-[#101828] mb-4">Send Us a Direct Message</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,7 +71,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Your name"
-                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden"
+                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden"
                         required
                       />
                     </div>
@@ -83,7 +83,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@company.com"
-                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden"
+                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden"
                         required
                       />
                     </div>
@@ -97,7 +97,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+91..."
-                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden"
+                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden"
                       />
                     </div>
 
@@ -106,7 +106,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                       <select
                         value={roleType}
                         onChange={(e) => setRoleType(e.target.value)}
-                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden bg-white"
+                        className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden bg-white"
                       >
                         <option value="candidate">Job Seeker / Candidate</option>
                         <option value="employer">Employer / Recruiter</option>
@@ -123,7 +123,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       placeholder="How can our team help?"
-                      className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden"
+                      className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden"
                       required
                     />
                   </div>
@@ -135,7 +135,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={4}
                       placeholder="Provide details about your query..."
-                      className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#061226] focus:ring-1 focus:ring-[#061226]/10 focus:outline-hidden"
+                      className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] mt-1 focus:border-[#102B4E] focus:ring-1 focus:ring-[#102B4E]/10 focus:outline-hidden"
                       required
                     />
                   </div>
@@ -145,7 +145,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                     whileTap={{ scale: 0.99 }}
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
+                    className="w-full py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
                   >
                     <Send className="w-4 h-4" />
                     <span>{submitting ? 'Transmitting...' : 'Send Inquiry'}</span>
@@ -159,11 +159,11 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
           <div className="lg:col-span-5 space-y-6">
             <ScrollReveal direction="up" delay={0.12} distance={18}>
               <div className="space-y-6">
-                <div className="bg-white rounded-3xl p-6 border border-[#E4E7EC] shadow-xs space-y-4">
+                <div className="bg-white rounded-xl p-6 border border-[#E4E7EC] shadow-xs space-y-4">
                   <h3 className="text-base font-bold text-[#101828]">Direct Inquiries</h3>
                   <div className="space-y-3 text-xs">
                     <div className="flex items-start gap-3">
-                      <Mail className="w-4 h-4 text-[#FF2B1A] shrink-0 mt-0.5" />
+                      <Mail className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
                       <div>
                         <div className="font-semibold text-[#101828]">Email Us</div>
                         <div className="text-[#667085]">contact@abhijobs.com</div>
@@ -182,7 +182,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ navigate }) => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-3xl p-6 border border-[#E4E7EC] shadow-xs space-y-4">
+                <div className="bg-white rounded-xl p-6 border border-[#E4E7EC] shadow-xs space-y-4">
                   <h3 className="text-base font-bold text-[#101828]">Office Hubs</h3>
                   <div className="space-y-3 text-xs text-[#667085]">
                     <div className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E4E7EC]">

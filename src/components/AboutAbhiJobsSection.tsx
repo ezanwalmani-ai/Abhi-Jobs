@@ -26,12 +26,12 @@ export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navi
     <section
       id="about"
       aria-label="About ABHI JOBS"
-      className="relative overflow-hidden py-16 sm:py-24 bg-white border-b border-slate-200"
+      className="relative overflow-hidden py-10 sm:py-12 bg-white border-b border-slate-200"
     >
       {/* Brand Identity Background Texture */}
       <BrandPattern pattern="faceted-grid" theme="light-slate" opacity={0.5} />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -40,7 +40,7 @@ export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navi
             <span>Curated Career Ecosystem • Discover. Apply. Grow.</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-slate-900 tracking-tight leading-tight">
             Bridging Verified Talent and Real Opportunity.
           </h2>
 
@@ -50,7 +50,7 @@ export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navi
         </div>
 
         {/* The Core Story: Real & Grounded */}
-        <div className="mt-14 max-w-4xl mx-auto bg-slate-50 rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-xs">
+        <div className="mt-14 max-w-4xl mx-auto bg-slate-50 rounded-xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600">
@@ -153,7 +153,7 @@ export const AboutAbhiJobsSection: React.FC<AboutAbhiJobsSectionProps> = ({ navi
 
           {/* Tab Content: Brand Identity & Design System */}
           {activeTab === 'brand' && (
-            <div className="bg-white/95 backdrop-blur-sm p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-sm animate-fadeIn">
+            <div className="bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm animate-fadeIn">
               <BrandIdentityShowcase />
             </div>
           )}

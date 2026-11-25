@@ -13,7 +13,7 @@ export interface HeroTextRevealProps {
   justify?: 'start' | 'center' | 'end' | 'between';
   /** Optional array of words to highlight with special accent styling */
   highlightWords?: string[];
-  /** Styling class applied to highlighted words (defaults to '#FF2B1A' brand red) */
+  /** Styling class applied to highlighted words (defaults to '#F47A24' brand red) */
   highlightClassName?: string;
   /**
    * Word-by-word stagger delay in seconds.

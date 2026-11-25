@@ -128,7 +128,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
           <span>Back to Employer Hub</span>
         </button>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-6">
           <div className="border-b border-slate-100 pb-5">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Post a Job Opening</h1>
             <p className="text-xs text-slate-500 mt-1">
@@ -146,7 +146,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Lead Frontend Architect, DevOps Engineer..."
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden"
                   required
                 />
               </div>
@@ -158,7 +158,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="e.g. Your Organization Name"
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden"
                   required
                 />
               </div>
@@ -171,7 +171,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden"
                 />
               </div>
 
@@ -181,7 +181,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden"
                 />
               </div>
 
@@ -190,7 +190,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 <select
                   value={workMode}
                   onChange={(e) => setWorkMode(e.target.value as any)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden bg-white cursor-pointer"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden bg-white cursor-pointer"
                 >
                   <option value="Remote">Remote</option>
                   <option value="Hybrid">Hybrid</option>
@@ -203,7 +203,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 <select
                   value={employmentType}
                   onChange={(e) => setEmploymentType(e.target.value as any)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden bg-white cursor-pointer"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden bg-white cursor-pointer"
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -253,7 +253,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 onChange={(e) => setOverview(e.target.value)}
                 rows={3}
                 placeholder="Describe the mission, impact, and core charter of this position..."
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#061226] focus:outline-hidden"
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 mt-1 focus:border-[#102B4E] focus:outline-hidden"
                 required
               />
             </div>
@@ -320,7 +320,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 <button
                   type="button"
                   onClick={() => navigate('/terms-and-conditions')}
-                  className="text-[#004D40] font-semibold underline hover:text-[#061226] cursor-pointer inline"
+                  className="text-[#004D40] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
                 >
                   Terms &amp; Conditions
                 </button>{' '}
@@ -328,7 +328,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 <button
                   type="button"
                   onClick={() => navigate('/privacy')}
-                  className="text-[#004D40] font-semibold underline hover:text-[#061226] cursor-pointer inline"
+                  className="text-[#004D40] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
                 >
                   Privacy Policy
                 </button>
@@ -348,7 +348,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Publish Verified Opening</span>

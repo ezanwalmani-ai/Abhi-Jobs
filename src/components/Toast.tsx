@@ -15,14 +15,14 @@ export const ToastContainer: React.FC = () => {
             success: <CheckCircle2 className="w-5 h-5 text-[#004D40] shrink-0 mt-0.5" />,
             error: <AlertCircle className="w-5 h-5 text-[#FF2B1A] shrink-0 mt-0.5" />,
             warning: <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />,
-            info: <Info className="w-5 h-5 text-[#061226] shrink-0 mt-0.5" />,
+            info: <Info className="w-5 h-5 text-[#102B4E] shrink-0 mt-0.5" />,
           };
 
           const borderMap = {
             success: 'border-l-4 border-l-[#004D40] border-[#E4E7EC] bg-white text-[#101828]',
             error: 'border-l-4 border-l-[#FF2B1A] border-[#E4E7EC] bg-white text-[#101828]',
             warning: 'border-l-4 border-l-amber-500 border-[#E4E7EC] bg-white text-[#101828]',
-            info: 'border-l-4 border-l-[#061226] border-[#E4E7EC] bg-white text-[#101828]',
+            info: 'border-l-4 border-l-[#102B4E] border-[#E4E7EC] bg-white text-[#101828]',
           };
 
           return (

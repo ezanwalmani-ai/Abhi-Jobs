@@ -54,10 +54,10 @@ export const EmployerCompanyProfilePage: React.FC<EmployerCompanyProfilePageProp
         </div>
 
         {/* Company Card / Form */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-[#061226] text-white flex items-center justify-center font-bold text-2xl shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-[#102B4E] text-white flex items-center justify-center font-bold text-2xl shadow-sm">
                 {formData.companyName.charAt(0)}
               </div>
               <div>
@@ -140,7 +140,7 @@ export const EmployerCompanyProfilePage: React.FC<EmployerCompanyProfilePageProp
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#061226] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>Save Changes</span>

@@ -16,15 +16,11 @@ import {
   Eye,
   FileSpreadsheet,
   FileText,
-  Keyboard,
-  Lightbulb,
   List,
   Loader2,
   Lock,
   PlayCircle,
   Settings2,
-  Table2,
-  Target,
   Unlock,
   X,
 } from 'lucide-react';
@@ -49,10 +45,12 @@ import {
   saveVideoPlaybackProgress,
 } from '../../services/learningFirestoreService';
 import { CourseAssessmentRunner } from './CourseAssessmentRunner';
+import { CollapsibleStudyGuide } from './CollapsibleStudyGuide';
 import {
   YouTubeTrackedPlayer,
   VideoProgressUpdatePayload,
 } from './YouTubeTrackedPlayer';
+import { resolveResumeLessonId } from '../../utils/courseCatalogueState';
 import { EASE_PREMIUM } from '../../lib/motion';
 
 interface CoursePlayerViewProps {
@@ -74,6 +72,7 @@ interface CoursePlayerViewProps {
   }) => Promise<void>;
   onAssessmentAttemptCompleted: (attempt: AssessmentAttemptRecord) => Promise<void>;
   onBackToCourseDetails: () => void;
+  onBackToDashboard?: () => void;
   onOpenAdminContentManager?: () => void;
   certificate?: CourseCertificateRecord | null;
   isIssuingCertificate?: boolean;
@@ -100,6 +99,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   onUpdateProgress,
   onAssessmentAttemptCompleted,
   onBackToCourseDetails,
+  onBackToDashboard,
   onOpenAdminContentManager,
   certificate,
   isIssuingCertificate = false,
@@ -119,13 +119,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     enrolment.completedLessonIds || []
   );
 
-  // Open Module 1 / first lesson immediately so the video player is visible right away
+  // Resume directly at the student's next incomplete unlocked module/lesson (or Module 1 for new/review)
   const [activeId, setActiveId] = useState<string>(() => {
-    if (
-      enrolment.currentLessonId &&
-      flatLessons.some((item) => item.lesson.id === enrolment.currentLessonId)
-    ) {
-      return enrolment.currentLessonId;
+    const resumeLessonId = resolveResumeLessonId(course, enrolment);
+    if (resumeLessonId) {
+      return resumeLessonId;
     }
     if (flatLessons.length > 0) {
       return flatLessons[0].lesson.id;
@@ -247,6 +245,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     return best > 0 ? best : null;
   }, [courseAttempts, enrolment.bestFinalScorePercent]);
 
+  const fmtMod = (n: number) => String(n).padStart(2, '0');
+  const hasUpcomingPlaceholder = sortedModules.some((m) => m.isUpcomingPlaceholder);
+
   const completionState = useMemo(
     () =>
       evaluateCourseCompletion({
@@ -255,6 +256,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         passedModuleQuizIds: Array.from(passedModuleQuizSet),
         requiredModuleQuizIds,
         finalAssessmentPassed,
+        requiresFinalAssessment:
+          Boolean(assessmentOverview?.finalAssessment) || hasUpcomingPlaceholder,
         hasCurrentLesson: Boolean(enrolment.currentLessonId),
       }),
     [
@@ -263,6 +266,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       passedModuleQuizSet,
       requiredModuleQuizIds,
       finalAssessmentPassed,
+      assessmentOverview?.finalAssessment,
+      hasUpcomingPlaceholder,
       enrolment.currentLessonId,
     ]
   );
@@ -340,7 +345,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       const targetEntry = flatLessons[globalIndex];
       if (targetEntry && targetEntry.module.order > effectiveUnlockedModuleOrder) {
         setLockNotice(
-          `Pass the Module 0${targetEntry.module.order - 1} Quiz (70%+) first to unlock Module 0${targetEntry.module.order}.`
+          `Pass the Module ${fmtMod(targetEntry.module.order - 1)} Quiz (70%+) first to unlock Module ${fmtMod(targetEntry.module.order)}.`
         );
       } else {
         const prevTitle = flatLessons[globalIndex - 1]?.lesson.title || 'the previous lesson';
@@ -374,11 +379,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       const mod = sortedModules.find((m) => m.id === moduleId);
       if (mod && mod.order > effectiveUnlockedModuleOrder) {
         setLockNotice(
-          `Pass the Module 0${mod.order - 1} Quiz (70%+) first to unlock Module 0${mod.order}.`
+          `Pass the Module ${fmtMod(mod.order - 1)} Quiz (70%+) first to unlock Module ${fmtMod(mod.order)}.`
         );
       } else if (mod) {
         setLockNotice(
-          `Watch at least 90% of the Module 0${mod.order} video first to unlock the Module 0${mod.order} Quiz.`
+          `Watch at least 90% of the Module ${fmtMod(mod.order)} video first to unlock the Module ${fmtMod(mod.order)} Quiz.`
         );
       } else {
         setLockNotice(
@@ -535,7 +540,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       const flatMatch = flatLessons.find((f) => f.lesson.id === firstNextLesson.id);
       if (flatMatch) {
         return {
-          label: `Continue to Module 0${nextMod.order}`,
+          label: `Continue to Module ${fmtMod(nextMod.order)}`,
           action: () => void selectLesson(flatMatch.lesson.id, flatMatch.globalIndex),
         };
       }
@@ -548,7 +553,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         ? flatLessons.find((f) => f.lesson.id === currentFirstLesson.id)
         : flatLessons[0];
       return {
-        label: `Back to Module 0${currentMod?.order ?? 1} (Module 0${nextMod.order} Unlocked)`,
+        label: `Back to Module ${fmtMod(currentMod?.order ?? 1)} (Module ${fmtMod(nextMod.order)} Unlocked)`,
         action: () => {
           if (currentMatch) {
             void selectLesson(currentMatch.lesson.id, currentMatch.globalIndex);
@@ -667,9 +672,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     const passPct = quizMeta?.passPercentage ?? 70;
     const passNeeded = Math.ceil((qCount * passPct) / 100);
 
+    const hasNextModule = Boolean(nextModObj);
+
     return (
       <section
-        className={`rounded-2xl border p-5 sm:p-7 space-y-4 ${
+        className={`rounded-xl border p-5 sm:p-6 space-y-4 ${
           modPassed
             ? 'bg-emerald-50/50 border-emerald-200'
             : hasFailedAttempt
@@ -686,7 +693,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 <span className="inline-flex items-center gap-1.5 text-emerald-700">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>
-                    Module 0{activeModOrder} Passed · Module 0{nextModOrder} Unlocked
+                    {hasNextModule
+                      ? `Module ${fmtMod(activeModOrder)} Passed · Module ${fmtMod(nextModOrder)} Unlocked`
+                      : `Module ${fmtMod(activeModOrder)} Passed · Course Completed!`}
                   </span>
                 </span>
               ) : hasFailedAttempt ? (
@@ -710,17 +719,23 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
             </div>
 
             <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-              Module 0{activeModOrder} Quiz: {qCount} Questions (Pass {passPct}%+)
+              Module {fmtMod(activeModOrder)} Quiz: {qCount} Questions (Pass {passPct}%+)
             </h2>
 
             <p className="text-xs sm:text-sm text-[#566479] leading-relaxed">
               {modPassed
-                ? `Best score: ${bestScore ?? passPct}%. Module 0${nextModOrder} is now unlocked for your account. You may retake the quiz anytime to review.`
+                ? hasNextModule
+                  ? `Best score: ${bestScore ?? passPct}%. Module ${fmtMod(nextModOrder)} is now unlocked for your account. You may retake the quiz anytime to review.`
+                  : `Best score: ${bestScore ?? passPct}%. Congratulations — you have passed the final module and completed ${course.title}!`
                 : hasFailedAttempt
-                ? `Your best attempt so far is ${bestScore}%. Score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Review the study material and try again.`
+                ? hasNextModule
+                  ? `Your best attempt so far is ${bestScore}%. Score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module ${fmtMod(activeModOrder)} and unlock Module ${fmtMod(nextModOrder)}. Review the study material and try again.`
+                  : `Your best attempt so far is ${bestScore}%. Score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module ${fmtMod(activeModOrder)} and complete the course. Review the study material and try again.`
                 : modQuizUnlocked
-                ? `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module 0${activeModOrder} and unlock Module 0${nextModOrder}. Unlimited retakes allowed.`
-                : `Watch at least 90% of the embedded video above to automatically unlock the ${qCount}-question Module 0${activeModOrder} Quiz.`}
+                ? hasNextModule
+                  ? `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module ${fmtMod(activeModOrder)} and unlock Module ${fmtMod(nextModOrder)}. Unlimited retakes allowed.`
+                  : `Complete all ${qCount} multiple-choice questions and score at least ${passPct}% (${passNeeded}/${qCount}) to pass Module ${fmtMod(activeModOrder)} and complete ${course.title}. Unlimited retakes allowed.`
+                : `Watch at least 90% of the embedded video above to automatically unlock the ${qCount}-question Module ${fmtMod(activeModOrder)} Quiz.`}
             </p>
           </div>
 
@@ -734,9 +749,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     nextModFlatMatch.globalIndex
                   )
                 }
-                className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
+                className="min-h-[42px] px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors"
               >
-                <span>Continue to Module 0{nextModOrder}</span>
+                <span>Continue to Module {fmtMod(nextModOrder)}</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             )}
@@ -746,7 +761,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               onClick={() =>
                 selectModuleQuiz(activeModule.id, activeModule.title)
               }
-              className={`min-h-[46px] px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+              className={`min-h-[42px] px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                 modQuizUnlocked
                   ? 'bg-[#102B4E] hover:bg-[#081D36] text-white'
                   : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
@@ -756,11 +771,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
               <span>
                 {modPassed
-                  ? `Retake Module 0${activeModOrder} Quiz`
+                  ? `Retake Module ${fmtMod(activeModOrder)} Quiz`
                   : bestScore !== null
                   ? `Retake Quiz (Best ${bestScore}%)`
                   : modQuizUnlocked
-                  ? `Start Module 0${activeModOrder} Quiz`
+                  ? `Start Module ${fmtMod(activeModOrder)} Quiz`
                   : 'Quiz Locked'}
               </span>
               <ArrowRight className="w-4 h-4 shrink-0" />
@@ -771,84 +786,137 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     );
   };
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* Progress Summary Header */}
-      <div className="p-5 border-b border-[#E5EAF0] space-y-3">
+  const handleSidebarBack = () => {
+    setMobileDrawerOpen(false);
+    if (onBackToDashboard) {
+      onBackToDashboard();
+    } else {
+      onBackToCourseDetails();
+    }
+  };
+
+  const renderSidebarContent = (isMobileDrawer: boolean) => (
+    <div className="flex flex-col flex-auto min-h-0 overflow-hidden">
+      {/* Sticky Course Sidebar Header — Keeps Back to Dashboard, Course Title & Progress visible while scrolling */}
+      <div
+        className={`sticky top-0 z-20 shrink-0 bg-white border-b border-[#E5EAF0] ${
+          isMobileDrawer ? 'px-4 py-3 space-y-2.5' : 'px-4 py-3.5 sm:px-5 sm:py-4 space-y-3'
+        }`}
+      >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-[#566479]">Course Progress</span>
-          <span className="font-display text-sm font-extrabold text-[#102B4E] tabular-nums">
-            {progressPercent}%
-          </span>
+          <button
+            type="button"
+            onClick={handleSidebarBack}
+            className="min-h-[36px] -ml-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+            <span>Back to Dashboard</span>
+          </button>
+
+          {isMobileDrawer && (
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(false)}
+              aria-label="Close course outline"
+              className="min-w-[40px] min-h-[40px] -mr-1.5 rounded-lg flex items-center justify-center text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] cursor-pointer transition-colors shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
-        <div
-          className="h-2 w-full rounded-full bg-[#E8EEF5] overflow-hidden"
-          role="progressbar"
-          aria-valuenow={progressPercent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Course progress"
-        >
-          <div
-            className={`h-full rounded-full transition-all duration-300 ${
-              completionState.isCourseCompleted ? 'bg-emerald-600' : 'bg-[#F47A24]'
-            }`}
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <div className="space-y-1 text-[11px] text-[#778397] tabular-nums">
-          <div className="flex items-center justify-between">
-            <span>
-              Video/Lessons: {validCompletedSet.size}/{totalLessons}
-            </span>
-            <span>
-              Quizzes: {passedRequiredCount}/{requiredModuleQuizIds.length}
+
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="font-display text-sm font-bold text-[#102B4E] leading-snug line-clamp-2 min-w-0">
+              {course.title}
+            </h2>
+            <span className="font-display text-xs font-extrabold text-[#102B4E] tabular-nums shrink-0 pt-0.5">
+              {progressPercent}%
             </span>
           </div>
-          {assessmentOverview?.finalAssessment ? (
-            <div className="flex items-center justify-between">
+
+          <div
+            className="h-1.5 w-full rounded-full bg-[#E8EEF5] overflow-hidden"
+            role="progressbar"
+            aria-valuenow={progressPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Course progress"
+          >
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                completionState.isCourseCompleted ? 'bg-emerald-600' : 'bg-[#F47A24]'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          <div className="space-y-1 text-[11px] text-[#778397] tabular-nums">
+            <div className="flex items-center justify-between gap-2">
               <span>
-                Final Assessment:{' '}
-                <strong
-                  className={
-                    finalAssessmentPassed ? 'text-emerald-700' : 'text-[#566479]'
-                  }
-                >
-                  {finalAssessmentPassed
-                    ? `Passed${bestFinalScore ? ` (${bestFinalScore}%)` : ''}`
-                    : 'Required (70%+)'}
-                </strong>
+                Lessons: {validCompletedSet.size}/{totalLessons}
+              </span>
+              <span>
+                Quizzes: {passedRequiredCount}/{requiredModuleQuizIds.length}
               </span>
             </div>
-          ) : (() => {
-            const nextLockedMod = sortedModules.find(
-              (m) => m.order > effectiveUnlockedModuleOrder
-            );
-            const highestPlaceholder = sortedModules.find((m) => m.isUpcomingPlaceholder);
-            const targetModOrder = nextLockedMod?.order ?? highestPlaceholder?.order ?? 2;
-            const targetUnlocked = effectiveUnlockedModuleOrder >= targetModOrder;
-            return (
-              <div className="flex items-center justify-between">
-                <span>
-                  Module 0{targetModOrder} Status:{' '}
-                  <strong
-                    className={
-                      targetUnlocked ? 'text-emerald-700' : 'text-[#566479]'
-                    }
-                  >
-                    {targetUnlocked
-                      ? 'Unlocked'
-                      : `Locked (Pass M0${targetModOrder - 1} 70%+)`}
-                  </strong>
-                </span>
-              </div>
-            );
-          })()}
+            {!isMobileDrawer &&
+              (assessmentOverview?.finalAssessment ? (
+                <div className="flex items-center justify-between">
+                  <span>
+                    Final Assessment:{' '}
+                    <strong
+                      className={
+                        finalAssessmentPassed ? 'text-emerald-700' : 'text-[#566479]'
+                      }
+                    >
+                      {finalAssessmentPassed
+                        ? `Passed${bestFinalScore ? ` (${bestFinalScore}%)` : ''}`
+                        : 'Required (70%+)'}
+                    </strong>
+                  </span>
+                </div>
+              ) : (() => {
+                if (completionState.isCourseCompleted) {
+                  return (
+                    <div className="flex items-center justify-between">
+                      <span>
+                        Status:{' '}
+                        <strong className="text-emerald-700">Completed</strong>
+                      </span>
+                    </div>
+                  );
+                }
+                const nextLockedMod = sortedModules.find(
+                  (m) => m.order > effectiveUnlockedModuleOrder
+                );
+                const highestPlaceholder = sortedModules.find((m) => m.isUpcomingPlaceholder);
+                const targetModOrder =
+                  nextLockedMod?.order ?? highestPlaceholder?.order ?? sortedModules.length;
+                const targetUnlocked = effectiveUnlockedModuleOrder >= targetModOrder;
+                return (
+                  <div className="flex items-center justify-between">
+                    <span>
+                      Module {fmtMod(targetModOrder)}:{' '}
+                      <strong
+                        className={
+                          targetUnlocked ? 'text-emerald-700' : 'text-[#566479]'
+                        }
+                      >
+                        {targetUnlocked
+                          ? 'Unlocked'
+                          : `Locked (Pass M${fmtMod(targetModOrder - 1)} 70%+)`}
+                      </strong>
+                    </span>
+                  </div>
+                );
+              })())}
+          </div>
         </div>
       </div>
 
       {/* Scrollable Module, Lesson, Quiz & Final Assessment List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#E5EAF0]">
+      <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain course-sidebar-scroll divide-y divide-[#E5EAF0] pb-3">
         {/* Course Introduction Link */}
         <div className="p-3">
           <button
@@ -886,8 +954,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   onClick={() => {
                     setLockNotice(
                       isPlaceholderUnlocked
-                        ? `Module 0${mod.order} is unlocked! Module 0${prevModOrder} has been completed and passed.`
-                        : `Module 0${mod.order} is locked. Watch the Module 0${prevModOrder} video (90%+) and score at least 70% on the Module 0${prevModOrder} Quiz to unlock it.`
+                        ? `Module ${fmtMod(mod.order)} is unlocked! Module ${fmtMod(prevModOrder)} has been completed and passed.`
+                        : `Module ${fmtMod(mod.order)} is locked. Watch the Module ${fmtMod(prevModOrder)} video (90%+) and score at least 70% on the Module ${fmtMod(prevModOrder)} Quiz to unlock it.`
                     );
                     setMobileDrawerOpen(false);
                   }}
@@ -906,15 +974,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </span>
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wide">
-                      Module 0{mod.order}
+                      Module {fmtMod(mod.order)}
                     </p>
                     <p className="text-xs font-bold leading-snug text-[#102B4E]">
                       {isPlaceholderUnlocked ? 'Unlocked — Ready Next' : 'Next Module (Locked)'}
                     </p>
                     <p className="text-[11px]">
                       {isPlaceholderUnlocked
-                        ? `Module 0${prevModOrder} passed (70%+)`
-                        : `Pass Module 0${prevModOrder} Quiz (70%+) to unlock`}
+                        ? `Module ${fmtMod(prevModOrder)} passed (70%+)`
+                        : `Pass Module ${fmtMod(prevModOrder)} Quiz (70%+) to unlock`}
                     </p>
                   </div>
                 </button>
@@ -941,7 +1009,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               >
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2 text-[11px] font-semibold text-[#778397] tabular-nums">
-                    <span>Module 0{mod.order}</span>
+                    <span>Module {fmtMod(mod.order)}</span>
                     <span aria-hidden="true">·</span>
                     <span>
                       {modCompletedCount}/{mod.lessons.length} done
@@ -1106,7 +1174,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                               : 'text-[#778397]'
                           }`}
                         >
-                          Module 0{mod.order} Quiz
+                          Module {fmtMod(mod.order)} Quiz
                         </p>
                         <div
                           className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
@@ -1229,12 +1297,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     <div className="min-h-screen bg-[#F6F8FB] text-[#253449]">
       {/* Minimal Distraction-Free Player Toolbar */}
       <div className="bg-white border-b border-[#E5EAF0]">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={onBackToCourseDetails}
-              className="min-h-[40px] px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="min-h-[38px] px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Course Overview</span>
@@ -1242,7 +1310,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
             </button>
             <span className="h-5 w-px bg-[#E5EAF0] shrink-0" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-sm sm:text-base font-bold text-[#102B4E] truncate">
+              <p className="text-sm sm:text-[15px] font-bold text-[#102B4E] truncate">
                 {course.title}
               </p>
               <p className="hidden md:block text-xs text-[#778397] truncate">
@@ -1269,7 +1337,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenAdminContentManager}
-                className="min-h-[40px] px-3.5 py-2 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] text-[#102B4E] text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
               >
                 <Settings2 className="w-3.5 h-3.5 text-[#F47A24]" />
                 <span className="hidden sm:inline">Manage Course</span>
@@ -1279,7 +1347,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden min-h-[44px] px-3.5 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-semibold inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
+              className="lg:hidden min-h-[44px] px-3.5 py-2 rounded-lg bg-[#102B4E] text-white text-xs font-semibold inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <List className="w-4 h-4 text-[#F47A24]" />
               <span className="tabular-nums">Outline · {progressPercent}%</span>
@@ -1289,32 +1357,35 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       </div>
 
       {/* Main Split Learning Workspace */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Desktop Sidebar */}
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+          {/* Desktop Sidebar (290px fixed width, sticky header inside) */}
           <aside
             aria-label="Course curriculum"
-            className="hidden lg:block lg:col-span-4 xl:col-span-3 bg-white rounded-2xl border border-[#E5EAF0] overflow-hidden lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]"
+            className="hidden lg:flex lg:flex-col lg:w-[290px] lg:shrink-0 bg-white rounded-xl border border-[#E5EAF0] overflow-hidden lg:sticky lg:top-[84px] lg:max-h-[calc(100vh-6rem)]"
           >
-            {sidebarContent}
+            {renderSidebarContent(false)}
           </aside>
 
           {/* Main Learning Content Area */}
-          <main className="lg:col-span-8 xl:col-span-9 min-w-0 space-y-6">
+          <main className="flex-1 min-w-0 space-y-5">
             {/* Course Completed & Certificate Banner */}
             {completionState.isCourseCompleted && (
-              <div className="rounded-2xl bg-white border border-emerald-200 px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="rounded-xl bg-white border border-emerald-200 px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
                     <Award className="w-5 h-5 text-[#C59B43]" />
                   </div>
                   <div className="space-y-0.5 min-w-0">
                     <p className="text-sm font-bold text-[#102B4E]">
-                      Course Completed — Official Certificate Ready
+                      {certificate
+                        ? 'Course Completed — Official Certificate Ready'
+                        : `Course Completed — Congratulations on Finishing ${course.title}!`}
                     </p>
                     <p className="text-xs text-[#566479] leading-relaxed">
-                      You completed all {totalLessons} lessons, passed all required module quizzes, and passed the Final Course Assessment
-                      {bestFinalScore ? ` with ${bestFinalScore}%` : ''}.
+                      {assessmentOverview?.finalAssessment
+                        ? `You completed all ${totalLessons} lessons, passed all required module quizzes, and passed the Final Course Assessment${bestFinalScore ? ` with ${bestFinalScore}%` : ''}.`
+                        : `You completed all ${totalLessons} modules and passed all ${requiredModuleQuizIds.length} module quizzes (70%+).`}
                       {certificate ? (
                         <span className="font-semibold text-[#102B4E] tabular-nums">
                           {' '}
@@ -1445,13 +1516,13 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
             ) : isViewingFinalAssessment ? (
               /* VIEW B: FINAL COURSE ASSESSMENT (LOCKED CHECKLIST OR RUNNER) */
               !isFinalAssessmentUnlocked ? (
-                <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-6">
-                  <div className="space-y-2 border-b border-[#E5EAF0] pb-5">
+                <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-5">
+                  <div className="space-y-2 border-b border-[#E5EAF0] pb-4">
                     <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5" />
                       <span>Prerequisites Required</span>
                     </p>
-                    <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E]">
+                    <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#102B4E]">
                       Final Course Assessment
                     </h1>
                     <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[66ch]">
@@ -1592,7 +1663,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   }}
                 />
               ) : (
-                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 text-center text-sm text-[#566479]">
+                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 text-center text-sm text-[#566479]">
                   Loading Final Course Assessment...
                 </div>
               )
@@ -1603,9 +1674,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: EASE_PREMIUM }}
-                className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-8"
+                className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6"
               >
-                <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
+                <div className="space-y-2.5 border-b border-[#E5EAF0] pb-5">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397]">
                     <span className="font-semibold text-[#F47A24]">Course Introduction</span>
                     <span aria-hidden="true">·</span>
@@ -1615,15 +1686,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     <span aria-hidden="true">·</span>
                     <span>Module Quizzes &amp; Final Assessment</span>
                   </div>
-                  <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
+                  <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
                     {course.courseIntroduction.headline}
                   </h1>
-                  <p className="text-[15px] sm:text-base text-[#566479] leading-[1.7] max-w-[68ch]">
+                  <p className="text-sm sm:text-[15px] text-[#566479] leading-[1.65] max-w-[68ch]">
                     {course.courseIntroduction.overview}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
                       How to Complete This Course
@@ -1683,17 +1754,17 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, ease: EASE_PREMIUM }}
-                className="space-y-6"
+                className="space-y-5"
               >
                 {/* 1. Primary Module Header & Embedded YouTube Video (Immediately Visible) */}
                 {activeLesson.videos && activeLesson.videos.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {/* Module Title & Metadata Banner */}
-                    <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-7 space-y-3">
-                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
+                    <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-2.5">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[#778397] tabular-nums">
                         {activeModule && (
                           <span className="font-bold text-[#F47A24]">
-                            Module 0{activeModule.order}
+                            Module {fmtMod(activeModule.order)}
                           </span>
                         )}
                         {activeModule?.level && (
@@ -1720,11 +1791,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         )}
                       </div>
 
-                      <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
+                      <h1 className="font-display text-xl sm:text-[24px] font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
                         {activeModule ? activeModule.title : activeLesson.title}
                       </h1>
 
-                      <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[70ch]">
+                      <p className="text-sm sm:text-[15px] text-[#566479] leading-relaxed max-w-[70ch]">
                         {activeModule?.summary || activeLesson.description}
                       </p>
                     </section>
@@ -1735,7 +1806,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         key={vid.id}
                         video={vid}
                         moduleLabel={
-                          activeModule ? `Module 0${activeModule.order} Quiz` : 'Module Quiz'
+                          activeModule ? `Module ${fmtMod(activeModule.order)} Quiz` : 'Module Quiz'
                         }
                         savedProgress={videoProgressById[vid.id]}
                         isSaving={isSavingVideo || isSavingProgress}
@@ -1745,271 +1816,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       />
                     ))}
 
-                    {/* Learning Objectives — Directly Underneath the Video */}
-                    {activeModule?.learningObjectives &&
-                      activeModule.learningObjectives.length > 0 && (
-                        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-7 space-y-4">
-                          <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-[#F47A24] shrink-0" />
-                            <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
-                              Module 0{activeModule.order} Learning Objectives
-                            </h2>
-                          </div>
-                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {activeModule.learningObjectives.map((obj, idx) => (
-                              <li
-                                key={idx}
-                                className="flex items-start gap-2.5 text-sm text-[#253449] leading-relaxed bg-[#FAFBFD] border border-[#E5EAF0]/80 rounded-xl px-3.5 py-2.5"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-                                <span>{obj}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </section>
-                      )}
-
-                    {/* Primary Progression Card: Shown above study material for Modules 1 & 2 */}
-                    {activeModule && activeModule.order < 3 && renderActiveModuleQuizCard()}
-
-                    {/* 2. Supporting Study Material (Secondary to Video + Quiz) */}
-                    {activeLesson.studyGuide ? (() => {
-                      const hasRichTopics = activeLesson.studyGuide.sections.some((sec) =>
-                        Boolean(
-                          (sec.steps && sec.steps.length > 0) ||
-                            sec.example ||
-                            sec.commonMistake ||
-                            (sec.shortcuts && sec.shortcuts.length > 0)
-                        )
-                      );
-
-                      return (
-                        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-8 space-y-6">
-                          <div className="space-y-1 border-b border-[#E5EAF0] pb-4">
-                            <p className="text-xs font-semibold text-teal-700 inline-flex items-center gap-1.5">
-                              <BookOpen className="w-3.5 h-3.5" />
-                              <span>Supporting Study Material</span>
-                            </p>
-                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-                              {activeLesson.studyGuide.title ||
-                                'Concise Excel Fundamentals Study Guide'}
-                            </h2>
-                            <p className="text-xs sm:text-sm text-[#566479]">
-                              {activeLesson.studyGuide.subtitle ||
-                                'Quick written reference covering key concepts, interface tools, and workplace spreadsheet examples to reinforce the video lesson.'}
-                            </p>
-                          </div>
-
-                          {/* Study Guide Concept / Topic Blocks */}
-                          {hasRichTopics ? (
-                            <div className="space-y-5">
-                              {activeLesson.studyGuide.sections.map((sec, idx) => (
-                                <div
-                                  key={idx}
-                                  className="p-4 sm:p-6 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-4"
-                                >
-                                  <div className="space-y-1.5">
-                                    <h3 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
-                                      {sec.heading}
-                                    </h3>
-                                    <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
-                                      {sec.body}
-                                    </p>
-                                  </div>
-
-                                  {sec.bullets && sec.bullets.length > 0 && (
-                                    <ul className="space-y-1.5">
-                                      {sec.bullets.map((b, bIdx) => (
-                                        <li
-                                          key={bIdx}
-                                          className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
-                                        >
-                                          <span
-                                            aria-hidden="true"
-                                            className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
-                                          />
-                                          <span>{b}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-
-                                  {sec.steps && sec.steps.length > 0 && (
-                                    <div className="bg-white rounded-xl border border-[#E5EAF0] p-4 space-y-2.5">
-                                      <p className="text-xs font-bold uppercase tracking-wide text-[#102B4E]">
-                                        Step-by-Step Instructions
-                                      </p>
-                                      <ol className="space-y-2">
-                                        {sec.steps.map((step, sIdx) => (
-                                          <li
-                                            key={sIdx}
-                                            className="flex items-start gap-2.5 text-xs sm:text-sm text-[#253449] leading-relaxed"
-                                          >
-                                            <span className="w-5 h-5 rounded-md bg-[#102B4E] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
-                                              {sIdx + 1}
-                                            </span>
-                                            <span>{step}</span>
-                                          </li>
-                                        ))}
-                                      </ol>
-                                    </div>
-                                  )}
-
-                                  {(sec.example || sec.commonMistake) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      {sec.example && (
-                                        <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 space-y-1">
-                                          <p className="text-xs font-bold text-teal-900 inline-flex items-center gap-1.5">
-                                            <Lightbulb className="w-3.5 h-3.5 text-teal-700 shrink-0" />
-                                            <span>Workplace Example</span>
-                                          </p>
-                                          <p className="text-xs sm:text-[13px] text-teal-950 leading-relaxed">
-                                            {sec.example}
-                                          </p>
-                                        </div>
-                                      )}
-                                      {sec.commonMistake && (
-                                        <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/90 space-y-1">
-                                          <p className="text-xs font-bold text-amber-900 inline-flex items-center gap-1.5">
-                                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                                            <span>Common Beginner Mistake</span>
-                                          </p>
-                                          <p className="text-xs sm:text-[13px] text-amber-950 leading-relaxed">
-                                            {sec.commonMistake}
-                                          </p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {sec.shortcuts && sec.shortcuts.length > 0 && (
-                                    <div className="pt-1 space-y-2">
-                                      <p className="text-xs font-bold text-[#102B4E] inline-flex items-center gap-1.5">
-                                        <Keyboard className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
-                                        <span>Useful Keyboard Shortcuts</span>
-                                      </p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {sec.shortcuts.map((sc, scIdx) => (
-                                          <div
-                                            key={scIdx}
-                                            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-[#D4DCE6] text-xs text-[#253449]"
-                                          >
-                                            <kbd className="font-mono text-[11px] font-bold text-[#102B4E] bg-[#F1F5FA] px-1.5 py-0.5 rounded border border-[#D4DCE6]">
-                                              {sc.keys}
-                                            </kbd>
-                                            <span>{sc.action}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {activeLesson.studyGuide.sections.map((sec, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`p-4 sm:p-5 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] space-y-2 ${
-                                    sec.bullets && sec.bullets.length >= 4 ? 'md:col-span-2' : ''
-                                  }`}
-                                >
-                                  <h3 className="font-display text-sm sm:text-[15px] font-bold text-[#102B4E]">
-                                    {sec.heading}
-                                  </h3>
-                                  <p className="text-xs sm:text-sm text-[#253449] leading-relaxed">
-                                    {sec.body}
-                                  </p>
-                                  {sec.bullets && sec.bullets.length > 0 && (
-                                    <ul className="space-y-1.5 pt-1">
-                                      {sec.bullets.map((b, bIdx) => (
-                                        <li
-                                          key={bIdx}
-                                          className="flex items-start gap-2 text-xs sm:text-sm text-[#253449] leading-relaxed"
-                                        >
-                                          <span
-                                            aria-hidden="true"
-                                            className="mt-2 w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0"
-                                          />
-                                          <span>{b}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                        {/* Real-World Spreadsheet Examples (Employee Spreadsheet & Supplier List) */}
-                        {activeLesson.studyGuide.examples.length > 0 && (
-                          <div className="space-y-5 pt-2">
-                            <div className="flex items-center gap-2">
-                              <Table2 className="w-4 h-4 text-[#F47A24] shrink-0" />
-                              <h3 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
-                                Real-World Workplace Spreadsheet Examples
-                              </h3>
-                            </div>
-
-                            {activeLesson.studyGuide.examples.map((ex, exIdx) => (
-                              <div
-                                key={exIdx}
-                                className="rounded-xl border border-[#D4DCE6] overflow-hidden bg-white"
-                              >
-                                <div className="px-4 py-3 bg-[#F6F8FB] border-b border-[#E5EAF0] space-y-0.5">
-                                  <p className="text-sm font-bold text-[#102B4E]">{ex.title}</p>
-                                  <p className="text-xs text-[#566479] leading-relaxed">
-                                    {ex.subtitle}
-                                  </p>
-                                </div>
-                                <div className="w-full overflow-x-auto">
-                                  <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[520px]">
-                                    <thead>
-                                      <tr className="bg-emerald-50/70 border-b border-[#D4DCE6]">
-                                        <th className="py-2 px-3 w-10 text-center font-bold text-slate-500 border-r border-[#E5EAF0] bg-slate-100">
-                                          Row
-                                        </th>
-                                        {ex.columns.map((col, cIdx) => (
-                                          <th
-                                            key={cIdx}
-                                            className="py-2 px-3 font-bold text-[#102B4E] border-r last:border-r-0 border-[#E5EAF0] whitespace-nowrap"
-                                          >
-                                            {col}
-                                          </th>
-                                        ))}
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#E5EAF0]">
-                                      {ex.rows.map((row, rIdx) => (
-                                        <tr
-                                          key={rIdx}
-                                          className="hover:bg-[#FAFBFD] transition-colors"
-                                        >
-                                          <td className="py-2 px-3 text-center font-semibold text-slate-500 border-r border-[#E5EAF0] bg-slate-50 tabular-nums">
-                                            {rIdx + 2}
-                                          </td>
-                                          {row.map((cell, cellIdx) => (
-                                            <td
-                                              key={cellIdx}
-                                              className="py-2 px-3 text-[#253449] border-r last:border-r-0 border-[#E5EAF0] whitespace-nowrap"
-                                            >
-                                              {cell}
-                                            </td>
-                                          ))}
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </section>
-                      );
-                    })() : (
-                      <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+                    {/* 2. Collapsible Study Guide (Collapsed by default on every module) */}
+                    {activeLesson.studyGuide ? (
+                      <CollapsibleStudyGuide
+                        key={activeLesson.id}
+                        lessonId={activeLesson.id}
+                        studyGuide={activeLesson.studyGuide}
+                      />
+                    ) : (
+                      <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
                         <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">
                           Lesson Notes
                         </h2>
@@ -2045,12 +1860,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       </div>
                     )}
 
-                    <div className="p-6 sm:p-8 lg:p-10 space-y-6">
-                      <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-[#778397] tabular-nums">
+                    <div className="p-5 sm:p-6 space-y-5">
+                      <div className="space-y-2.5 border-b border-[#E5EAF0] pb-5">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#778397] tabular-nums">
                           {activeModule && (
                             <span className="font-semibold text-[#102B4E]">
-                              Module 0{activeModule.order}: {activeModule.title}
+                              Module {fmtMod(activeModule.order)}: {activeModule.title}
                             </span>
                           )}
                           <span aria-hidden="true">·</span>
@@ -2064,12 +1879,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                           </span>
                         </div>
 
-                        <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
+                        <h1 className="font-display text-xl sm:text-[24px] font-extrabold text-[#102B4E] leading-tight [text-wrap:balance]">
                           {activeLesson.title}
                         </h1>
 
                         {activeLesson.description && (
-                          <p className="text-sm sm:text-base text-[#566479] leading-relaxed max-w-[68ch]">
+                          <p className="text-sm sm:text-[15px] text-[#566479] leading-relaxed max-w-[68ch]">
                             {activeLesson.description}
                           </p>
                         )}
@@ -2089,7 +1904,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
                 {/* Practical Activity */}
                 {activeLesson.exercise && (
-                  <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+                  <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1">
                         <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
@@ -2180,7 +1995,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
                 {/* Downloadable Resources */}
                 {activeLesson.attachments && activeLesson.attachments.length > 0 && (
-                  <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 space-y-4">
+                  <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
                     <div className="space-y-1">
                       <h2 className="font-display text-lg font-bold text-[#102B4E]">
                         Downloadable Resources
@@ -2194,7 +2009,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                       {activeLesson.attachments.map((att) => (
                         <div
                           key={att.id}
-                          className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                          className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                         >
                           <div className="flex items-start gap-3 min-w-0">
                             <FileText className="w-4 h-4 text-[#F47A24] shrink-0 mt-0.5" />
@@ -2214,7 +2029,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                             onClick={() =>
                               downloadLessonResource(course.title, activeLesson.title, att)
                             }
-                            className="min-h-[44px] px-4 py-2 rounded-xl border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                            className="min-h-[40px] px-4 py-2 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Download {att.url ? att.fileType : 'PDF'}</span>
@@ -2225,11 +2040,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Module Quiz Card at the end (below study material & practical activity) for Module 3+ */}
-                {activeModule && activeModule.order >= 3 && renderActiveModuleQuizCard()}
+                {/* Module Quiz Card (below Study Guide, Practical Activity & Downloadable Resources) */}
+                {activeModule && renderActiveModuleQuizCard()}
 
                 {/* Lesson Completion Status & Navigation Controls */}
-                <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
+                <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
                   {activeLesson.videos && activeLesson.videos.length > 0 ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5">
@@ -2335,7 +2150,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                           <Lock className="w-4 h-4 shrink-0" />
                         )}
                         <ClipboardCheck className="w-4 h-4 shrink-0 text-[#F47A24]" />
-                        <span>Take Module 0{activeModule.order} Quiz</span>
+                        <span>Take Module {fmtMod(activeModule.order)} Quiz</span>
                         <ArrowRight className="w-4 h-4 shrink-0" />
                       </button>
                     ) : nextEntry ? (
@@ -2390,20 +2205,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
               aria-label="Course curriculum drawer"
               className="relative z-10 w-[88vw] max-w-[360px] bg-white h-full flex flex-col shadow-xl"
             >
-              <div className="px-4 py-3.5 border-b border-[#E5EAF0] flex items-center justify-between gap-2">
-                <p className="font-display text-sm font-bold text-[#102B4E] truncate">
-                  {course.title}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setMobileDrawerOpen(false)}
-                  aria-label="Close course outline"
-                  className="min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center text-[#566479] hover:bg-[#F6F8FB] cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {renderSidebarContent(true)}
               </div>
-              <div className="flex-1 overflow-hidden">{sidebarContent}</div>
             </motion.aside>
           </div>
         )}

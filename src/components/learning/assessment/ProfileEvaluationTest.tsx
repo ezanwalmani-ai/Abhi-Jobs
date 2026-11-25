@@ -507,7 +507,7 @@ export const ProfileEvaluationTest: React.FC<ProfileEvaluationTestProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: EASE_PREMIUM }}
-            className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 lg:p-10 space-y-6"
+            className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6"
           >
             <div className="space-y-1.5 pb-4 border-b border-[#E5EAF0]">
               <p className="text-xs font-semibold text-[#F47A24]">

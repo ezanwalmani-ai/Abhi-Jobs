@@ -152,6 +152,7 @@ export function evaluateCourseCompletion(params: {
   passedModuleQuizIds: string[];
   requiredModuleQuizIds: string[];
   finalAssessmentPassed: boolean;
+  requiresFinalAssessment?: boolean;
   hasCurrentLesson?: boolean;
 }): {
   allLessonsCompleted: boolean;
@@ -171,14 +172,19 @@ export function evaluateCourseCompletion(params: {
   const allRequiredQuizzesPassed =
     requiredQuizIds.length === 0 || passedRequiredQuizzesCount >= requiredQuizIds.length;
 
+  const requiresFinal = params.requiresFinalAssessment ?? true;
   const finalAssessmentPassed = Boolean(params.finalAssessmentPassed);
   const isCourseCompleted =
-    allLessonsCompleted && allRequiredQuizzesPassed && finalAssessmentPassed;
+    allLessonsCompleted &&
+    allRequiredQuizzesPassed &&
+    (!requiresFinal || finalAssessmentPassed);
 
-  // Weight milestones: every lesson + every required module quiz + final assessment
-  const totalMilestones = safeTotalLessons + requiredQuizIds.length + 1;
+  // Weight milestones: every lesson + every required module quiz (+ final assessment if configured)
+  const totalMilestones = safeTotalLessons + requiredQuizIds.length + (requiresFinal ? 1 : 0);
   const completedMilestones =
-    uniqueLessonsDone + passedRequiredQuizzesCount + (finalAssessmentPassed ? 1 : 0);
+    uniqueLessonsDone +
+    passedRequiredQuizzesCount +
+    (requiresFinal && finalAssessmentPassed ? 1 : 0);
 
   let progressPercent = isCourseCompleted
     ? 100
@@ -563,6 +569,7 @@ export async function saveCandidateCourseProgress(
     unlockedModuleOrder?: number;
     requiredModuleQuizIds?: string[];
     finalAssessmentPassed?: boolean;
+    requiresFinalAssessment?: boolean;
     bestFinalScorePercent?: number;
     /** Server-graded passing module quiz attempt ID (required by Firestore rules to advance quiz unlock) */
     verifiedAttemptId?: string;
@@ -638,6 +645,8 @@ export async function saveCandidateCourseProgress(
     passedModuleQuizIds: sanitizedPassedQuizzes,
     requiredModuleQuizIds: requiredQuizIds,
     finalAssessmentPassed,
+    requiresFinalAssessment:
+      params.requiresFinalAssessment ?? course.modules.some((m) => m.isUpcomingPlaceholder),
     hasCurrentLesson: Boolean(safeCurrentLessonId),
   });
 

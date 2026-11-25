@@ -737,14 +737,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   }, [filteredJobs.length]);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-[#F6F8FB] py-6 sm:py-8">
       <ScrollProgress />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Page Header */}
         <ScrollReveal direction="up" distance={16}>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#102B4E]/5 text-[#102B4E] text-xs font-bold border border-[#102B4E]/15">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E5EAF0] pb-5">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#F47A24]">
                 <Briefcase className="w-3.5 h-3.5 text-[#F47A24]" />
                 <span>Curated Consultancy Openings</span>
               </div>
@@ -753,37 +753,37 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 text="Find Your Next Opportunity"
                 highlightWords={['Opportunity']}
                 highlightClassName="text-[#F47A24]"
-                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#102B4E] tracking-tight"
+                className="font-display text-[28px] sm:text-[34px] lg:text-[38px] font-extrabold text-[#102B4E] tracking-tight"
                 delay={0.05}
               />
-              <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
+              <p className="text-sm text-[#566479] leading-relaxed">
                 Discover opportunities based on skills, experience, and career interests. Every opening is published and verified by ABHI JOBS recruitment specialists.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
+            <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
               {/* Mobile filter toggle button */}
               <button
                 type="button"
                 onClick={() => setIsMobileFiltersOpen(true)}
-                className="md:hidden px-3.5 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-[#101828] text-xs font-bold shadow-2xs flex items-center gap-2 cursor-pointer min-h-[44px] hover:border-[#061226] active:scale-98 transition-all"
+                className="md:hidden px-3.5 py-2 rounded-lg border border-[#D4DCE6] bg-white text-[#102B4E] text-xs font-semibold shadow-2xs flex items-center gap-2 cursor-pointer min-h-[42px] hover:border-[#102B4E] active:scale-98 transition-all"
                 aria-label="Open filter sidebar"
               >
-                <SlidersHorizontal className="w-4 h-4 text-[#667085]" />
+                <SlidersHorizontal className="w-4 h-4 text-[#566479]" />
                 <span>Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF2B1A] text-white">
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F47A24] text-white">
                     {activeFilterCount}
                   </span>
                 )}
               </button>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#667085] font-semibold hidden sm:inline">Sort:</span>
+                <span className="text-xs text-[#778397] font-semibold hidden sm:inline">Sort:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="text-xs font-bold px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-[#101828] shadow-2xs focus:outline-hidden cursor-pointer min-h-[44px]"
+                  className="text-xs sm:text-[13px] font-semibold px-3 py-2 rounded-lg border border-[#D4DCE6] bg-white text-[#102B4E] shadow-2xs focus:outline-hidden cursor-pointer min-h-[40px]"
                   aria-label="Sort job listings"
                 >
                   <option value="recent">Most Recent</option>
@@ -798,11 +798,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
 
         {/* Search Bar & Primary Filter Controls */}
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E4E7EC] shadow-xs space-y-4">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5EAF0] shadow-xs space-y-3.5">
             {/* 1. Search & 2. Location Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               {/* 1. Search */}
-              <div className="abhi-search-shell md:col-span-7 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
+              <div className="abhi-search-shell md:col-span-7 flex items-center gap-2 px-3 sm:px-3.5 py-2.5 rounded-lg border border-[#D4DCE6] bg-[#F6F8FB] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
                 <Search className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -1169,7 +1169,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="ml-auto text-xs font-semibold text-[#FF2B1A] hover:text-[#e02213] hover:underline cursor-pointer flex items-center gap-1 py-1.5 px-2"
+                    className="ml-auto text-xs font-semibold text-[#F47A24] hover:text-[#DE6816] hover:underline cursor-pointer flex items-center gap-1 py-1.5 px-2"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Clear All</span>
@@ -1201,7 +1201,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="px-3 py-2 text-xs font-semibold text-[#FF2B1A] hover:underline cursor-pointer min-h-[44px] flex items-center gap-1 shrink-0"
+                    className="px-3 py-2 text-xs font-semibold text-[#F47A24] hover:underline cursor-pointer min-h-[44px] flex items-center gap-1 shrink-0"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Clear All</span>
@@ -1235,7 +1235,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="text-xs font-semibold text-[#FF2B1A] hover:text-[#e02213] hover:underline cursor-pointer ml-1.5 flex items-center gap-1 py-1"
+                    className="text-xs font-semibold text-[#F47A24] hover:text-[#DE6816] hover:underline cursor-pointer ml-1.5 flex items-center gap-1 py-1"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Clear All</span>
@@ -1295,7 +1295,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   <button
                     type="button"
                     onClick={clearAllRecentSearches}
-                    className="text-[11px] font-semibold text-slate-400 hover:text-[#FF2B1A] transition-colors px-2 py-1 cursor-pointer ml-auto sm:ml-1"
+                    className="text-[11px] font-semibold text-slate-400 hover:text-[#F47A24] transition-colors px-2 py-1 cursor-pointer ml-auto sm:ml-1"
                     title="Clear search history"
                   >
                     Clear History
@@ -1389,7 +1389,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                       onClick={() => setSelectedSkill('All')}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         selectedSkill === 'All'
-                          ? 'bg-[#061226] text-white shadow-2xs'
+                          ? 'bg-[#102B4E] text-white shadow-2xs'
                           : 'bg-[#F7F8FA] text-[#667085] hover:bg-slate-200'
                       }`}
                     >
@@ -1402,7 +1402,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                         onClick={() => setSelectedSkill(skill === selectedSkill ? 'All' : skill)}
                         className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                           selectedSkill === skill
-                            ? 'bg-[#061226] text-white shadow-2xs font-bold'
+                            ? 'bg-[#102B4E] text-white shadow-2xs font-bold'
                             : 'bg-[#F7F8FA] text-[#101828] hover:bg-slate-200'
                         }`}
                       >
@@ -1524,7 +1524,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.25 }}
-                className="p-12 text-center bg-white rounded-3xl border border-rose-200 shadow-xs space-y-4 max-w-lg mx-auto"
+                className="p-6 text-center bg-white rounded-xl border border-rose-200 shadow-xs space-y-4 max-w-lg mx-auto"
               >
                 <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
                   <AlertCircle className="w-7 h-7" />
@@ -1536,7 +1536,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 <div className="pt-2">
                   <button
                     onClick={handleRetry}
-                    className="px-5 py-2.5 rounded-xl bg-[#061226] text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer inline-flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer inline-flex items-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Retry</span>
@@ -1549,7 +1549,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-10 sm:p-14 text-center bg-white rounded-3xl border border-[#E4E7EC] shadow-xs space-y-5 max-w-xl mx-auto"
+                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E4E7EC] shadow-xs space-y-5 max-w-xl mx-auto"
               >
                 <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#004D40] flex items-center justify-center mx-auto border border-teal-100">
                   <Briefcase className="w-8 h-8 text-[#004D40]" />
@@ -1567,7 +1567,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     onClick={() => navigate('/job-seeker/profile')}
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                   >
                     <UserCheck className="w-4 h-4" />
                     <span>Update My Profile</span>
@@ -1587,7 +1587,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-10 sm:p-14 text-center bg-white rounded-3xl border border-[#E4E7EC] shadow-xs space-y-4 max-w-lg mx-auto"
+                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E4E7EC] shadow-xs space-y-4 max-w-lg mx-auto"
               >
                 <div className="w-14 h-14 rounded-2xl bg-[#F7F8FA] text-[#667085] flex items-center justify-center mx-auto">
                   <Search className="w-7 h-7" />
@@ -1601,7 +1601,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 <div className="pt-3">
                   <button
                     onClick={handleResetFilters}
-                    className="px-5 py-2.5 rounded-xl bg-[#061226] text-white text-xs font-bold hover:bg-[#0c1f3d] transition-colors cursor-pointer min-h-[44px] inline-flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-[#0c1f3d] transition-colors cursor-pointer min-h-[44px] inline-flex items-center gap-2"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Clear Filters</span>
@@ -1689,7 +1689,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                         <button
                           type="button"
                           onClick={() => setLocation('')}
-                          className="text-[11px] text-[#FF2B1A] font-medium hover:underline cursor-pointer"
+                          className="text-[11px] text-[#F47A24] font-medium hover:underline cursor-pointer"
                         >
                           Clear
                         </button>

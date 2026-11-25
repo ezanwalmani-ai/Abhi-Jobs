@@ -234,7 +234,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </ScrollReveal>
 
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5EAF0] shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E5EAF0] shadow-sm space-y-6">
             {successMessage && (
               <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-[#004D40] font-semibold flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
@@ -374,7 +374,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#061226]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#102B4E]"
                 />
               </div>
 
@@ -386,7 +386,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-xs text-[#004D40] hover:text-[#061226] font-semibold flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[#004D40] hover:text-[#102B4E] font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     <span>{showPassword ? 'Hide' : 'Show'}</span>
@@ -397,7 +397,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Your password"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#061226]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#102B4E]"
                 />
               </div>
 

@@ -350,7 +350,7 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
 
   if (authChecking) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5EAF0] p-10 flex items-center justify-center gap-3 text-sm text-[#566479]">
+      <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 flex items-center justify-center gap-3 text-sm text-[#566479]">
         <Loader2 className="w-5 h-5 animate-spin text-[#102B4E]" />
         <span>Verifying administrator access...</span>
       </div>
@@ -359,7 +359,7 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
 
   if (!isAuthorized) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-8 max-w-lg mx-auto space-y-5">
+      <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 max-w-lg mx-auto space-y-5">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#FAFBFD] border border-[#E5EAF0] flex items-center justify-center shrink-0">
             <KeyRound className="w-5 h-5 text-[#F47A24]" />
@@ -498,7 +498,7 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
       {/* TAB 1: QUESTION BANK & SETTINGS */}
       {activeSubTab === 'questions' &&
         (LEARNING_CATALOGUE_COURSES.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 sm:p-10 text-center space-y-2.5">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 text-center space-y-2.5">
             <h3 className="font-display text-lg font-bold text-[#102B4E]">
               No courses available yet
             </h3>
@@ -921,7 +921,7 @@ export const AdminAssessmentManager: React.FC<AdminAssessmentManagerProps> = ({
                 </div>
               </>
             ) : (
-              <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 text-center text-sm text-[#778397]">
+              <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 text-center text-sm text-[#778397]">
                 Select a module quiz or final assessment to edit its questions and settings.
               </div>
             )}

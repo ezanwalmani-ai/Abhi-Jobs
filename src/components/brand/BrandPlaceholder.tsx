@@ -24,7 +24,7 @@ export interface BrandPlaceholderProps {
 
 /**
  * Professional Brand Placeholder Component
- * Uses the ABHI JOBS palette (Navy #061226, Brand Red #FF2B1A, Teal #004D40)
+ * Uses the ABHI JOBS palette (Navy #102B4E, Brand Red #F47A24, Teal #004D40)
  * and geometric textures to render pristine, high-fidelity placeholder imagery.
  */
 export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
@@ -52,7 +52,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
     }
     const IconComponent = BRAND_ICONS[icon] || BRAND_ICONS.beacon;
     return (
-      <div className={`p-3 rounded-2xl ${isDark ? 'bg-white/10 border border-white/15' : 'bg-[#061226]/5 border border-[#061226]/10'}`}>
+      <div className={`p-3 rounded-2xl ${isDark ? 'bg-white/10 border border-white/15' : 'bg-[#102B4E]/5 border border-[#102B4E]/10'}`}>
         <IconComponent size="xl" colorMode={isDark ? 'white' : 'palette'} />
       </div>
     );
@@ -68,14 +68,14 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
   const bgClasses = (() => {
     switch (theme) {
       case 'midnight-teal':
-        return 'bg-gradient-to-br from-[#00382F] via-[#061226] to-[#0A0F1D] text-white';
+        return 'bg-gradient-to-br from-[#00382F] via-[#102B4E] to-[#0A0F1D] text-white';
       case 'light-slate':
         return 'bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 text-slate-900 border border-slate-200';
       case 'pure-white':
         return 'bg-white text-slate-900 border border-slate-200';
       case 'dark-navy':
       default:
-        return 'bg-gradient-to-br from-[#061226] via-[#0B192C] to-[#0A0F1D] text-white';
+        return 'bg-gradient-to-br from-[#102B4E] via-[#0B192C] to-[#0A0F1D] text-white';
     }
   })();
 
@@ -88,7 +88,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
       >
         <BrandPattern pattern={pattern} theme={theme} opacity={0.9} />
         {/* Subtle radial ambient glows */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#FF2B1A]/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#F47A24]/15 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#004D40]/25 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center gap-4 sm:gap-6 min-w-0">
@@ -101,7 +101,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
                 </span>
               )}
               {title && (
-                <h3 className={`text-base sm:text-xl font-bold truncate font-sora ${isDark ? 'text-white' : 'text-[#061226]'}`}>
+                <h3 className={`text-base sm:text-xl font-bold truncate font-sora ${isDark ? 'text-white' : 'text-[#102B4E]'}`}>
                   {title}
                 </h3>
               )}
@@ -116,7 +116,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
 
         {/* Minimal corner brand hallmark */}
         <div className="relative z-10 hidden sm:flex items-center gap-1.5 opacity-60">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FF2B1A]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#F47A24]" />
           <span className="text-[11px] font-mono tracking-widest uppercase">ABHI JOBS ®</span>
         </div>
       </div>
@@ -128,7 +128,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
     return (
       <div
         style={aspectStyle}
-        className={`relative w-full p-8 sm:p-12 rounded-3xl overflow-hidden flex flex-col items-center justify-center text-center ${bgClasses} ${className}`}
+        className={`relative w-full p-6 sm:p-7 rounded-xl overflow-hidden flex flex-col items-center justify-center text-center ${bgClasses} ${className}`}
       >
         <BrandPattern pattern={pattern} theme={theme} opacity={0.8} />
         <div className="relative z-10 flex flex-col items-center max-w-md space-y-3">

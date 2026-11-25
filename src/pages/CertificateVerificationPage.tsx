@@ -69,7 +69,7 @@ export const CertificateVerificationPage: React.FC<CertificateVerificationPagePr
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] py-10 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F6F8FB] py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto space-y-6">
         <button
           type="button"
@@ -81,7 +81,7 @@ export const CertificateVerificationPage: React.FC<CertificateVerificationPagePr
         </button>
 
         {/* Verification Header & Search Card */}
-        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-6 sm:p-10 space-y-6">
+        <section className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 space-y-6">
           <div className="space-y-3 border-b border-[#E5EAF0] pb-6">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <AbhiJobsWordmarkSVG theme="color" className="h-6 sm:h-7 w-auto" />

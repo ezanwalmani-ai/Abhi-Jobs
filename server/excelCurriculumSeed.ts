@@ -11,6 +11,61 @@ import type {
   PersistedAssessmentConfig,
   PersistedCourseDefinition,
 } from './learningStore';
+import {
+  EXCEL_M05_ID,
+  EXCEL_M05_LESSON_ID,
+  EXCEL_M06_ID,
+  EXCEL_M06_LESSON_ID,
+  EXCEL_M07_ID,
+  EXCEL_M07_LESSON_ID,
+  EXCEL_M08_ID,
+  EXCEL_M08_LESSON_ID,
+  EXCEL_M09_ID,
+  EXCEL_M09_LESSON_ID,
+  EXCEL_M10_ID,
+  EXCEL_M10_LESSON_ID,
+  EXCEL_M11_ID,
+  EXCEL_M11_LESSON_ID,
+  EXCEL_M12_ID,
+  EXCEL_M12_LESSON_ID,
+  EXCEL_M05_QUIZ_CONFIG,
+  EXCEL_M06_QUIZ_CONFIG,
+  EXCEL_M07_QUIZ_CONFIG,
+  EXCEL_M08_QUIZ_CONFIG,
+  EXCEL_M09_QUIZ_CONFIG,
+  EXCEL_M10_QUIZ_CONFIG,
+  EXCEL_M11_QUIZ_CONFIG,
+  EXCEL_M12_QUIZ_CONFIG,
+  EXCEL_M05_TO_M12_QUIZ_CONFIGS,
+} from './excelModules05To12Quizzes';
+
+export {
+  EXCEL_M05_ID,
+  EXCEL_M05_LESSON_ID,
+  EXCEL_M06_ID,
+  EXCEL_M06_LESSON_ID,
+  EXCEL_M07_ID,
+  EXCEL_M07_LESSON_ID,
+  EXCEL_M08_ID,
+  EXCEL_M08_LESSON_ID,
+  EXCEL_M09_ID,
+  EXCEL_M09_LESSON_ID,
+  EXCEL_M10_ID,
+  EXCEL_M10_LESSON_ID,
+  EXCEL_M11_ID,
+  EXCEL_M11_LESSON_ID,
+  EXCEL_M12_ID,
+  EXCEL_M12_LESSON_ID,
+  EXCEL_M05_QUIZ_CONFIG,
+  EXCEL_M06_QUIZ_CONFIG,
+  EXCEL_M07_QUIZ_CONFIG,
+  EXCEL_M08_QUIZ_CONFIG,
+  EXCEL_M09_QUIZ_CONFIG,
+  EXCEL_M10_QUIZ_CONFIG,
+  EXCEL_M11_QUIZ_CONFIG,
+  EXCEL_M12_QUIZ_CONFIG,
+  EXCEL_M05_TO_M12_QUIZ_CONFIGS,
+};
 
 export const EXCEL_COURSE_ID = 'excel_for_job_seekers';
 export const EXCEL_COURSE_SLUG = 'excel-for-job-seekers';
@@ -25,14 +80,41 @@ export const EXCEL_M02_LESSON_ID = 'excel_m02_lesson_01';
 export const EXCEL_M03_ID = 'excel_m03_formulas_references';
 export const EXCEL_M03_LESSON_ID = 'excel_m03_lesson_01';
 
-export const EXCEL_M04_ID = 'excel_m04_upcoming';
+export const EXCEL_M04_ID = 'excel_m04_essential_functions';
+export const EXCEL_M04_LESSON_ID = 'excel_m04_lesson_01';
 
 export const EXCEL_COURSE_DEFINITION: Omit<PersistedCourseDefinition, 'updatedAt'> = {
   courseId: EXCEL_COURSE_ID,
   courseSlug: EXCEL_COURSE_SLUG,
   courseTitle: EXCEL_COURSE_TITLE,
-  orderedModuleIds: [EXCEL_M01_ID, EXCEL_M02_ID, EXCEL_M03_ID, EXCEL_M04_ID],
-  requiredLessonIds: [EXCEL_M01_LESSON_ID, EXCEL_M02_LESSON_ID, EXCEL_M03_LESSON_ID],
+  orderedModuleIds: [
+    EXCEL_M01_ID,
+    EXCEL_M02_ID,
+    EXCEL_M03_ID,
+    EXCEL_M04_ID,
+    EXCEL_M05_ID,
+    EXCEL_M06_ID,
+    EXCEL_M07_ID,
+    EXCEL_M08_ID,
+    EXCEL_M09_ID,
+    EXCEL_M10_ID,
+    EXCEL_M11_ID,
+    EXCEL_M12_ID,
+  ],
+  requiredLessonIds: [
+    EXCEL_M01_LESSON_ID,
+    EXCEL_M02_LESSON_ID,
+    EXCEL_M03_LESSON_ID,
+    EXCEL_M04_LESSON_ID,
+    EXCEL_M05_LESSON_ID,
+    EXCEL_M06_LESSON_ID,
+    EXCEL_M07_LESSON_ID,
+    EXCEL_M08_LESSON_ID,
+    EXCEL_M09_LESSON_ID,
+    EXCEL_M10_LESSON_ID,
+    EXCEL_M11_LESSON_ID,
+    EXCEL_M12_LESSON_ID,
+  ],
   passPercentage: 70,
   certificateTemplateId: 'default_abhi_certificate',
 };
@@ -45,6 +127,15 @@ export const MODULE_REQUIRED_LESSONS: Record<string, string[]> = {
   [EXCEL_M01_ID]: [EXCEL_M01_LESSON_ID],
   [EXCEL_M02_ID]: [EXCEL_M02_LESSON_ID],
   [EXCEL_M03_ID]: [EXCEL_M03_LESSON_ID],
+  [EXCEL_M04_ID]: [EXCEL_M04_LESSON_ID],
+  [EXCEL_M05_ID]: [EXCEL_M05_LESSON_ID],
+  [EXCEL_M06_ID]: [EXCEL_M06_LESSON_ID],
+  [EXCEL_M07_ID]: [EXCEL_M07_LESSON_ID],
+  [EXCEL_M08_ID]: [EXCEL_M08_LESSON_ID],
+  [EXCEL_M09_ID]: [EXCEL_M09_LESSON_ID],
+  [EXCEL_M10_ID]: [EXCEL_M10_LESSON_ID],
+  [EXCEL_M11_ID]: [EXCEL_M11_LESSON_ID],
+  [EXCEL_M12_ID]: [EXCEL_M12_LESSON_ID],
 };
 
 export const EXCEL_M01_QUIZ_CONFIG: PersistedAssessmentConfig = {
@@ -409,5 +500,121 @@ export const EXCEL_M03_QUIZ_CONFIG: PersistedAssessmentConfig = {
     },
   ],
 };
+
+export const EXCEL_M04_QUIZ_CONFIG: PersistedAssessmentConfig = {
+  id: `quiz_${EXCEL_M04_ID}`,
+  courseId: EXCEL_COURSE_ID,
+  courseSlug: EXCEL_COURSE_SLUG,
+  courseTitle: EXCEL_COURSE_TITLE,
+  assessmentType: 'module_quiz',
+  moduleId: EXCEL_M04_ID,
+  moduleOrder: 4,
+  title: 'Module 04 Quiz: Essential Excel Functions',
+  description:
+    'Test your mastery of SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, SUMIF, IF, basic text functions, and date functions. Score at least 70% (7 out of 10) to pass Module 4 and unlock Module 5.',
+  passPercentage: 70,
+  questionCount: 10,
+  randomizeOrder: false,
+  requiredForCompletion: true,
+  questions: [
+    {
+      id: 'excel_m04_q01',
+      prompt: 'Which function is used to calculate the total of a range?',
+      options: ['COUNT', 'SUM', 'MAX', 'MIN'],
+      correctOptionIndex: 1,
+      explanation:
+        'SUM adds all numeric values in a selected range — for example, =SUM(B2:B10) calculates the total purchase value or expenses.',
+    },
+    {
+      id: 'excel_m04_q02',
+      prompt: 'Which function calculates the average of a group of numbers?',
+      options: ['SUM', 'COUNTA', 'AVERAGE', 'COUNTIF'],
+      correctOptionIndex: 2,
+      explanation:
+        'AVERAGE computes the arithmetic mean of numeric cells in a range while ignoring blank cells and text.',
+    },
+    {
+      id: 'excel_m04_q03',
+      prompt: 'Which function returns the highest number in a range?',
+      options: ['MIN', 'MAX', 'SUM', 'COUNT'],
+      correctOptionIndex: 1,
+      explanation:
+        'MAX returns the largest numeric value in a range, useful for spotting the highest supplier quotation or maximum salary.',
+    },
+    {
+      id: 'excel_m04_q04',
+      prompt: 'What is the difference between COUNT and COUNTA?',
+      options: [
+        'Both count only numbers',
+        'COUNT counts numbers; COUNTA counts non-empty cells',
+        'COUNT counts text; COUNTA counts numbers only',
+        'Both calculate averages',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        'COUNT counts only cells containing numeric values, whereas COUNTA counts every non-empty cell including text, IDs, dates, and numbers.',
+    },
+    {
+      id: 'excel_m04_q05',
+      prompt: 'Which function counts cells that meet a specific condition?',
+      options: ['SUM', 'IF', 'COUNTIF', 'MAX'],
+      correctOptionIndex: 2,
+      explanation:
+        'COUNTIF counts how many cells inside a range satisfy a given criterion — such as =COUNTIF(C2:C20,"Completed").',
+    },
+    {
+      id: 'excel_m04_q06',
+      prompt: 'Which function adds values based on a specified condition?',
+      options: ['SUMIF', 'COUNT', 'MIN', 'LEN'],
+      correctOptionIndex: 0,
+      explanation:
+        'SUMIF totals values from a sum range only for rows where the criteria range matches your condition.',
+    },
+    {
+      id: 'excel_m04_q07',
+      prompt: 'What does the IF function do?',
+      options: [
+        'Adds all numbers',
+        'Checks a condition and returns one result if true and another if false',
+        'Counts blank cells only',
+        'Deletes duplicate values',
+      ],
+      correctOptionIndex: 1,
+      explanation:
+        'IF evaluates a logical test and returns the value_if_true when the condition is met, or value_if_false otherwise (e.g., =IF(B2>=50000,"High","Low")).',
+    },
+    {
+      id: 'excel_m04_q08',
+      prompt: 'Which function removes unnecessary extra spaces from text?',
+      options: ['LEFT', 'LEN', 'TRIM', 'RIGHT'],
+      correctOptionIndex: 2,
+      explanation:
+        'TRIM strips leading, trailing, and repeated internal spaces from text, keeping only single spaces between words.',
+    },
+    {
+      id: 'excel_m04_q09',
+      prompt: 'Which function returns the current date?',
+      options: ['NOW', 'TODAY', 'DAY', 'YEAR'],
+      correctOptionIndex: 1,
+      explanation:
+        '=TODAY() returns the current system date without a timestamp, whereas =NOW() returns both the current date and current time.',
+    },
+    {
+      id: 'excel_m04_q10',
+      prompt:
+        'Which formula correctly calculates the total IT purchase amount when departments are in B2:B10 and purchase amounts are in D2:D10?',
+      options: [
+        '=SUM(B2:B10,D2:D10)',
+        '=COUNTIF(B2:B10,"IT")',
+        '=SUMIF(B2:B10,"IT",D2:D10)',
+        '=AVERAGE(D2:D10)',
+      ],
+      correctOptionIndex: 2,
+      explanation:
+        '=SUMIF(B2:B10,"IT",D2:D10) checks the criteria range B2:B10 for "IT" and sums the corresponding amounts in D2:D10.',
+    },
+  ],
+};
+
 
 

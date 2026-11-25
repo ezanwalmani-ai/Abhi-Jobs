@@ -22,6 +22,8 @@ import {
   EXCEL_M01_QUIZ_CONFIG,
   EXCEL_M02_QUIZ_CONFIG,
   EXCEL_M03_QUIZ_CONFIG,
+  EXCEL_M04_QUIZ_CONFIG,
+  EXCEL_M05_TO_M12_QUIZ_CONFIGS,
 } from './excelCurriculumSeed';
 
 export type AssessmentType = 'module_quiz' | 'final_assessment';
@@ -246,6 +248,7 @@ export async function initializeLearningStore(): Promise<void> {
   }
 
   initializedPromise = (async () => {
+    const useSupabase = process.env.USE_SUPABASE_LEARNING === 'true';
     const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
     const supabaseKey = (
       process.env.SUPABASE_SECRET_KEY ||
@@ -253,7 +256,7 @@ export async function initializeLearningStore(): Promise<void> {
       ''
     ).trim();
 
-    if (supabaseUrl && supabaseKey) {
+    if (useSupabase && supabaseUrl && supabaseKey) {
       try {
         const supabaseRepo = new SupabaseLearningStoreRepository();
         const diag = await supabaseRepo.getDiagnostics();
@@ -261,20 +264,22 @@ export async function initializeLearningStore(): Promise<void> {
           activeRepository = supabaseRepo;
           console.log('[learningStore] Connected to Supabase PostgreSQL learning store.');
         } else {
-          console.warn(
-            `[learningStore] Supabase unavailable (${diag.connectionError || 'unconnected'}); using server-side file learning store (.learning-data/store.json).`
+          console.log(
+            '[learningStore] Using server-side file learning store (.learning-data/store.json).'
           );
           activeRepository = new FileLearningStoreRepository();
         }
-      } catch (err) {
-        console.warn(
-          '[learningStore] Supabase connection check failed; using server-side file learning store (.learning-data/store.json):',
-          err instanceof Error ? err.message : err
+      } catch {
+        console.log(
+          '[learningStore] Using server-side file learning store (.learning-data/store.json).'
         );
         activeRepository = new FileLearningStoreRepository();
       }
     } else {
       activeRepository = new FileLearningStoreRepository();
+      console.log(
+        '[learningStore] Server-side learning store ready (.learning-data/store.json).'
+      );
     }
 
     await seedDefaultExcelModule1IfNeeded();
@@ -344,6 +349,24 @@ export async function seedDefaultExcelModule1IfNeeded(): Promise<void> {
       ...EXCEL_M03_QUIZ_CONFIG,
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  const existingM04Quiz = await store.getAssessmentConfigById(EXCEL_M04_QUIZ_CONFIG.id);
+  if (!existingM04Quiz) {
+    await store.upsertAssessmentConfig({
+      ...EXCEL_M04_QUIZ_CONFIG,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  for (const quizCfg of EXCEL_M05_TO_M12_QUIZ_CONFIGS) {
+    const existing = await store.getAssessmentConfigById(quizCfg.id);
+    if (!existing) {
+      await store.upsertAssessmentConfig({
+        ...quizCfg,
+        updatedAt: new Date().toISOString(),
+      });
+    }
   }
 }
 

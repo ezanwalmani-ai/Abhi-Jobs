@@ -112,7 +112,7 @@ export const UploadResumeWorkflow: React.FC<UploadResumeWorkflowProps> = ({
         <span>Back to Starting Options</span>
       </button>
 
-      <div className="bg-white rounded-3xl border border-[#E5EAF0] p-6 sm:p-10 shadow-2xs space-y-6">
+      <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-2xs space-y-6">
         <div className="text-center space-y-2 max-w-lg mx-auto">
           <div className="w-14 h-14 rounded-2xl bg-[#102B4E]/[0.06] border border-[#102B4E]/15 text-[#102B4E] flex items-center justify-center mx-auto">
             <Upload className="w-7 h-7 text-[#F47A24]" />
@@ -134,7 +134,7 @@ export const UploadResumeWorkflow: React.FC<UploadResumeWorkflowProps> = ({
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => !isExtracting && fileInputRef.current?.click()}
-          className={`rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center transition-all cursor-pointer ${
+          className={`rounded-2xl border-2 border-dashed p-6 sm:p-7 text-center transition-all cursor-pointer ${
             isDragging
               ? 'border-[#F47A24] bg-[#F47A24]/5'
               : 'border-[#CBD5E1] hover:border-[#102B4E] bg-[#F6F8FB]'

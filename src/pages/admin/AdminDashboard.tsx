@@ -278,8 +278,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   // Access Gate: Internal Recruiter / Admin Only
   if (!currentUser || currentRole !== 'admin') {
     return (
-      <div className="min-h-[75vh] bg-[#F6F8FB] flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E5EAF0] shadow-sm p-8 text-center space-y-5">
+      <div className="min-h-[75vh] bg-[#F6F8FB] flex items-center justify-center px-4 py-10">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E5EAF0] shadow-sm p-5 sm:p-6 text-center space-y-5">
           <div className="w-14 h-14 rounded-2xl bg-[#102B4E]/10 text-[#102B4E] flex items-center justify-center mx-auto">
             <Lock className="w-7 h-7" />
           </div>
@@ -538,32 +538,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] pb-16">
+    <div className="min-h-screen bg-[#F6F8FB] pb-12">
       {/* Top Admin Header Banner */}
       <div className="bg-[#081D36] text-white border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-            <div className="space-y-2 min-w-0">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-1.5 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
                 <AbhiJobsLogo variant="horizontal" theme="white" size="sm" />
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-xs font-semibold text-white/90 border border-white/15">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-xs font-semibold text-white/90 border border-white/15">
                   <Shield className="w-3.5 h-3.5 text-[#F47A24]" />
                   Internal Recruiter &amp; Admin Console
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              <h1 className="font-display text-xl sm:text-[26px] font-bold tracking-tight text-white">
                 Recruitment Consultancy Operations
               </h1>
-              <p className="text-sm text-slate-300 max-w-2xl">
+              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
                 Manage active job openings, screen candidate applications, coordinate employer hiring requirements, and curate partner learning programs.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={openCreateJobModal}
-                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                className="min-h-[40px] px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Job</span>
@@ -571,7 +571,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               <button
                 type="button"
                 onClick={openCreateCourseModal}
-                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                className="min-h-[40px] px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <BookOpen className="w-4 h-4" />
                 <span>Add Course</span>
@@ -579,7 +579,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               <button
                 type="button"
                 onClick={() => exportCsvReport('applications')}
-                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/15 text-slate-200 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/15 border border-white/15 text-slate-200 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export CSV</span>
@@ -588,7 +588,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mt-6 flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          <div className="mt-5 flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
             {tabs.map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -596,7 +596,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`min-h-[42px] px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 shrink-0 cursor-pointer ${
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors flex items-center gap-2 shrink-0 cursor-pointer ${
                     active
                       ? 'bg-white text-[#102B4E] shadow-xs'
                       : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -623,10 +623,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
       </div>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Primary Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
@@ -663,17 +663,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   key={card.label}
                   type="button"
                   onClick={card.action}
-                  className="bg-white rounded-2xl border border-[#E5EAF0] p-5 text-left hover:border-[#102B4E]/30 hover:shadow-sm transition-all cursor-pointer"
+                  className="bg-white rounded-xl border border-[#E5EAF0] p-5 text-left hover:border-[#102B4E]/30 hover:shadow-xs transition-all cursor-pointer"
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2.5">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[#778397]">
                       {card.label}
                     </span>
-                    <div className="w-9 h-9 rounded-xl bg-[#F6F8FB] border border-[#E5EAF0] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-[#F6F8FB] border border-[#E5EAF0] flex items-center justify-center">
                       {card.icon}
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-[#102B4E]">{card.value}</div>
+                  <div className="font-display text-2xl font-bold text-[#102B4E] tabular-nums">{card.value}</div>
                   <div className="text-xs text-[#778397] mt-1">{card.sub}</div>
                 </button>
               ))}
@@ -751,7 +751,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                     </div>
                   ))}
                   {applications.length === 0 && (
-                    <div className="p-8 text-center text-sm text-[#778397]">
+                    <div className="p-5 sm:p-6 text-center text-sm text-[#778397]">
                       No candidate applications recorded yet.
                     </div>
                   )}
@@ -791,7 +791,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                     </div>
                   ))}
                   {hiringEnquiries.length === 0 && (
-                    <div className="p-8 text-center text-sm text-[#778397]">
+                    <div className="p-5 sm:p-6 text-center text-sm text-[#778397]">
                       No hiring enquiries submitted yet.
                     </div>
                   )}
@@ -1063,7 +1063,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                 })}
 
                 {filteredApplications.length === 0 && (
-                  <div className="bg-white rounded-2xl border border-[#E5EAF0] p-12 text-center text-sm text-[#778397]">
+                  <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 text-center text-sm text-[#778397]">
                     No applications found matching the selected filters.
                   </div>
                 )}
@@ -1451,7 +1451,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               })}
 
               {filteredEnquiries.length === 0 && (
-                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-12 text-center text-sm text-[#778397]">
+                <div className="bg-white rounded-2xl border border-[#E5EAF0] p-6 text-center text-sm text-[#778397]">
                   No hiring enquiries in this status.
                 </div>
               )}
@@ -1641,7 +1641,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center text-xs text-[#778397]">
+                <div className="p-5 sm:p-6 text-center text-xs text-[#778397]">
                   Candidate course enquiries submitted on Learn with ABHI will appear here.
                 </div>
               )}

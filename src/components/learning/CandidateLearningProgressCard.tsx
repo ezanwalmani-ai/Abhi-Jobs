@@ -151,7 +151,7 @@ export const CandidateLearningProgressCard: React.FC<CandidateLearningProgressCa
   const hasAnyLearningData = enrolments.length > 0 || assessmentSummaries.length > 0;
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2 min-w-0">
           <GraduationCap className="w-4 h-4 text-[#F47A24] shrink-0" />

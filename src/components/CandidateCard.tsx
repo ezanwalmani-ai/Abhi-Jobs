@@ -49,7 +49,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                 loading="lazy"
               />
             ) : (
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#061226] to-[#0B192C] text-white border border-[#061226] flex flex-col items-center justify-center font-bold text-base relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#102B4E] to-[#0B192C] text-white border border-[#102B4E] flex flex-col items-center justify-center font-bold text-base relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
                 <span className="relative z-10 font-sora">{candidate.name.charAt(0)}</span>
                 <div className="absolute -bottom-1 -right-1 opacity-20">
                   <VerifiedSkillIcon size={28} colorMode="white" />
@@ -68,7 +68,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
             <div className="flex items-center gap-2 flex-wrap">
               <h3
                 onClick={() => onViewProfile(candidate)}
-                className="text-base font-bold text-[#101828] hover:text-[#061226] transition-colors cursor-pointer"
+                className="text-base font-bold text-[#101828] hover:text-[#102B4E] transition-colors cursor-pointer"
               >
                 {candidate.name}
               </h3>
@@ -126,7 +126,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
       <div className="pt-4 mt-5 border-t border-[#E4E7EC] flex items-center justify-between gap-2 relative">
         <button
           onClick={() => onViewProfile(candidate)}
-          className="text-xs font-semibold text-[#101828] hover:text-[#FF2B1A] transition-colors flex items-center gap-1 cursor-pointer"
+          className="text-xs font-semibold text-[#101828] hover:text-[#F47A24] transition-colors flex items-center gap-1 cursor-pointer"
         >
           <span>View Profile</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -136,9 +136,9 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
         <div className="relative">
           <button
             onClick={() => setShowInviteMenu(!showInviteMenu)}
-            className="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#FF2B1A] text-xs font-semibold border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#F47A24] text-xs font-semibold border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <Send className="w-3 h-3 text-[#FF2B1A]" />
+            <Send className="w-3 h-3 text-[#F47A24]" />
             <span>Invite to Apply</span>
           </button>
 
@@ -159,7 +159,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                     <select
                       value={inviteJobId}
                       onChange={(e) => setInviteJobId(e.target.value)}
-                      className="w-full text-xs p-2 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#061226]"
+                      className="w-full text-xs p-2 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#102B4E]"
                     >
                       <option value="">Select a job...</option>
                       {activeJobs.map((j) => (
@@ -178,7 +178,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                       <button
                         onClick={handleInvite}
                         disabled={!inviteJobId}
-                        className="px-3.5 py-1.5 text-xs font-bold bg-[#FF2B1A] hover:bg-[#e02213] text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-xs transition-colors"
+                        className="px-3.5 py-1.5 text-xs font-bold bg-[#F47A24] hover:bg-[#DE6816] text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-xs transition-colors"
                       >
                         Send Invite
                       </button>

@@ -24,7 +24,7 @@ export const RouteProtectionNotice: React.FC<RouteProtectionNoticeProps> = ({
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-      <div className="max-w-lg w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-6">
+      <div className="max-w-lg w-full bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xl text-center space-y-6">
         <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-8 h-8" />
         </div>
@@ -53,7 +53,7 @@ export const RouteProtectionNotice: React.FC<RouteProtectionNoticeProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={onRedirectToAllowed}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#061226] hover:bg-[#0d1e3d] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#0d1e3d] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Go to My {currentRole === 'employer' ? 'Employer Portal' : 'Job Seeker Portal'}</span>
             <ArrowRight className="w-4 h-4" />

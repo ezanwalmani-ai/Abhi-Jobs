@@ -534,7 +534,7 @@ export const PasswordInputWithStrength: React.FC<PasswordInputWithStrengthProps>
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="text-xs font-semibold text-[#004D40] hover:text-[#061226] flex items-center gap-1 cursor-pointer transition-colors"
+          className="text-xs font-semibold text-[#004D40] hover:text-[#102B4E] flex items-center gap-1 cursor-pointer transition-colors"
         >
           {showPassword ? (
             <>
@@ -556,7 +556,7 @@ export const PasswordInputWithStrength: React.FC<PasswordInputWithStrengthProps>
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 rounded-xl border text-sm text-[#101828] placeholder:text-[#667085] focus:outline-none focus:ring-2 focus:ring-[#061226] focus:border-[#061226] transition-all ${
+          className={`w-full px-4 py-3 rounded-xl border text-sm text-[#101828] placeholder:text-[#667085] focus:outline-none focus:ring-2 focus:ring-[#102B4E] focus:border-[#102B4E] transition-all ${
             error ? 'border-red-400 bg-red-50/20' : 'border-[#D0D5DD] bg-white'
           }`}
         />

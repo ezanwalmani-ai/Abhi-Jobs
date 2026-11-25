@@ -55,7 +55,7 @@ export const CandidateProfileModal: React.FC<CandidateProfileModalProps> = ({
             className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col"
           >
         {/* Modal Top Banner */}
-        <div className="relative h-28 bg-[#061226] p-4">
+        <div className="relative h-28 bg-[#102B4E] p-4">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
@@ -75,7 +75,7 @@ export const CandidateProfileModal: React.FC<CandidateProfileModalProps> = ({
                   className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md bg-white"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-2xl bg-slate-100 text-[#061226] flex items-center justify-center font-bold text-2xl border-4 border-white shadow-md">
+                <div className="w-24 h-24 rounded-2xl bg-slate-100 text-[#102B4E] flex items-center justify-center font-bold text-2xl border-4 border-white shadow-md">
                   {candidate.name.charAt(0)}
                 </div>
               )}
@@ -125,7 +125,7 @@ export const CandidateProfileModal: React.FC<CandidateProfileModalProps> = ({
                   onInvite(candidate.id);
                   onClose();
                 }}
-                className="px-4 py-2 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-white" />
                 <span>Invite to Job</span>

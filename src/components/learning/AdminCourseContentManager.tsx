@@ -377,7 +377,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
 
       {/* Empty Catalogue State (Preserves Course Management Tools & Adds Safe Firestore Reset Inspector) */}
       {!hydratedCourse ? (
-        <div className="bg-white rounded-2xl border border-[#E5EAF0] p-8 sm:p-10 text-center space-y-3">
+        <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 text-center space-y-3">
           <h3 className="font-display text-lg font-bold text-[#102B4E]">
             No courses in the Learn with ABHI catalogue yet
           </h3>
@@ -431,7 +431,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
               >
                 {hydratedCourse.modules.map((m) => (
                   <option key={m.id} value={m.id}>
-                    Module 0{m.order}: {m.title} ({m.lessons.length} lessons)
+                    Module {String(m.order).padStart(2, '0')}: {m.title} ({m.lessons.length} lessons)
                   </option>
                 ))}
               </select>
@@ -447,7 +447,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
           <div className="flex items-center justify-between gap-3 border-b border-[#E5EAF0] pb-4">
             <div>
               <p className="text-xs font-semibold text-[#F47A24]">
-                {hydratedCourse.title} · Module 0{activeModule.order}
+                {hydratedCourse.title} · Module {String(activeModule.order).padStart(2, '0')}
               </p>
               <h3 className="font-display text-lg font-bold text-[#102B4E]">
                 {editingLessonId ? 'Edit Lesson Content' : 'Add New Lesson'}
@@ -735,7 +735,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
           <div>
             <h3 className="font-display text-sm sm:text-base font-bold text-[#102B4E]">
               {activeModule
-                ? `Module 0${activeModule.order}: ${activeModule.title}`
+                ? `Module ${String(activeModule.order).padStart(2, '0')}: ${activeModule.title}`
                 : 'Lessons'}
             </h3>
             <p className="text-xs text-[#778397]">
@@ -751,9 +751,11 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
               .slice()
               .sort((a, b) => a.order - b.order)
               .map((lesson) => {
+                const primaryVideo = lesson.videos?.[0];
                 const hasVideo = Boolean(
-                  lesson.videoUrl &&
-                    parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+                  primaryVideo?.youtubeVideoId ||
+                    (lesson.videoUrl &&
+                      parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid')
                 );
                 return (
                   <div
@@ -793,6 +795,22 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
                               <span>Exercise included</span>
                             </>
                           )}
+                          {primaryVideo && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span
+                                className={`font-semibold ${
+                                  primaryVideo.verificationStatus === 'needs_correction'
+                                    ? 'text-red-700'
+                                    : 'text-emerald-700'
+                                }`}
+                              >
+                                {primaryVideo.verificationStatus === 'needs_correction'
+                                  ? 'Video Needs Correction'
+                                  : 'Video Verified'}
+                              </span>
+                            </>
+                          )}
                           {lesson.isAdminManaged && (
                             <>
                               <span aria-hidden="true">·</span>
@@ -803,6 +821,19 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
                             </>
                           )}
                         </div>
+                        {primaryVideo && (
+                          <div className="mt-1.5 p-2.5 rounded-lg bg-[#FAFBFD] border border-[#E5EAF0] text-[11px] text-[#566479] space-y-0.5 break-all">
+                            <p className="font-semibold text-[#102B4E]">
+                              {primaryVideo.title}
+                              {primaryVideo.publisher ? ` — ${primaryVideo.publisher}` : ''}
+                            </p>
+                            <p>
+                              ID: <span className="font-mono text-[#102B4E]">{primaryVideo.youtubeVideoId}</span> · Watch:{' '}
+                              {primaryVideo.watchUrl || `https://www.youtube.com/watch?v=${primaryVideo.youtubeVideoId}`} · Embed:{' '}
+                              {primaryVideo.embedUrl || `https://www.youtube.com/embed/${primaryVideo.youtubeVideoId}`}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -839,7 +870,7 @@ export const AdminCourseContentManager: React.FC<AdminCourseContentManagerProps>
               })}
           </div>
         ) : (
-          <div className="p-8 text-center text-sm text-[#778397]">
+          <div className="p-5 sm:p-6 text-center text-sm text-[#778397]">
             No lessons in this module yet. Click "Add Lesson" above to create one.
           </div>
         )}

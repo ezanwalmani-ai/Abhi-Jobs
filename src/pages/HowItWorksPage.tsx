@@ -124,11 +124,11 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* 1. Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#061226] via-[#0c1f3d] to-[#061226] text-white py-16 sm:py-24 border-b border-slate-800">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#102B4E] via-[#0c1f3d] to-[#102B4E] text-white py-10 sm:py-12 border-b border-slate-800">
         <ScrollReveal direction="up" distance={16}>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold tracking-wide">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF2B1A] shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
               <span>How ABHI JOBS Works</span>
             </div>
 
@@ -136,9 +136,9 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
               as="h1"
               text="Where verified skills meet real employment opportunities."
               highlightWords={['skills', 'opportunities.']}
-              highlightClassName="text-[#FF2B1A]"
+              highlightClassName="text-[#F47A24]"
               justify="center"
-              className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight font-sora text-center w-full"
+              className="text-3xl sm:text-[36px] font-extrabold tracking-tight text-white leading-tight font-sora text-center w-full"
               delay={0.15}
               stagger={0.08}
               duration={0.65}
@@ -156,7 +156,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   onClick={() => setActiveTab('job_seeker')}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === 'job_seeker'
-                      ? 'bg-[#FF2B1A] text-white shadow-md'
+                      ? 'bg-[#F47A24] text-white shadow-md'
                       : 'text-slate-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -168,7 +168,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   onClick={() => setActiveTab('employer')}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === 'employer'
-                      ? 'bg-[#FF2B1A] text-white shadow-md'
+                      ? 'bg-[#F47A24] text-white shadow-md'
                       : 'text-slate-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -182,10 +182,10 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
       </section>
 
       {/* 2. Step-by-Step Pathway */}
-      <section className="py-16 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal direction="up" delay={0.05} distance={18}>
           <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#FF2B1A]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F47A24]">
               {activeTab === 'job_seeker' ? 'Candidate Journey' : 'Recruiter Workflow'}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#101828]">
@@ -210,7 +210,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="w-10 h-10 rounded-xl bg-[#061226] text-white font-extrabold flex items-center justify-center text-sm">
+                    <span className="w-10 h-10 rounded-xl bg-[#102B4E] text-white font-extrabold flex items-center justify-center text-sm">
                       {item.step}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-md bg-[#F7F8FA] text-[#101828] text-[10px] font-bold border border-[#E4E7EC]">
@@ -235,7 +235,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
 
         {/* Action Bar based on Active Tab */}
         <ScrollReveal direction="up" delay={0.1} distance={18}>
-          <div className="mt-12 p-8 rounded-3xl bg-[#F7F8FA] border border-[#E4E7EC] flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="mt-12 p-5 sm:p-6 rounded-xl bg-[#F7F8FA] border border-[#E4E7EC] flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-lg font-bold text-[#101828]">
                 {activeTab === 'job_seeker'
@@ -255,7 +255,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   <button
                     type="button"
                     onClick={() => navigate('/register/job-seeker')}
-                    className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-2 min-h-[44px]"
+                    className="px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-2 min-h-[44px]"
                   >
                     <span>Get Started as Job Seeker</span>
                     <ArrowRight className="w-4 h-4 shrink-0" />
@@ -273,7 +273,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   <button
                     type="button"
                     onClick={() => navigate('/register/employer')}
-                    className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-2 min-h-[44px]"
+                    className="px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer flex items-center gap-2 min-h-[44px]"
                   >
                     <span>Register as Employer</span>
                     <ArrowRight className="w-4 h-4 shrink-0" />
@@ -293,11 +293,11 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
       </section>
 
       {/* 3. Core Principles / Pillars */}
-      <section className="py-16 bg-white border-y border-[#E4E7EC]">
+      <section className="py-10 bg-white border-y border-[#E4E7EC]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal direction="up" distance={16}>
             <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#FF2B1A]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#F47A24]">
                 Why ABHI JOBS Works
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#101828]">
@@ -347,10 +347,10 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
       </section>
 
       {/* 4. Frequently Asked Questions */}
-      <section className="py-16 sm:py-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-12 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal direction="up" distance={16}>
           <div className="text-center space-y-2 mb-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#FF2B1A]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F47A24]">
               Frequently Asked Questions
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#101828]">
@@ -373,7 +373,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                 <span>{faq.question}</span>
                 <ChevronDown
                   className={`w-5 h-5 text-[#667085] transition-transform duration-200 shrink-0 ${
-                    openFaqIndex === idx ? 'rotate-180 text-[#FF2B1A]' : ''
+                    openFaqIndex === idx ? 'rotate-180 text-[#F47A24]' : ''
                   }`}
                 />
               </button>
@@ -402,7 +402,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
             <button
               type="button"
               onClick={() => navigate('/about')}
-              className="text-[#FF2B1A] font-bold hover:underline cursor-pointer"
+              className="text-[#F47A24] font-bold hover:underline cursor-pointer"
             >
               Visit our full About page
             </button>

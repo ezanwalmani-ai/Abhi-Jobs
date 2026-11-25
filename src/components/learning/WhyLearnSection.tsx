@@ -28,44 +28,44 @@ export const WhyLearnSection: React.FC = () => {
     <section
       id="why-learn-with-abhi"
       aria-labelledby="why-learn-heading"
-      className="py-16 sm:py-24 bg-[#F6F8FB] border-b border-[#E5EAF0]"
+      className="py-10 sm:py-12 bg-[#F6F8FB] border-b border-[#E5EAF0]"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={VIEWPORT_ONCE}
-          transition={{ duration: 0.45, ease: EASE_PREMIUM }}
-          className="max-w-2xl space-y-3"
+          transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+          className="max-w-2xl space-y-2"
         >
-          <p className="text-xs sm:text-sm font-semibold text-[#F47A24]">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F47A24]">
             Built for Career Progression
           </p>
           <h2
             id="why-learn-heading"
-            className="font-display text-2xl sm:text-4xl font-extrabold text-[#102B4E] tracking-tight leading-tight [text-wrap:balance]"
+            className="font-display text-2xl sm:text-[28px] font-bold text-[#102B4E] tracking-tight leading-snug [text-wrap:balance]"
           >
             Why Learn with ABHI?
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {BENEFITS.map((benefit, idx) => (
             <motion.div
               key={benefit.index}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={VIEWPORT_ONCE}
-              transition={{ duration: 0.4, delay: idx * 0.08, ease: EASE_PREMIUM }}
-              className="pt-6 border-t border-[#CBD5E1] space-y-3"
+              transition={{ duration: 0.36, delay: idx * 0.06, ease: EASE_PREMIUM }}
+              className="pt-5 border-t border-[#CBD5E1] space-y-2"
             >
-              <span className="block font-display text-sm font-bold text-[#F47A24] tabular-nums">
+              <span className="block font-display text-xs font-bold text-[#F47A24] tabular-nums">
                 {benefit.index}
               </span>
-              <h3 className="font-display text-xl font-bold text-[#102B4E] leading-snug">
+              <h3 className="font-display text-[18px] font-bold text-[#102B4E] leading-snug">
                 {benefit.title}
               </h3>
-              <p className="text-sm sm:text-base text-[#566479] leading-relaxed">
+              <p className="text-sm text-[#566479] leading-relaxed">
                 {benefit.description}
               </p>
             </motion.div>

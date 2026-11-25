@@ -86,7 +86,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <ScrollProgress />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Header Title */}
         <ScrollReveal direction="up" distance={16}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -110,7 +110,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
 
             <button
               onClick={() => navigate('/employer/post-job')}
-              className="px-4 py-2.5 rounded-xl bg-[#FF2B1A] text-white text-xs font-bold hover:bg-[#e02213] transition-colors self-start sm:self-auto cursor-pointer shadow-xs min-h-[44px]"
+              className="px-4 py-2.5 rounded-xl bg-[#F47A24] text-white text-xs font-bold hover:bg-[#DE6816] transition-colors self-start sm:self-auto cursor-pointer shadow-xs min-h-[44px]"
             >
               Post Job to Invite Talent
             </button>
@@ -121,7 +121,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
         <ScrollReveal direction="up" delay={0.06} distance={18}>
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E7EC] shadow-xs space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Search className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -132,7 +132,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <MapPin className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -143,7 +143,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Briefcase className="w-4 h-4 text-[#667085] shrink-0" />
                 <select
                   value={expLevel}
@@ -158,7 +158,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Users className="w-4 h-4 text-[#667085] shrink-0" />
                 <select
                   value={availability}
@@ -180,7 +180,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 <button
                   onClick={() => setSelectedSkill('All')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    selectedSkill === 'All' ? 'bg-[#061226] text-white shadow-xs' : 'bg-[#F7F8FA] text-[#667085] hover:bg-slate-200'
+                    selectedSkill === 'All' ? 'bg-[#102B4E] text-white shadow-xs' : 'bg-[#F7F8FA] text-[#667085] hover:bg-slate-200'
                   }`}
                 >
                   All
@@ -190,7 +190,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                     key={skill}
                     onClick={() => setSelectedSkill(skill)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                      selectedSkill === skill ? 'bg-[#FF2B1A] text-white shadow-xs' : 'bg-[#F7F8FA] text-[#101828] hover:bg-slate-200'
+                      selectedSkill === skill ? 'bg-[#F47A24] text-white shadow-xs' : 'bg-[#F7F8FA] text-[#101828] hover:bg-slate-200'
                     }`}
                   >
                     {skill}
@@ -201,7 +201,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
               {(search || location || expLevel !== 'All' || availability !== 'All' || selectedSkill !== 'All') && (
                 <button
                   onClick={handleReset}
-                  className="text-xs text-[#FF2B1A] hover:text-[#e02213] font-semibold flex items-center gap-1 cursor-pointer py-1"
+                  className="text-xs text-[#F47A24] hover:text-[#DE6816] font-semibold flex items-center gap-1 cursor-pointer py-1"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Filters</span>
@@ -213,7 +213,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
 
         {/* Candidates Grid */}
         {filteredCandidates.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-2xl border border-[#E4E7EC] shadow-xs space-y-3">
+          <div className="p-6 text-center bg-white rounded-2xl border border-[#E4E7EC] shadow-xs space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#F7F8FA] text-[#667085] flex items-center justify-center mx-auto">
               <Users className="w-6 h-6" />
             </div>
@@ -223,7 +223,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
             </p>
             <button
               onClick={handleReset}
-              className="px-4 py-2 rounded-xl bg-[#061226] text-white text-xs font-bold hover:bg-[#0c1f3d] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-[#0c1f3d] transition-colors cursor-pointer"
             >
               Reset Filters
             </button>

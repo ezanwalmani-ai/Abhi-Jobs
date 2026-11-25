@@ -137,29 +137,29 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       <section
         id="about-hero"
         aria-label="About Hero"
-        className="relative overflow-hidden bg-[#061226] border-b border-slate-800 text-white pt-14 pb-20 sm:pt-20 sm:pb-28"
+        className="relative overflow-hidden bg-[#102B4E] border-b border-slate-800 text-white pt-14 pb-10 sm:pt-10 sm:pb-14"
       >
         {/* Subtle geometric grid background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal direction="up" distance={16}>
             <div className="text-center max-w-3xl mx-auto space-y-5">
               {/* Pill Tag */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-[#FF2B1A] shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-[#F47A24] shrink-0" />
                 <span>About ABHI JOBS &bull; Company &amp; Philosophy</span>
               </div>
 
               {/* Main Headline (Text Mask Reveal) */}
               <TextMaskReveal
                 as="h1"
-                className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]"
+                className="text-3xl sm:text-[36px] lg:text-[40px] font-extrabold tracking-tight text-white leading-[1.15]"
                 delay={0.15}
                 duration={0.7}
               >
                 Building a Better Connection Between{' '}
-                <span className="text-[#FF2B1A]">
+                <span className="text-[#F47A24]">
                   Skills and Opportunity.
                 </span>
               </TextMaskReveal>
@@ -174,7 +174,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                 <button
                   id="hero-btn-find-jobs"
                   onClick={() => navigate('/jobs')}
-                  className="px-6 py-3.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-lg shadow-red-950/30 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-3.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-lg shadow-red-950/30 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Briefcase className="w-4 h-4 text-white" />
                   <span>Explore Jobs</span>
@@ -197,8 +197,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 2. WHO WE ARE */}
       {/* ========================================================================= */}
-      <section id="who-we-are" aria-label="Who We Are" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="who-we-are" aria-label="Who We Are" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
               Who We Are
@@ -212,7 +212,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
           </div>
 
           {/* Narrative Card */}
-          <div className="max-w-4xl mx-auto bg-slate-50 rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-xs mb-14">
+          <div className="max-w-4xl mx-auto bg-slate-50 rounded-xl p-5 sm:p-6 border border-slate-200/90 shadow-xs mb-14">
             <div className="space-y-4">
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
                 Beyond Traditional Job Listing Platforms
@@ -354,8 +354,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 3. THE PROBLEM WE SOLVE */}
       {/* ========================================================================= */}
-      <section id="problem-we-solve" aria-label="The Problem We Solve" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="problem-we-solve" aria-label="The Problem We Solve" className="py-10 sm:py-12 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-slate-200 text-slate-800 text-xs font-bold uppercase tracking-wider">
               The Real Challenges
@@ -441,8 +441,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 4. OUR APPROACH */}
       {/* ========================================================================= */}
-      <section id="our-approach" aria-label="Our Approach" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="our-approach" aria-label="Our Approach" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
               Guiding Principles
@@ -457,7 +457,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {/* Principle 01 */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
                 <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
                   01 &mdash; Skills
@@ -476,7 +476,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             {/* Principle 02 */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
                 <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
                   02 &mdash; Learning
@@ -495,7 +495,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             {/* Principle 03 */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
                 <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
                   03 &mdash; Opportunity
@@ -514,7 +514,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             {/* Principle 04 */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
                 <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
                   04 &mdash; Growth
@@ -538,15 +538,15 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 5. SKILLS-FIRST PHILOSOPHY */}
       {/* ========================================================================= */}
-      <section id="skills-first-philosophy" aria-label="Skills-First Philosophy" className="py-16 sm:py-24 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="skills-first-philosophy" aria-label="Skills-First Philosophy" className="py-10 sm:py-12 bg-slate-900 text-white">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto space-y-6 text-center">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-slate-300 text-xs font-bold uppercase tracking-wider">
-              <Lightbulb className="w-3.5 h-3.5 text-[#FF2B1A]" />
+              <Lightbulb className="w-3.5 h-3.5 text-[#F47A24]" />
               <span>Core Philosophy</span>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-[36px] font-extrabold text-white tracking-tight leading-tight">
               Skills Should Open Doors.
             </h2>
 
@@ -618,8 +618,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 6. FOR JOB SEEKERS */}
       {/* ========================================================================= */}
-      <section id="for-job-seekers" aria-label="For Job Seekers" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="for-job-seekers" aria-label="For Job Seekers" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12 max-w-6xl mx-auto">
             {/* Left Header */}
             <div className="lg:max-w-md space-y-4">
@@ -720,8 +720,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 7. FOR EMPLOYERS */}
       {/* ========================================================================= */}
-      <section id="for-employers" aria-label="For Employers" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="for-employers" aria-label="For Employers" className="py-10 sm:py-12 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12 max-w-6xl mx-auto">
             {/* Left Header */}
             <div className="lg:max-w-md space-y-4">
@@ -816,8 +816,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 8. THE ABHI JOBS ECOSYSTEM (VISUAL DIAGRAM) */}
       {/* ========================================================================= */}
-      <section id="abhi-jobs-ecosystem" aria-label="The ABHI JOBS Ecosystem" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="abhi-jobs-ecosystem" aria-label="The ABHI JOBS Ecosystem" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
               Interconnected Platform
@@ -831,7 +831,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
           </div>
 
           {/* Connected Ecosystem Diagram */}
-          <div className="max-w-5xl mx-auto bg-slate-50 rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs">
+          <div className="max-w-5xl mx-auto bg-slate-50 rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Node 1 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
@@ -948,8 +948,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 9. LEARNING & UPSKILLING */}
       {/* ========================================================================= */}
-      <section id="learning-upskilling" aria-label="Learning and Upskilling" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="learning-upskilling" aria-label="Learning and Upskilling" className="py-10 sm:py-12 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center space-y-4 mb-14">
               <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
@@ -1043,8 +1043,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 10. HOW ABHI JOBS WORKS (6-STEP PROCESS) */}
       {/* ========================================================================= */}
-      <section id="how-abhi-jobs-works" aria-label="How ABHI JOBS Works" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="how-abhi-jobs-works" aria-label="How ABHI JOBS Works" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-slate-200 text-slate-800 text-xs font-bold uppercase tracking-wider">
               Step-by-Step
@@ -1160,11 +1160,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 11 & 12. OUR MISSION & OUR VISION */}
       {/* ========================================================================= */}
-      <section id="mission-and-vision" aria-label="Our Mission and Vision" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="mission-and-vision" aria-label="Our Mission and Vision" className="py-10 sm:py-12 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* Mission Card */}
-            <div className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-6 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-white border border-slate-200 shadow-xs space-y-6 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
                   <Target className="w-3.5 h-3.5 text-[#004D40]" />
@@ -1205,10 +1205,10 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             {/* Vision Card */}
-            <div className="p-8 sm:p-10 rounded-3xl bg-[#061226] text-white border border-slate-800 shadow-md space-y-6 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-xl bg-[#102B4E] text-white border border-slate-800 shadow-md space-y-6 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-xs font-bold uppercase tracking-wider">
-                  <Eye className="w-3.5 h-3.5 text-[#FF2B1A]" />
+                  <Eye className="w-3.5 h-3.5 text-[#F47A24]" />
                   <span>Our Vision</span>
                 </div>
 
@@ -1251,8 +1251,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 13. WHY ABHI JOBS */}
       {/* ========================================================================= */}
-      <section id="why-abhi-jobs" aria-label="Why ABHI JOBS" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="why-abhi-jobs" aria-label="Why ABHI JOBS" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
               Distinct Advantages
@@ -1351,8 +1351,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 14. TRUST & TRANSPARENCY */}
       {/* ========================================================================= */}
-      <section id="trust-and-transparency" aria-label="Trust and Transparency" className="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="trust-and-transparency" aria-label="Trust and Transparency" className="py-10 sm:py-12 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-slate-200 text-slate-800 text-xs font-bold uppercase tracking-wider">
               Accountability
@@ -1404,7 +1404,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 15. ABOUT PAGE FAQ */}
       {/* ========================================================================= */}
-      <section id="about-faq" aria-label="Frequently Asked Questions" className="py-16 sm:py-24 bg-white border-b border-slate-200/80">
+      <section id="about-faq" aria-label="Frequently Asked Questions" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-14">
             <span className="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider">
@@ -1468,14 +1468,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       {/* ========================================================================= */}
       {/* 16. FINAL CALL TO ACTION */}
       {/* ========================================================================= */}
-      <section id="about-final-cta" aria-label="Join ABHI JOBS" className="py-16 sm:py-24 bg-[#061226] text-white">
+      <section id="about-final-cta" aria-label="Join ABHI JOBS" className="py-10 sm:py-12 bg-[#102B4E] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold">
-            <HeartHandshake className="w-3.5 h-3.5 text-[#FF2B1A]" />
+            <HeartHandshake className="w-3.5 h-3.5 text-[#F47A24]" />
             <span>Connect With Purpose</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight max-w-3xl mx-auto">
+          <h2 className="text-3xl sm:text-[36px] font-extrabold text-white tracking-tight leading-tight max-w-3xl mx-auto">
             Build Your Skills. Discover Your Opportunity.
           </h2>
 
@@ -1487,7 +1487,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             <button
               id="cta-btn-find-jobs"
               onClick={() => navigate('/jobs')}
-              className="px-7 py-3.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-lg shadow-red-950/30 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-7 py-3.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-bold shadow-lg shadow-red-950/30 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Briefcase className="w-4 h-4 text-white" />
               <span>Find Jobs</span>

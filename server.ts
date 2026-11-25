@@ -42,6 +42,17 @@ import {
 import { MODULE_REQUIRED_LESSONS } from './server/excelCurriculumSeed';
 import { getModule02PracticeWorkbookBuffer } from './server/module02WorkbookGenerator';
 import { getModule03PracticeWorkbookBuffer } from './server/module03WorkbookGenerator';
+import { getModule04PracticeWorkbookBuffer } from './server/module04WorkbookGenerator';
+import {
+  getModule05PracticeWorkbookBuffer,
+  getModule06PracticeWorkbookBuffer,
+  getModule07PracticeWorkbookBuffer,
+  getModule08PracticeWorkbookBuffer,
+  getModule09PracticeWorkbookBuffer,
+  getModule10PracticeWorkbookBuffer,
+  getModule11PracticeWorkbookBuffer,
+  getModule12PracticeWorkbookBuffer,
+} from './server/modules05To12WorkbookGenerators';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -478,6 +489,28 @@ async function startServer() {
     }
   );
 
+  // 0c. Downloadable Practice Excel Workbook for Module 04 (Instructions + Purchase Data + Function Practice + Completed Answer Sheet)
+  app.get(
+    '/api/learning/resources/excel-module-04-practice-workbook.xlsx',
+    (_req: Request, res: Response) => {
+      try {
+        const buffer = getModule04PracticeWorkbookBuffer();
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="ABHI-Excel-Module-04-Practice-Workbook.xlsx"'
+        );
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(buffer);
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    }
+  );
+
   // 0b. Downloadable Practice Excel Workbook for Module 03 (Instructions + Practice + Answer Reference)
   app.get(
     '/api/learning/resources/excel-module-03-practice-workbook.xlsx',
@@ -499,6 +532,71 @@ async function startServer() {
       }
     }
   );
+
+  // 0d. Downloadable Practice Excel Workbooks for Modules 05–12
+  const module05To12Workbooks: Array<{
+    route: string;
+    filename: string;
+    getBuffer: () => Promise<Buffer>;
+  }> = [
+    {
+      route: '/api/learning/resources/excel-module-05-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-05-Practice-Workbook.xlsx',
+      getBuffer: getModule05PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-06-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-06-Practice-Workbook.xlsx',
+      getBuffer: getModule06PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-07-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-07-Practice-Workbook.xlsx',
+      getBuffer: getModule07PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-08-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-08-Practice-Workbook.xlsx',
+      getBuffer: getModule08PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-09-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-09-Practice-Workbook.xlsx',
+      getBuffer: getModule09PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-10-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-10-Practice-Workbook.xlsx',
+      getBuffer: getModule10PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-11-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-11-Practice-Workbook.xlsx',
+      getBuffer: getModule11PracticeWorkbookBuffer,
+    },
+    {
+      route: '/api/learning/resources/excel-module-12-practice-workbook.xlsx',
+      filename: 'ABHI-Excel-Module-12-Practice-Workbook.xlsx',
+      getBuffer: getModule12PracticeWorkbookBuffer,
+    },
+  ];
+
+  for (const wbRoute of module05To12Workbooks) {
+    app.get(wbRoute.route, async (_req: Request, res: Response) => {
+      try {
+        const buffer = await wbRoute.getBuffer();
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader('Content-Disposition', `attachment; filename="${wbRoute.filename}"`);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(buffer);
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    });
+  }
 
   // 1. Course assessments summary (NO questions, NO correctOptionIndex, NO explanations)
   app.get('/api/learning/assessments/course/:courseId/summary', async (req: Request, res: Response) => {

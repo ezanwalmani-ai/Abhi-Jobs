@@ -577,7 +577,7 @@ export const EmployerSettingsPage: React.FC<EmployerSettingsPageProps> = ({
         {/* ======================================================== */}
         <div className="hidden md:grid md:grid-cols-12 gap-8 items-start">
           {/* Left Navigation Sidebar */}
-          <div className="md:col-span-4 lg:col-span-3 bg-white rounded-3xl border border-slate-200 p-3 shadow-xs space-y-1 sticky top-24">
+          <div className="md:col-span-4 lg:col-span-3 bg-white rounded-xl border border-slate-200 p-3 shadow-xs space-y-1 sticky top-24">
             <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               Employer Settings
             </div>
@@ -606,7 +606,7 @@ export const EmployerSettingsPage: React.FC<EmployerSettingsPageProps> = ({
           </div>
 
           {/* Right Main Content Card */}
-          <div className="md:col-span-8 lg:col-span-9 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+          <div className="md:col-span-8 lg:col-span-9 bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs">
             {renderSectionContent(activeSection)}
           </div>
         </div>
@@ -1014,7 +1014,7 @@ export const EmployerSettingsPage: React.FC<EmployerSettingsPageProps> = ({
                   deleteCurrentUser();
                   navigate('/');
                 }}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold min-h-[44px] cursor-pointer"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold min-h-[44px] cursor-pointer"
               >
                 Delete Permanently
               </button>
@@ -1322,7 +1322,7 @@ export const EmployerSettingsPage: React.FC<EmployerSettingsPageProps> = ({
             </div>
 
             {/* Company Info Card Summary */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200 space-y-5">
               <div className="flex items-center gap-4 pb-4 border-b border-slate-200">
                 {currentEmployer?.logo ? (
                   <img
@@ -2271,7 +2271,7 @@ export const EmployerSettingsPage: React.FC<EmployerSettingsPageProps> = ({
                   setDeleteConfirmText('');
                   setIsDeleteModalOpen(true);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px] shrink-0"
+                className="px-4 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px] shrink-0"
               >
                 Delete Account
               </button>

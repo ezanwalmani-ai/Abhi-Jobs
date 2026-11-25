@@ -116,13 +116,13 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
     : SECTIONS;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
       {/* Top Header / Hero */}
-      <header className="bg-[#061226] text-white border-b border-slate-800 pt-10 pb-12 sm:pt-14 sm:pb-16 relative overflow-hidden">
+      <header className="bg-[#102B4E] text-white border-b border-slate-800 pt-10 pb-12 sm:pt-14 sm:pb-10 relative overflow-hidden">
         {/* Subtle geometric background motif */}
         <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Back to Home Navigation */}
           <div className="mb-6">
             <button
@@ -137,11 +137,11 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
 
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold mb-3">
-              <Scale className="w-3.5 h-3.5 text-[#FF2B1A]" />
+              <Scale className="w-3.5 h-3.5 text-[#F47A24]" />
               <span>Legal Agreement &amp; Platform Policies</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold tracking-tight text-white mb-3">
               Terms &amp; Conditions
             </h1>
 
@@ -151,7 +151,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
 
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-400 pt-1">
               <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 font-medium">
-                <Calendar className="w-4 h-4 text-[#FF2B1A]" />
+                <Calendar className="w-4 h-4 text-[#F47A24]" />
                 <strong>Last Updated:</strong> September 5, 2026
               </span>
               <span className="hidden sm:inline">&bull;</span>
@@ -162,7 +162,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
         {/* Mobile Sticky / Collapsible Table of Contents */}
         <div className="lg:hidden mb-6 sticky top-16 z-30">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
@@ -198,7 +198,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                       {sec.title}
                     </span>
                     {activeSection === sec.id && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF2B1A] shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F47A24] shrink-0" />
                     )}
                   </button>
                 ))}
@@ -230,7 +230,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter sections..."
-                  className="w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50/70 focus:outline-hidden focus:border-[#061226] focus:bg-white transition-all placeholder:text-slate-400"
+                  className="w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50/70 focus:outline-hidden focus:border-[#102B4E] focus:bg-white transition-all placeholder:text-slate-400"
                 />
               </div>
 
@@ -243,7 +243,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                       onClick={() => scrollToSection(sec.id)}
                       className={`w-full text-left py-2 px-2.5 rounded-xl transition-all flex items-center justify-between group cursor-pointer ${
                         isActive
-                          ? 'bg-[#061226] text-white font-semibold shadow-xs'
+                          ? 'bg-[#102B4E] text-white font-semibold shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                     >
@@ -254,7 +254,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                         {sec.title}
                       </span>
                       {isActive && (
-                        <span className="w-2 h-2 rounded-full bg-[#FF2B1A] shrink-0 shadow-xs" />
+                        <span className="w-2 h-2 rounded-full bg-[#F47A24] shrink-0 shadow-xs" />
                       )}
                     </button>
                   );
@@ -282,7 +282,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
           {/* Right Column: Centered High-Legibility Legal Document */}
           <main className="lg:col-span-8 xl:col-span-9 max-w-4xl space-y-10">
             {/* Introductory Statement Card */}
-            <article className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4">
+            <article className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2.5 text-[#004D40]">
                 <Shield className="w-5 h-5 text-[#004D40] shrink-0" />
                 <h2 className="text-lg font-bold text-slate-900">ABHI JOBS &mdash; Terms &amp; Conditions</h2>
@@ -307,7 +307,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 1: PURPOSE OF ABHI JOBS */}
             <section
               id="section-1"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -339,10 +339,10 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 2: NO GUARANTEE OF EMPLOYMENT OR PLACEMENT */}
             <section
               id="section-2"
-              className="bg-white rounded-2xl border-2 border-[#004D40]/30 p-6 sm:p-8 shadow-xs space-y-5 scroll-mt-24"
+              className="bg-white rounded-2xl border-2 border-[#004D40]/30 p-5 sm:p-6 shadow-xs space-y-5 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-[#E4E7EC]">
-                <span className="w-8 h-8 rounded-xl bg-[#061226] text-white font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#102B4E] text-white font-extrabold flex items-center justify-center text-sm">
                   2
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -379,7 +379,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 3: ROLE OF ABHI JOBS */}
             <section
               id="section-3"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -415,7 +415,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 4: JOB SEEKER RESPONSIBILITIES */}
             <section
               id="section-4"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -446,7 +446,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 5: EMPLOYER AND RECRUITER RESPONSIBILITIES */}
             <section
               id="section-5"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -481,7 +481,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 6: UPSKILLING AND TRAINING SERVICES */}
             <section
               id="section-6"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -512,7 +512,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 7: USER CONTENT AND INFORMATION */}
             <section
               id="section-7"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -551,7 +551,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 8: PRIVACY AND PERSONAL INFORMATION */}
             <section
               id="section-8"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -593,7 +593,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 9: THIRD-PARTY EMPLOYERS AND WEBSITES */}
             <section
               id="section-9"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -624,7 +624,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 10: PROHIBITED ACTIVITIES */}
             <section
               id="section-10"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -663,7 +663,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 11: ACCOUNT SECURITY */}
             <section
               id="section-11"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -696,7 +696,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 12: JOB LISTING AND USER INFORMATION ACCURACY */}
             <section
               id="section-12"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -735,7 +735,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 13: FEES AND PAID SERVICES */}
             <section
               id="section-13"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -762,7 +762,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 14: INTELLECTUAL PROPERTY */}
             <section
               id="section-14"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -789,7 +789,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 15: PLATFORM AVAILABILITY */}
             <section
               id="section-15"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -827,7 +827,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 16: DISCLAIMER */}
             <section
               id="section-16"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -858,7 +858,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 17: LIMITATION OF LIABILITY */}
             <section
               id="section-17"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -893,7 +893,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 18: SUSPENSION OR TERMINATION */}
             <section
               id="section-18"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -925,7 +925,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 19: REPORTING ABUSE OR FRAUD */}
             <section
               id="section-19"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -948,7 +948,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 20: CHANGES TO THESE TERMS */}
             <section
               id="section-20"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -975,7 +975,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 21: GOVERNING LAW */}
             <section
               id="section-21"
-              className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4 scroll-mt-24"
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
@@ -998,7 +998,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 22: CONTACT ABHI JOBS */}
             <section
               id="section-22"
-              className="bg-[#061226] text-white rounded-2xl p-6 sm:p-8 shadow-md space-y-6 scroll-mt-24 border border-slate-800"
+              className="bg-[#102B4E] text-white rounded-2xl p-5 sm:p-6 shadow-md space-y-6 scroll-mt-24 border border-slate-800"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
                 <span className="w-8 h-8 rounded-xl bg-teal-500 text-[#004D40] font-extrabold flex items-center justify-center text-sm">

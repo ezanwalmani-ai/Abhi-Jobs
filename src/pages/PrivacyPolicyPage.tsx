@@ -17,10 +17,10 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
       {/* Hero Header */}
-      <header className="bg-[#061226] text-white border-b border-slate-800 pt-10 pb-12 sm:pt-14 sm:pb-16 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <header className="bg-[#102B4E] text-white border-b border-slate-800 pt-10 pb-12 sm:pt-14 sm:pb-10 relative overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal direction="up" distance={16}>
             <div className="mb-6">
               <button
@@ -34,10 +34,10 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
 
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold mb-3">
-                <Shield className="w-3.5 h-3.5 text-[#FF2B1A]" />
+                <Shield className="w-3.5 h-3.5 text-[#F47A24]" />
                 <span>Data Protection &amp; Confidentiality</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-3">
+              <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold tracking-tight text-white mb-3">
                 Privacy Policy
               </h1>
               <p className="text-base sm:text-lg text-slate-300 leading-relaxed font-normal">
@@ -54,7 +54,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
       {/* Content Body */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-8">
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl border border-[#E4E7EC] p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-white rounded-2xl border border-[#E4E7EC] p-5 sm:p-6 shadow-xs space-y-6">
             <section className="space-y-3">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#004D40]" />
@@ -114,7 +114,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
               </p>
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800">
                 <p className="font-bold text-[#101828]">ABHI JOBS Data Privacy Office</p>
-                <p>Email: <a href="mailto:privacy@abhijobs.in" className="text-[#FF2B1A] hover:underline">privacy@abhijobs.in</a></p>
+                <p>Email: <a href="mailto:privacy@abhijobs.in" className="text-[#F47A24] hover:underline">privacy@abhijobs.in</a></p>
                 <p>Platform: ABHI JOBS Platform Technologies</p>
               </div>
             </section>
@@ -122,7 +122,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
             <div className="pt-4 flex items-center gap-4">
               <button
                 onClick={() => navigate('/terms-and-conditions')}
-                className="px-4 py-2.5 rounded-xl bg-[#FF2B1A] text-white text-xs font-bold hover:bg-[#e02213] transition-colors cursor-pointer min-h-[44px]"
+                className="px-4 py-2.5 rounded-xl bg-[#F47A24] text-white text-xs font-bold hover:bg-[#DE6816] transition-colors cursor-pointer min-h-[44px]"
               >
                 View Terms &amp; Conditions
               </button>

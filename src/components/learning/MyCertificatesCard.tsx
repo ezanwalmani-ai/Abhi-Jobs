@@ -77,7 +77,7 @@ export const MyCertificatesCard: React.FC<MyCertificatesCardProps> = ({
     <>
       <section
         aria-label="My Certificates"
-        className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4"
+        className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4"
       >
         <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 min-w-0">

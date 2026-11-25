@@ -18,13 +18,13 @@ interface NotFoundPageProps {
 
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
   return (
-    <div className="min-h-[82vh] bg-[#061226] text-white flex flex-col justify-center items-center px-4 py-16 sm:py-24 relative overflow-hidden">
+    <div className="min-h-[82vh] bg-[#102B4E] text-white flex flex-col justify-center items-center px-4 py-10 sm:py-12 relative overflow-hidden">
       {/* Subtle Background Radial Glows */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: EASE_PREMIUM }}
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] h-[350px] bg-[#FF2B1A]/10 rounded-full blur-3xl pointer-events-none"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] h-[350px] bg-[#F47A24]/10 rounded-full blur-3xl pointer-events-none"
       />
       <div className="absolute bottom-10 right-1/4 w-[350px] h-[350px] bg-[#004D40]/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -56,9 +56,9 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
             className="relative inline-block"
           >
             <h1 className="text-7xl sm:text-9xl font-extrabold tracking-tight font-display text-white select-none">
-              4<span className="text-[#FF2B1A]">0</span>4
+              4<span className="text-[#F47A24]">0</span>4
             </h1>
-            <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-[#FF2B1A] text-white text-[11px] sm:text-xs font-bold uppercase tracking-widest whitespace-nowrap shadow-md">
+            <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-[#F47A24] text-white text-[11px] sm:text-xs font-bold uppercase tracking-widest whitespace-nowrap shadow-md">
               Page Not Found
             </div>
           </motion.div>
@@ -129,8 +129,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate('/jobs')}
               className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all text-left group cursor-pointer"
             >
-              <Search className="w-4 h-4 text-[#FF2B1A] mb-1.5 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-white group-hover:text-[#FF2B1A] transition-colors">
+              <Search className="w-4 h-4 text-[#F47A24] mb-1.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs font-bold text-white group-hover:text-[#F47A24] transition-colors">
                 Browse Jobs
               </div>
               <div className="text-[11px] text-slate-400">Verified openings</div>

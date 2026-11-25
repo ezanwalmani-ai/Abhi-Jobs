@@ -306,20 +306,20 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
   // Unauthenticated State Handling
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs text-center space-y-5">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#061226]">
-            <ShieldCheck className="w-7 h-7" />
+      <div className="min-h-screen bg-[#F6F8FB] py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-xl border border-[#E5EAF0] p-6 shadow-xs text-center space-y-5">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-[#102B4E]/5 border border-[#102B4E]/15 flex items-center justify-center text-[#102B4E]">
+            <ShieldCheck className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-slate-900">Sign In to View Your Dashboard</h2>
-            <p className="text-xs sm:text-sm text-slate-500">
+            <h2 className="font-display text-xl font-bold text-[#102B4E]">Sign In to View Your Dashboard</h2>
+            <p className="text-xs sm:text-sm text-[#778397]">
               Access your personal applications, saved opportunities, learning progress, and profile completion.
             </p>
           </div>
           <button
             onClick={() => navigate('/login')}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[44px]"
           >
             <span>Sign In to ABHI JOBS</span>
             <ArrowRight className="w-4 h-4" />
@@ -332,27 +332,27 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
   // Loading Skeleton State
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 space-y-6 animate-pulse">
+      <div className="min-h-screen bg-[#F6F8FB] py-6 sm:py-8">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 animate-pulse">
           {/* Header Skeleton */}
-          <div className="h-32 bg-slate-200 rounded-3xl" />
+          <div className="h-28 bg-slate-200 rounded-xl" />
           {/* Metrics Skeleton */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 bg-slate-200 rounded-2xl" />
+              <div key={i} className="h-24 bg-slate-200 rounded-xl" />
             ))}
           </div>
           {/* Quick Actions Skeleton */}
-          <div className="h-16 bg-slate-200 rounded-2xl" />
+          <div className="h-16 bg-slate-200 rounded-xl" />
           {/* Main Content Grid Skeleton */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="h-64 bg-slate-200 rounded-3xl" />
-              <div className="h-64 bg-slate-200 rounded-3xl" />
+              <div className="h-56 bg-slate-200 rounded-xl" />
+              <div className="h-56 bg-slate-200 rounded-xl" />
             </div>
             <div className="space-y-6">
-              <div className="h-48 bg-slate-200 rounded-3xl" />
-              <div className="h-64 bg-slate-200 rounded-3xl" />
+              <div className="h-48 bg-slate-200 rounded-xl" />
+              <div className="h-56 bg-slate-200 rounded-xl" />
             </div>
           </div>
         </div>
@@ -363,14 +363,14 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
   // Error State Handling
   if (hasError) {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-rose-200 p-6 sm:p-8 shadow-xs text-center space-y-5">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
-            <AlertCircle className="w-7 h-7" />
+      <div className="min-h-screen bg-[#F6F8FB] py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-xl border border-rose-200 p-6 shadow-xs text-center space-y-5">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+            <AlertCircle className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-slate-900">Dashboard Unavailable</h2>
-            <p className="text-xs sm:text-sm text-slate-500">
+            <h2 className="font-display text-xl font-bold text-[#102B4E]">Dashboard Unavailable</h2>
+            <p className="text-xs sm:text-sm text-[#778397]">
               We encountered an issue loading your dashboard data. Please retry or refresh your session.
             </p>
           </div>
@@ -380,7 +380,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
               setIsLoading(true);
               setTimeout(() => setIsLoading(false), 200);
             }}
-            className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[44px]"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Try Again</span>
@@ -391,23 +391,23 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-[#F6F8FB] py-6 sm:py-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
         {/* 1. WELCOME SECTION */}
         <ScrollReveal direction="up" distance={16}>
-          <div className="bg-[#061226] border border-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-[#102B4E] border border-[#1E3A5F] rounded-xl p-5 sm:p-6 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="flex items-start sm:items-center gap-4 min-w-0">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-bold text-xl sm:text-2xl text-teal-200 shadow-inner shrink-0">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-bold text-lg sm:text-xl text-white shadow-inner shrink-0">
                 {displayGreetingName.charAt(0).toUpperCase()}
               </div>
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight truncate">
+                  <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight truncate">
                     Welcome back, {displayGreetingName}
                   </h1>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 border border-slate-700 text-[11px] font-bold text-teal-200 shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-[11px] font-semibold text-slate-200 shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#F47A24]" />
                     Verified Job Seeker
                   </span>
                 </div>
@@ -415,7 +415,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                   Track your career progress, applications, saved opportunities, and learning journey in one place.
                 </p>
                 {currentCandidate?.headline && (
-                  <p className="text-xs text-teal-200/80 truncate">
+                  <p className="text-xs text-slate-300/90 truncate">
                     {currentCandidate.headline}
                   </p>
                 )}
@@ -426,7 +426,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-colors cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-colors cursor-pointer min-h-[40px]"
                 aria-label="Refresh dashboard data"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -434,7 +434,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
               </button>
               <button
                 onClick={() => navigate('/jobs')}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer min-h-[40px]"
               >
                 <Briefcase className="w-4 h-4" />
                 <span>Find Jobs</span>
@@ -446,11 +446,11 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
         {/* 2. PROMINENT PROFILE COMPLETION CARD (Mobile & Top Desktop Placement) */}
         <ScrollReveal direction="up" delay={0.04} distance={16}>
-          <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 shadow-xs space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-[#061226] text-xs font-bold inline-flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-[#102B4E] text-xs font-bold inline-flex items-center gap-1">
                     <User className="w-3 h-3 text-[#004D40]" />
                     Profile Completion
                   </span>
@@ -474,7 +474,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
               <button
                 onClick={() => navigate('/profile')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px] shrink-0 self-start sm:self-auto"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[40px] shrink-0 self-start sm:self-auto"
               >
                 <span>{profileCompletion === 100 ? 'Edit My Profile' : 'Complete My Profile'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -482,9 +482,9 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
             </div>
 
             {/* Animated Progress Bar */}
-            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
               <motion.div
-                className="bg-[#004D40] h-3 rounded-full"
+                className="bg-[#102B4E] h-2.5 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${profileCompletion}%` }}
                 transition={{ duration: 0.85, ease: EASE_PREMIUM }}
@@ -498,28 +498,28 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
         </ScrollReveal>
 
         {/* 3. CAREER OVERVIEW SUMMARY CARDS */}
-        <StaggerGroup staggerDelay={0.05} className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+        <StaggerGroup staggerDelay={0.05} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Applications */}
           <StaggerItem>
             <motion.div
-              whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
+              whileHover={{ y: -2, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
               onClick={() => navigate('/applications')}
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
+              className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
-                  <FileText className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+                  <FileText className="w-4 h-4" />
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
-              <div className="mt-4">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <div className="mt-3">
+                <div className="font-display text-2xl font-extrabold text-[#102B4E] tabular-nums">
                   <CountUpNumber target={myApplications.length} duration={800} />
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-slate-700 mt-0.5">
+                <div className="text-xs sm:text-sm font-bold text-[#102B4E] mt-0.5">
                   Applications
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                <div className="text-[11px] text-[#778397] mt-0.5 truncate">
                   {myApplications.length === 1 ? '1 job application' : `${myApplications.length} total submitted`}
                 </div>
               </div>
@@ -529,24 +529,24 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
           {/* Card 2: Saved Jobs */}
           <StaggerItem>
             <motion.div
-              whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
+              whileHover={{ y: -2, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
               onClick={() => navigate('/saved-jobs')}
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
+              className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#004D40] shrink-0">
-                  <Bookmark className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg bg-[#FFF4EC] border border-[#F47A24]/25 flex items-center justify-center text-[#F47A24] shrink-0">
+                  <Bookmark className="w-4 h-4" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#FF2B1A] group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#F47A24] group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
-              <div className="mt-4">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <div className="mt-3">
+                <div className="font-display text-2xl font-extrabold text-[#102B4E] tabular-nums">
                   <CountUpNumber target={mySavedJobs.length} duration={800} />
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-slate-700 mt-0.5">
+                <div className="text-xs sm:text-sm font-bold text-[#102B4E] mt-0.5">
                   Saved Jobs
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                <div className="text-[11px] text-[#778397] mt-0.5 truncate">
                   {mySavedJobs.length === 1 ? '1 opportunity saved' : `${mySavedJobs.length} bookmarked`}
                 </div>
               </div>
@@ -556,24 +556,24 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
           {/* Card 3: Learning / Upskill */}
           <StaggerItem>
             <motion.div
-              whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
+              whileHover={{ y: -2, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
               onClick={() => navigate('/learning')}
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
+              className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 shrink-0">
-                  <GraduationCap className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 shrink-0">
+                  <GraduationCap className="w-4 h-4" />
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
-              <div className="mt-4">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <div className="mt-3">
+                <div className="font-display text-2xl font-extrabold text-[#102B4E] tabular-nums">
                   <CountUpNumber target={enrolledCourses.length} duration={800} />
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-slate-700 mt-0.5">
+                <div className="text-xs sm:text-sm font-bold text-[#102B4E] mt-0.5">
                   Learning
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                <div className="text-[11px] text-[#778397] mt-0.5 truncate">
                   {enrolledCourses.length === 1 ? '1 active course' : `${enrolledCourses.length} enrolled tracks`}
                 </div>
               </div>
@@ -583,24 +583,24 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
           {/* Card 4: Profile Completion */}
           <StaggerItem>
             <motion.div
-              whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
+              whileHover={{ y: -2, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
               onClick={() => navigate('/profile')}
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
+              className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-                  <User className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <User className="w-4 h-4" />
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
-              <div className="mt-4">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <div className="mt-3">
+                <div className="font-display text-2xl font-extrabold text-[#102B4E] tabular-nums">
                   <CountUpNumber target={profileCompletion} suffix="%" duration={900} />
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-slate-700 mt-0.5">
+                <div className="text-xs sm:text-sm font-bold text-[#102B4E] mt-0.5">
                   Profile Strength
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                <div className="text-[11px] text-[#778397] mt-0.5 truncate">
                   {profileCompletion === 100 ? 'All fields verified' : 'Action items pending'}
                 </div>
               </div>
@@ -610,7 +610,7 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
         {/* 4. QUICK ACTIONS BAR */}
         <ScrollReveal direction="up" delay={0.06} distance={16}>
-          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs">
+          <div className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
             Quick Actions
           </div>
@@ -669,27 +669,27 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
         </ScrollReveal>
 
         {/* 5. MAIN CONTENT 2-COLUMN GRID (Left: Applications, Saved, Recommendations | Right: Career Readiness, Learning) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
           {/* LEFT 2 COLUMNS */}
-          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+          <div className="lg:col-span-2 space-y-6">
 
             {/* SECTION: RECENT APPLICATIONS */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Recent Applications</h2>
-                    <p className="text-xs text-slate-500">Your submitted job proposals and live status</p>
+                    <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">Recent Applications</h2>
+                    <p className="text-xs text-[#778397]">Your submitted job proposals and live status</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => navigate('/applications')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer shrink-0 min-h-[36px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F8FB] hover:bg-slate-100 text-[#102B4E] text-xs font-semibold transition-colors cursor-pointer shrink-0 min-h-[36px]"
                 >
                   <span>View All Applications</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -703,18 +703,18 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                     return (
                       <div
                         key={app.id}
-                        className="p-4 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition-all bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="p-4 rounded-xl border border-[#E5EAF0] hover:border-slate-300 hover:shadow-xs transition-all bg-[#FAFBFD] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="space-y-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-bold text-slate-900 truncate">
+                            <h3 className="text-sm font-bold text-[#102B4E] truncate">
                               {app.jobTitle}
                             </h3>
-                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${badge.bg}`}>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${badge.bg}`}>
                               {badge.label}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                          <div className="flex items-center gap-3 text-xs text-[#778397] flex-wrap">
                             <span className="flex items-center gap-1">
                               <Building2 className="w-3.5 h-3.5 text-slate-400" />
                               {app.companyName}
@@ -728,9 +728,9 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
                         <button
                           onClick={() => navigate('/applications')}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0 min-h-[36px] self-start sm:self-auto"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5EAF0] hover:border-slate-300 text-[#102B4E] text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0 min-h-[36px] self-start sm:self-auto"
                         >
-                          <Eye className="w-3.5 h-3.5 text-slate-500" />
+                          <Eye className="w-3.5 h-3.5 text-[#778397]" />
                           <span>View Application</span>
                         </button>
                       </div>
@@ -739,21 +739,21 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                 </div>
               ) : (
                 /* Strict requested empty state */
-                <div className="p-8 rounded-2xl border border-dashed border-slate-200 text-center space-y-3 bg-slate-50/50">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                    <FileText className="w-6 h-6" />
+                <div className="p-6 rounded-xl border border-dashed border-[#D4DCE6] text-center space-y-3 bg-[#FAFBFD]">
+                  <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 flex items-center justify-center text-[#778397]">
+                    <FileText className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm font-bold text-slate-800">
+                    <div className="text-sm font-bold text-[#102B4E]">
                       You haven't applied to any jobs yet.
                     </div>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    <p className="text-xs text-[#778397] max-w-sm mx-auto">
                       Explore verified openings matching your skills and start your application journey today.
                     </p>
                   </div>
                   <button
                     onClick={() => navigate('/jobs')}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[40px]"
                   >
                     <Briefcase className="w-4 h-4" />
                     <span>Find Jobs</span>
@@ -763,21 +763,21 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
             </div>
 
             {/* SECTION: SAVED JOBS */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#004D40] shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#FFF4EC] border border-[#F47A24]/25 flex items-center justify-center text-[#F47A24] shrink-0">
                     <Bookmark className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Saved Jobs</h2>
-                    <p className="text-xs text-slate-500">Opportunities bookmarked for your review</p>
+                    <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">Saved Jobs</h2>
+                    <p className="text-xs text-[#778397]">Opportunities bookmarked for your review</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => navigate('/saved-jobs')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer shrink-0 min-h-[36px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F8FB] hover:bg-slate-100 text-[#102B4E] text-xs font-semibold transition-colors cursor-pointer shrink-0 min-h-[36px]"
                 >
                   <span>View Saved Jobs</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -789,20 +789,20 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                   {recentSavedJobs.map((job) => (
                     <div
                       key={job.id}
-                      className="p-4 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition-all bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 rounded-xl border border-[#E5EAF0] hover:border-slate-300 hover:shadow-xs transition-all bg-[#FAFBFD] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-bold text-slate-900 truncate">
+                          <h3 className="text-sm font-bold text-[#102B4E] truncate">
                             {job.title}
                           </h3>
                           {job.type && (
-                            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-[#004D40] border border-teal-200">
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#F6F8FB] text-[#102B4E] border border-[#E5EAF0]">
                               {job.type}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-3 text-xs text-[#778397] flex-wrap">
                           <span className="flex items-center gap-1">
                             <Building2 className="w-3.5 h-3.5 text-slate-400" />
                             {job.company || (job as any).companyName || 'Verified Employer'}
@@ -818,9 +818,9 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
                       <button
                         onClick={() => navigate(`/jobs/${job.id}`)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0 min-h-[36px] self-start sm:self-auto"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5EAF0] hover:border-slate-300 text-[#102B4E] text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0 min-h-[36px] self-start sm:self-auto"
                       >
-                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <Eye className="w-3.5 h-3.5 text-[#778397]" />
                         <span>View Job</span>
                       </button>
                     </div>
@@ -828,21 +828,21 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                 </div>
               ) : (
                 /* Strict requested empty state */
-                <div className="p-8 rounded-2xl border border-dashed border-slate-200 text-center space-y-3 bg-slate-50/50">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                    <Bookmark className="w-6 h-6" />
+                <div className="p-6 rounded-xl border border-dashed border-[#D4DCE6] text-center space-y-3 bg-[#FAFBFD]">
+                  <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 flex items-center justify-center text-[#778397]">
+                    <Bookmark className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm font-bold text-slate-800">
+                    <div className="text-sm font-bold text-[#102B4E]">
                       No saved jobs yet.
                     </div>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    <p className="text-xs text-[#778397] max-w-sm mx-auto">
                       Bookmark promising opportunities while searching to apply when you are ready.
                     </p>
                   </div>
                   <button
                     onClick={() => navigate('/jobs')}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[40px]"
                   >
                     <Briefcase className="w-4 h-4" />
                     <span>Find Jobs</span>
@@ -852,21 +852,21 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
             </div>
 
             {/* SECTION: JOB RECOMMENDATIONS (Requirement 10) */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Job Recommendations</h2>
-                    <p className="text-xs text-slate-500">Curated opportunities matched against your verified skills &amp; preferences</p>
+                    <h2 className="font-display text-base sm:text-lg font-bold text-[#102B4E]">Job Recommendations</h2>
+                    <p className="text-xs text-[#778397]">Curated opportunities matched against your verified skills &amp; preferences</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => navigate('/jobs')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer shrink-0 min-h-[36px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F8FB] hover:bg-slate-100 text-[#102B4E] text-xs font-semibold transition-colors cursor-pointer shrink-0 min-h-[36px]"
                 >
                   <span>Explore All Jobs</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -878,19 +878,19 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                   {recommendedJobs.map((job) => (
                     <div
                       key={job.id}
-                      className="p-4 rounded-2xl border border-[#E4E7EC] hover:border-slate-300 hover:shadow-xs transition-all bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                      className="p-4 rounded-xl border border-[#E5EAF0] hover:border-slate-300 hover:shadow-xs transition-all bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
                     >
                       <div className="space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#061226] transition-colors truncate">
+                          <h3 className="text-sm font-bold text-[#102B4E] group-hover:text-[#F47A24] transition-colors truncate">
                             {job.title}
                           </h3>
-                          <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#004D40] border border-teal-200 text-[10px] font-bold flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1">
                             <Sparkles className="w-2.5 h-2.5" /> Skill Match
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-3 text-xs text-[#778397] flex-wrap">
                           <span className="flex items-center gap-1">
                             <Building2 className="w-3.5 h-3.5 text-slate-400" />
                             {job.company || (job as any).companyName || 'Verified Employer'}
@@ -946,31 +946,31 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                 </div>
               ) : (
                 /* Professional empty state for recommendations */
-                <div className="p-8 rounded-2xl border border-dashed border-slate-200 text-center space-y-3 bg-slate-50/50">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
-                    <Sparkles className="w-6 h-6" />
+                <div className="p-6 rounded-xl border border-dashed border-[#D4DCE6] text-center space-y-3 bg-[#FAFBFD]">
+                  <div className="w-11 h-11 mx-auto rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
+                    <Sparkles className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm font-bold text-slate-800">
+                    <div className="text-sm font-bold text-[#102B4E]">
                       No matching recommendations found based on your current profile.
                     </div>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    <p className="text-xs text-[#778397] max-w-sm mx-auto">
                       Add your skills, target job title, and preferred location to receive personalized opening matches.
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-2.5 flex-wrap pt-1">
                     <button
                       onClick={() => navigate('/profile')}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer min-h-[40px]"
                     >
                       <User className="w-4 h-4" />
                       <span>Update Profile Skills</span>
                     </button>
                     <button
                       onClick={() => navigate('/jobs')}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold shadow-2xs transition-colors cursor-pointer min-h-[44px]"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[#D4DCE6] hover:bg-slate-50 text-[#102B4E] text-xs sm:text-sm font-semibold shadow-2xs transition-colors cursor-pointer min-h-[40px]"
                     >
-                      <Briefcase className="w-4 h-4 text-slate-500" />
+                      <Briefcase className="w-4 h-4 text-[#778397]" />
                       <span>Browse All Jobs</span>
                     </button>
                   </div>
@@ -980,21 +980,21 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
           </div>
 
           {/* RIGHT COLUMN (Career Readiness & Learning Overview) */}
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-6">
 
             {/* SECTION: CAREER READINESS CHECKLIST (Requirement 9) */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-[#004D40]" />
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900">Career Readiness</h2>
+                  <Award className="w-4 h-4 text-[#F47A24]" />
+                  <h2 className="font-display text-sm sm:text-base font-bold text-[#102B4E]">Career Readiness</h2>
                 </div>
-                <span className="text-xs font-bold text-[#004D40]">
+                <span className="text-xs font-bold text-[#102B4E] tabular-nums">
                   {careerReadinessItems.filter((i) => i.isCompleted).length} / {careerReadinessItems.length} Done
                 </span>
               </div>
 
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#778397]">
                 Actionable steps based on your actual profile to maximize employer responses.
               </p>
 
@@ -1002,24 +1002,24 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                 {careerReadinessItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-3.5 rounded-2xl border transition-all ${
+                    className={`p-3.5 rounded-xl border transition-all ${
                       item.isCompleted
-                        ? 'bg-teal-50/40 border-teal-100'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
+                        ? 'bg-emerald-50/40 border-emerald-200/70'
+                        : 'bg-white border-[#E5EAF0] hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5 min-w-0">
                         {item.isCompleted ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#004D40] mt-0.5 shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
                         ) : (
                           <Circle className="w-4 h-4 text-slate-300 mt-0.5 shrink-0" />
                         )}
                         <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          <div className="text-xs sm:text-[13px] font-bold text-[#102B4E] truncate">
                             {item.title}
                           </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                          <p className="text-[11px] text-[#778397] mt-0.5 line-clamp-2">
                             {item.description}
                           </p>
                         </div>
@@ -1027,10 +1027,10 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
                       <button
                         onClick={item.action}
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0 cursor-pointer ${
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors shrink-0 cursor-pointer ${
                           item.isCompleted
-                            ? 'text-[#004D40] hover:bg-teal-100/50'
-                            : 'bg-[#061226] text-white hover:bg-[#0b3b2c]'
+                            ? 'text-emerald-800 hover:bg-emerald-100/60'
+                            : 'bg-[#102B4E] text-white hover:bg-[#081D36]'
                         }`}
                       >
                         {item.actionLabel}

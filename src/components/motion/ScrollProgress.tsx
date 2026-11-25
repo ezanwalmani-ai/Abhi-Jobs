@@ -13,7 +13,7 @@ export interface ScrollProgressProps {
  */
 export const ScrollProgress: React.FC<ScrollProgressProps> = ({
   className = '',
-  color = 'bg-[#FF2B1A]',
+  color = 'bg-[#F47A24]',
 }) => {
   const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();

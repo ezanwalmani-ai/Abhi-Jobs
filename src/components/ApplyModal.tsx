@@ -147,7 +147,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.35, ease: EASE_PREMIUM }}
-            className="p-8 text-center space-y-4"
+            className="p-5 sm:p-6 text-center space-y-4"
           >
             <motion.div
               initial={{ scale: 0.6, opacity: 0 }}
@@ -196,7 +196,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
             </div>
           </motion.div>
         ) : alreadyApplied ? (
-          <div className="p-8 text-center space-y-4">
+          <div className="p-5 sm:p-6 text-center space-y-4">
             <div className="w-14 h-14 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 mx-auto flex items-center justify-center">
               <Check className="w-7 h-7" />
             </div>
@@ -209,7 +209,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
             <div className="pt-3 flex items-center justify-center gap-3">
               <button
                 onClick={() => handleNavigateTo('/applications')}
-                className="px-5 py-2.5 rounded-xl bg-[#FF2B1A] text-white text-xs font-bold hover:bg-[#e02213] transition-colors cursor-pointer shadow-xs"
+                className="px-5 py-2.5 rounded-xl bg-[#F47A24] text-white text-xs font-bold hover:bg-[#DE6816] transition-colors cursor-pointer shadow-xs"
               >
                 Go to My Applications
               </button>
@@ -234,7 +234,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                   <button
                     type="button"
                     onClick={handleSignOutAndLogin}
-                    className="px-4 py-2 rounded-xl bg-[#061226] hover:bg-[#0d1e3d] text-white font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#0d1e3d] text-white font-bold cursor-pointer transition-colors"
                   >
                     Sign In with Job Seeker Account
                   </button>
@@ -257,7 +257,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                   <button
                     type="button"
                     onClick={() => handleNavigateTo('/login')}
-                    className="px-4 py-2 rounded-xl bg-[#FF2B1A] hover:bg-[#e02213] text-white font-bold cursor-pointer transition-colors shadow-xs"
+                    className="px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-bold cursor-pointer transition-colors shadow-xs"
                   >
                     Sign In
                   </button>
@@ -337,7 +337,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                     placeholder="Briefly state why you are an ideal fit for this role and your availability..."
                     rows={3}
                     maxLength={250}
-                    className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#061226]"
+                    className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
 

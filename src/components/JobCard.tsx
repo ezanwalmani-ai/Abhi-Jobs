@@ -87,7 +87,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
   };
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-[#E4E7EC] hover:border-slate-300 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-300 md:hover:-translate-y-1 flex flex-col justify-between">
+    <div className="group relative bg-white rounded-xl border border-[#E4E7EC] hover:border-slate-300 p-5 shadow-xs hover:shadow-md transition-all duration-300 md:hover:-translate-y-0.5 flex flex-col justify-between">
       {/* Top Header: Logo, Company, Title, Save */}
       <div>
         <div className="flex items-start justify-between gap-3">
@@ -97,12 +97,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
                 src={job.companyLogo}
                 alt={job.companyName || 'Company'}
                 onError={() => setLogoError(true)}
-                className="w-12 h-12 rounded-xl object-cover border border-[#E4E7EC] shadow-2xs shrink-0"
+                className="w-11 h-11 rounded-lg object-cover border border-[#E4E7EC] shadow-2xs shrink-0"
                 loading="lazy"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-[#061226]/5 border border-[#E4E7EC] flex items-center justify-center shrink-0">
-                <EnterpriseMonolithIcon size={24} colorMode="palette" />
+              <div className="w-11 h-11 rounded-lg bg-[#102B4E]/5 border border-[#E4E7EC] flex items-center justify-center shrink-0">
+                <EnterpriseMonolithIcon size={22} colorMode="palette" />
               </div>
             )}
             <div className="min-w-0 flex-1">
@@ -122,7 +122,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
               </div>
               <h3
                 onClick={() => onViewDetails(job.id)}
-                className="font-display text-base sm:text-lg font-bold text-[#102B4E] group-hover:text-[#F47A24] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
+                className="font-display text-[17px] sm:text-[18px] font-bold text-[#102B4E] group-hover:text-[#F47A24] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
                 title={job.title}
               >
                 {job.title}

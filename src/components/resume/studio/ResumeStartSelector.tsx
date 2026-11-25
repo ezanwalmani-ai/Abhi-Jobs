@@ -64,7 +64,7 @@ export const ResumeStartSelector: React.FC<ResumeStartSelectorProps> = ({
         <motion.div
           whileHover={{ y: -3 }}
           transition={{ duration: 0.2, ease: EASE_PREMIUM }}
-          className="bg-white rounded-3xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-6 shadow-2xs hover:shadow-md flex flex-col justify-between gap-5 transition-all"
+          className="bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-6 shadow-2xs hover:shadow-md flex flex-col justify-between gap-5 transition-all"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ export const ResumeStartSelector: React.FC<ResumeStartSelectorProps> = ({
         <motion.div
           whileHover={{ y: -3 }}
           transition={{ duration: 0.2, ease: EASE_PREMIUM }}
-          className="bg-white rounded-3xl border-2 border-[#F47A24]/40 hover:border-[#F47A24] p-6 shadow-sm hover:shadow-md flex flex-col justify-between gap-5 transition-all relative overflow-hidden"
+          className="bg-white rounded-xl border-2 border-[#F47A24]/40 hover:border-[#F47A24] p-6 shadow-sm hover:shadow-md flex flex-col justify-between gap-5 transition-all relative overflow-hidden"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ export const ResumeStartSelector: React.FC<ResumeStartSelectorProps> = ({
         <motion.div
           whileHover={{ y: -3 }}
           transition={{ duration: 0.2, ease: EASE_PREMIUM }}
-          className="bg-white rounded-3xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-6 shadow-2xs hover:shadow-md flex flex-col justify-between gap-5 transition-all"
+          className="bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-6 shadow-2xs hover:shadow-md flex flex-col justify-between gap-5 transition-all"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">

@@ -39,7 +39,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Header */}
         <ScrollReveal direction="up" distance={16}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -56,7 +56,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
 
             <button
               onClick={() => navigate('/employer/post-job')}
-              className="px-4 py-2.5 rounded-xl bg-[#FF2B1A] text-white text-xs font-bold hover:bg-[#e02213] transition-colors cursor-pointer shadow-xs min-h-[44px]"
+              className="px-4 py-2.5 rounded-xl bg-[#F47A24] text-white text-xs font-bold hover:bg-[#DE6816] transition-colors cursor-pointer shadow-xs min-h-[44px]"
             >
               Register Your Company
             </button>
@@ -66,7 +66,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
         {/* Search & Filter */}
         <ScrollReveal direction="up" delay={0.06} distance={18}>
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E7EC] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="w-full sm:max-w-md flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#061226] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#061226]/10 transition-all">
+            <div className="w-full sm:max-w-md flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
               <Search className="w-4 h-4 text-[#667085] shrink-0" />
               <input
                 type="text"
@@ -110,7 +110,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
               <StaggerItem key={comp.id}>
                 <motion.div
                   whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
-                  className="bg-white rounded-2xl border border-[#E4E7EC] hover:border-[#061226]/30 p-6 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full"
+                  className="bg-white rounded-2xl border border-[#E4E7EC] hover:border-[#102B4E]/30 p-6 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full"
                 >
                   <div>
                     <div className="flex items-start gap-4">
@@ -155,7 +155,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
 
                     <button
                       onClick={() => navigate(`/jobs?query=${encodeURIComponent(compName)}`)}
-                      className="px-3.5 py-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#061226] text-[#101828] hover:text-white text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1"
+                      className="px-3.5 py-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#102B4E] text-[#101828] hover:text-white text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1"
                     >
                       <span>View Jobs</span>
                       <ExternalLink className="w-3 h-3" />

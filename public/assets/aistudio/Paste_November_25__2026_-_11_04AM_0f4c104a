@@ -1,0 +1,2252 @@
+# MASTER PROMPT — CREATE ALL REMAINING EXCEL COURSE MODULES (MODULES 5–12)
+
+## Learn with ABHI — Excel for Job Seekers
+
+Continue developing the existing Excel for Job Seekers course inside the Learn with ABHI website.
+
+**IMPORTANT: Create all remaining modules, Module 5 through Module 12, together. Do not stop after Module 5.**
+
+Follow the exact structure, design, implementation pattern, video placement, quiz system, workbook generation, backend integration and student progression used in the existing Module 4 implementation.
+
+Use the existing Module 4 prompt as the reference for how every module should be built.
+
+---
+
+# PART 1 — PROTECT THE EXISTING PLATFORM
+
+Before making changes, inspect the current implementation.
+
+Modules already created:
+
+1. Excel Fundamentals
+2. Data Entry, Formatting & Worksheets
+3. Formula Fundamentals & Cell References
+4. Essential Excel Functions
+
+Preserve all existing modules.
+
+Do not:
+- Delete or recreate Modules 1–4.
+- Modify their existing content or quiz answers.
+- Reset existing student progress.
+- Modify authentication or student accounts.
+- Change unrelated Firebase or backend configurations.
+- Modify ABHI JOBS recruitment functionality.
+- Change existing enrollment functionality.
+- Deploy the application.
+
+Reuse the existing module architecture, components, video player, quiz validation, workbook generation, progress tracking and backend services.
+
+Before creating a module, check whether it already exists. Avoid duplicate modules.
+
+---
+
+# PART 2 — STANDARD STRUCTURE FOR EVERY MODULE
+
+Every module from 5 to 12 must contain:
+
+1. Module title.
+2. Level.
+3. Purpose.
+4. One main YouTube lesson.
+5. Learning objectives.
+6. Comprehensive study material.
+7. Practical workplace activity.
+8. Downloadable Excel workbook.
+9. Exactly 10 multiple-choice quiz questions.
+10. Correct answers and explanations.
+11. Video completion tracking.
+12. Quiz unlocking.
+13. Module completion tracking.
+14. Next-module unlocking.
+
+## Student learning experience
+
+When a student opens a module:
+
+1. Display the module title and description.
+2. Display the embedded YouTube video immediately at the top.
+3. Display the learning material below the video.
+4. Display the practical activity below the study material.
+5. Provide the downloadable practice workbook.
+6. Keep the quiz locked until the video is completed.
+
+After video completion:
+
+1. Unlock the quiz.
+2. Display exactly 10 questions.
+3. Allow the student to submit answers.
+4. Calculate the score out of 10.
+5. Show the correct and incorrect answers with explanations after submission.
+6. A score of 7/10 or higher passes the module.
+7. A score below 7/10 allows another attempt.
+8. Passing unlocks the next module.
+
+Passing score: **70% (7/10).**
+
+Allow unlimited retakes.
+
+---
+
+# PART 3 — VIDEO IMPLEMENTATION (VERY IMPORTANT)
+
+Every module must have exactly one main YouTube video.
+
+The following video information must be explicitly saved in the module configuration:
+
+- Video title.
+- Publisher/channel.
+- YouTube video ID.
+- Full YouTube watch URL.
+- YouTube embed URL.
+- Verification status.
+
+Use the exact video information supplied in each module below.
+
+For example:
+
+Video ID: `VIDEO_ID`
+
+Watch URL: `https://www.youtube.com/watch?v=VIDEO_ID`
+
+Embed URL: `https://www.youtube.com/embed/VIDEO_ID`
+
+**Do not merely write the YouTube link inside the study material. The video must actually be embedded and displayed inside the module page.**
+
+Before marking a module complete:
+
+1. Verify the video ID.
+2. Verify that the video opens.
+3. Verify the title and publisher.
+4. Verify that the video is relevant to the module.
+5. Verify that embedding is permitted.
+6. Test playback inside the Learn with ABHI website.
+
+If a video is unavailable, incorrect, or cannot be embedded:
+
+- Do not silently replace it.
+- Do not invent another video ID.
+- Keep its correct configuration visible in the admin/content data.
+- Mark the video as requiring correction.
+- Report the issue clearly.
+- Do not mark that module's video as verified.
+
+Use the existing YouTube IFrame Player API completion tracking.
+
+Where supported, require at least 90% playback before recording completion.
+
+Opening the video must never count as completion.
+
+If automatic tracking is unavailable, use the existing clearly labeled manual completion fallback.
+
+---
+
+# MODULE 5 — VLOOKUP, XLOOKUP & LOOKUP SKILLS
+
+## 1. Module Information
+
+**Module Title:** VLOOKUP, XLOOKUP & Lookup Skills
+
+**Level:** Intermediate
+
+**Purpose:** Teach students how to search for information in Excel tables and retrieve related information using lookup functions.
+
+## 2. YouTube Lesson
+
+**Video Title:** The Only VLOOKUP Guide You'll Ever Need. (No More Errors)
+
+**Publisher:** Leila Gharani
+
+**YouTube Video ID:** `TDphx23AtqM`
+
+**Video URL:** https://www.youtube.com/watch?v=TDphx23AtqM
+
+**Embed URL:** https://www.youtube.com/embed/TDphx23AtqM
+
+Embed this video at the top of Module 5.
+
+Verify the video before marking it as available.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- What lookup functions do.
+- How lookup tables are structured.
+- VLOOKUP syntax and arguments.
+- Exact and approximate matching.
+- Absolute references in lookup formulas.
+- VLOOKUP limitations.
+- XLOOKUP syntax and arguments.
+- Returning values from columns on either side.
+- Handling missing values.
+- Troubleshooting lookup errors.
+- Comparing VLOOKUP and XLOOKUP.
+
+## 4. Study Material
+
+Create comprehensive beginner-friendly lessons covering:
+
+### Lesson 1: What Are Lookup Functions?
+
+Explain how lookup functions search for a value and return related information.
+
+Workplace examples:
+- Supplier name from supplier ID.
+- Employee department from employee ID.
+- Product price from product code.
+- Purchase order status from PO number.
+- Item description from inventory code.
+
+### Lesson 2: Understanding Lookup Tables
+
+Use this supplier table:
+
+| Supplier ID | Supplier Name | City | Category |
+|---|---|---|---|
+| SUP001 | ABC Technologies | Pune | IT |
+| SUP002 | Global Supplies | Mumbai | Office Supplies |
+| SUP003 | Tech Solutions | Bengaluru | IT |
+| SUP004 | Paper World | Hyderabad | Stationery |
+| SUP005 | Office Mart | Pune | Office Supplies |
+
+Explain lookup value, lookup column, return column, table range and unique identifiers.
+
+### Lesson 3: VLOOKUP Fundamentals
+
+Teach:
+
+`=VLOOKUP(lookup_value,table_array,col_index_num,[range_lookup])`
+
+Explain all four arguments.
+
+Example:
+
+`=VLOOKUP("SUP003",A2:D6,2,FALSE)`
+
+Expected result: Tech Solutions.
+
+### Lesson 4: VLOOKUP with Cell References
+
+Example:
+
+`=VLOOKUP(F2,A2:D6,2,FALSE)`
+
+Explain copying formulas and locking the table range:
+
+`=VLOOKUP(F2,$A$2:$D$6,2,FALSE)`
+
+### Lesson 5: Exact and Approximate Match
+
+Explain FALSE/0 for exact matching and TRUE/1 for approximate matching.
+
+Teach why exact matching is normally appropriate for supplier IDs, employee IDs and purchase orders.
+
+Explain approximate matching with properly sorted grading or commission tables.
+
+### Lesson 6: VLOOKUP Limitations
+
+Explain:
+- Searches in the first column of the selected table range.
+- Returns results from columns to the right.
+- Column numbers can become incorrect after inserting columns.
+- Approximate matching can produce incorrect results if used improperly.
+
+### Lesson 7: XLOOKUP Fundamentals
+
+Teach:
+
+`=XLOOKUP(lookup_value,lookup_array,return_array,[if_not_found],[match_mode],[search_mode])`
+
+Example:
+
+`=XLOOKUP("SUP003",A2:A6,B2:B6,"Not Found")`
+
+Expected result: Tech Solutions.
+
+Explain all arguments.
+
+### Lesson 8: XLOOKUP with Cell References
+
+Example:
+
+`=XLOOKUP(F2,A2:A6,B2:B6,"Supplier Not Found")`
+
+Explain how XLOOKUP can return results from either side of the lookup column.
+
+### Lesson 9: Handling Missing Values
+
+Teach:
+
+`=IFERROR(VLOOKUP(F2,$A$2:$D$6,2,FALSE),"Not Found")`
+
+Explain the difference between IFERROR and XLOOKUP's built-in not-found argument.
+
+### Lesson 10: VLOOKUP vs XLOOKUP
+
+Include a comparison table covering flexibility, lookup direction, exact matching, column numbers, missing values and Excel compatibility.
+
+### Lesson 11: Common Lookup Errors
+
+Explain:
+- #N/A
+- #REF!
+- #VALUE!
+- Text/number mismatches.
+- Extra spaces.
+- Incorrect references.
+- Incorrect match modes.
+
+### Lesson 12: Excel Compatibility
+
+Explain that XLOOKUP is available in Microsoft 365 and supported newer Excel versions, including Excel 2021 and later, but not every older Excel version.
+
+## 5. Practical Workplace Activity
+
+**Activity: Supplier and Purchase Order Lookup System**
+
+Create two worksheets.
+
+**Supplier Master**
+
+| Supplier ID | Supplier Name | City | Category | Payment Terms |
+|---|---|---|---|---|
+| SUP001 | ABC Technologies | Pune | IT | 30 Days |
+| SUP002 | Global Supplies | Mumbai | Office Supplies | 15 Days |
+| SUP003 | Tech Solutions | Bengaluru | IT | 45 Days |
+| SUP004 | Paper World | Hyderabad | Stationery | 30 Days |
+| SUP005 | Office Mart | Pune | Office Supplies | 15 Days |
+| SUP006 | Metro Systems | Chennai | IT | 30 Days |
+| SUP007 | Prime Stationers | Mumbai | Stationery | 15 Days |
+
+**Purchase Lookup**
+
+| Purchase ID | Supplier ID | Supplier Name | City | Category | Payment Terms |
+|---|---|---|---|---|---|
+| PO001 | SUP003 | | | | |
+| PO002 | SUP001 | | | | |
+| PO003 | SUP005 | | | | |
+| PO004 | SUP007 | | | | |
+| PO005 | SUP002 | | | | |
+
+Students must:
+1. Enter the supplier master data.
+2. Enter purchase records.
+3. Retrieve supplier names using VLOOKUP.
+4. Retrieve city and category using VLOOKUP.
+5. Retrieve payment terms using XLOOKUP.
+6. Copy formulas down.
+7. Handle a missing supplier ID.
+8. Compare VLOOKUP and XLOOKUP results.
+
+Include the exact formulas in the instructions.
+
+Example:
+
+`=VLOOKUP(B2,'Supplier Master'!$A$2:$E$8,2,FALSE)`
+
+`=XLOOKUP(B2,'Supplier Master'!$A$2:$A$8,'Supplier Master'!$E$2:$E$8,"Not Found")`
+
+## 6. Downloadable Workbook
+
+Create a real `.xlsx` workbook containing:
+
+1. Instructions.
+2. Supplier Master.
+3. Purchase Lookup Practice with blank answer cells.
+4. Completed Answer Sheet with working formulas and expected results.
+
+## 7. Module 5 Quiz
+
+Create exactly 10 MCQs.
+
+**Q1. What does VLOOKUP stand for?**
+
+A. Vertical Lookup  
+B. Value Location  
+C. Variable Lookup  
+D. Visual Lookup
+
+Correct answer: A
+
+**Q2. Which argument tells VLOOKUP which column to return a result from?**
+
+A. lookup_value  
+B. table_array  
+C. col_index_num  
+D. range_lookup
+
+Correct answer: C
+
+**Q3. Which argument should normally be used to find an exact supplier ID match?**
+
+A. TRUE  
+B. FALSE  
+C. SUM  
+D. MAX
+
+Correct answer: B
+
+**Q4. What is a major limitation of VLOOKUP?**
+
+A. It cannot search for text  
+B. It cannot calculate totals  
+C. It returns values only from columns to the right of the lookup column  
+D. It cannot use cell references
+
+Correct answer: C
+
+**Q5. Which function is a more flexible alternative to VLOOKUP?**
+
+A. SUMIF  
+B. XLOOKUP  
+C. COUNTIF  
+D. AVERAGE
+
+Correct answer: B
+
+**Q6. Which formula correctly searches for F2 in A2:A10 and returns the matching value from B2:B10?**
+
+A. `=XLOOKUP(F2,A2:A10,B2:B10)`  
+B. `=SUM(F2,A2:A10,B2:B10)`  
+C. `=COUNT(F2,A2:A10,B2:B10)`  
+D. `=AVERAGE(F2,A2:A10,B2:B10)`
+
+Correct answer: A
+
+**Q7. What does the if_not_found argument in XLOOKUP do?**
+
+A. Deletes missing records  
+B. Displays a specified result when no match is found  
+C. Sorts the lookup table  
+D. Changes column width
+
+Correct answer: B
+
+**Q8. Which formula helps prevent a VLOOKUP error from displaying when no match is found?**
+
+A. `=SUM(VLOOKUP(...))`  
+B. `=IFERROR(VLOOKUP(...),"Not Found")`  
+C. `=COUNT(VLOOKUP(...))`  
+D. `=MAX(VLOOKUP(...))`
+
+Correct answer: B
+
+**Q9. Which Excel versions generally support XLOOKUP?**
+
+A. Only Excel 2003  
+B. Microsoft 365 and supported newer versions such as Excel 2021 and later  
+C. Every Excel version without exception  
+D. Only Excel for Mac
+
+Correct answer: B
+
+**Q10. Why should the VLOOKUP table range often use absolute references when copying formulas down?**
+
+A. To lock the lookup range so it does not shift  
+B. To delete duplicate suppliers  
+C. To convert numbers into text  
+D. To sort data automatically
+
+Correct answer: A
+
+---
+
+# MODULE 6 — SORTING, FILTERING, TABLES & DATA VALIDATION
+
+## 1. Module Information
+
+**Module Title:** Sorting, Filtering, Tables & Data Validation
+
+**Level:** Beginner to Intermediate
+
+**Purpose:** Teach students to organize, filter, control and validate spreadsheet data.
+
+## 2. YouTube Lesson
+
+**Video Title:** Create SMART Drop Down Lists in Excel (with Data Validation)
+
+**Publisher:** Leila Gharani
+
+**YouTube Video ID:** `FRiFfKb_B_A`
+
+**Video URL:** https://www.youtube.com/watch?v=FRiFfKb_B_A
+
+**Embed URL:** https://www.youtube.com/embed/FRiFfKb_B_A
+
+Embed this video at the top of Module 6.
+
+Verify the video before marking it as available.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- Sorting alphabetically and numerically.
+- Sorting by multiple columns.
+- Filtering text, numbers and dates.
+- Creating Excel Tables.
+- Understanding structured references.
+- Using Total Row.
+- Creating dropdown lists.
+- Applying data validation.
+- Restricting invalid entries.
+- Removing duplicates.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+1. Why sorting and filtering matter.
+2. Sorting A–Z and Z–A.
+3. Sorting numbers and dates.
+4. Multi-level sorting.
+5. Filtering data.
+6. Text, number and date filters.
+7. Creating Excel Tables using Ctrl+T.
+8. Table styles and structured references.
+9. Using Total Row.
+10. Data validation.
+11. Creating dropdown lists.
+12. Restricting numbers and dates.
+13. Input messages and error alerts.
+14. Removing duplicate records.
+15. Common mistakes.
+
+Explain every feature using practical business examples.
+
+## 5. Practical Workplace Activity
+
+**Activity: Purchase Order Management Register**
+
+Create a register with:
+
+- PO Number
+- Supplier Name
+- Department
+- Order Date
+- Delivery Date
+- Purchase Amount
+- Order Status
+- Payment Status
+
+Use at least 20 realistic sample records.
+
+Students must:
+
+1. Enter all records.
+2. Convert the range into an Excel Table.
+3. Sort by purchase amount.
+4. Sort by order date.
+5. Filter pending orders.
+6. Filter purchases by department.
+7. Create a dropdown for Order Status.
+8. Create a dropdown for Payment Status.
+9. Restrict purchase amounts to positive numbers.
+10. Remove duplicate PO numbers.
+11. Use Total Row to calculate total purchases.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Purchase Order Data.
+3. Filter and Sort Practice.
+4. Completed Reference.
+
+Include actual Excel Tables, dropdowns and validation rules where supported.
+
+## 7. Module 6 Quiz
+
+Exactly 10 questions.
+
+**Q1. Which feature arranges data alphabetically?**
+
+A. Filter  
+B. Sort  
+C. Freeze Panes  
+D. Merge
+
+Correct answer: B
+
+**Q2. What does filtering do?**
+
+A. Deletes all records  
+B. Displays records matching selected conditions  
+C. Changes formulas  
+D. Creates a chart
+
+Correct answer: B
+
+**Q3. Which shortcut commonly converts a selected data range into an Excel Table?**
+
+A. Ctrl+P  
+B. Ctrl+T  
+C. Ctrl+Z  
+D. Ctrl+S
+
+Correct answer: B
+
+**Q4. What is Data Validation used for?**
+
+A. Restricting or controlling data entry  
+B. Deleting worksheets  
+C. Creating charts  
+D. Changing fonts
+
+Correct answer: A
+
+**Q5. Which Data Validation option creates a dropdown list?**
+
+A. Whole Number  
+B. Decimal  
+C. List  
+D. Date
+
+Correct answer: C
+
+**Q6. Why should data be sorted using the entire table rather than only one column?**
+
+A. To preserve correct row relationships  
+B. To remove formulas  
+C. To change the workbook name  
+D. To hide blank cells
+
+Correct answer: A
+
+**Q7. Which feature can remove repeated records?**
+
+A. AutoSum  
+B. Remove Duplicates  
+C. Freeze Panes  
+D. Wrap Text
+
+Correct answer: B
+
+**Q8. What does a Total Row in an Excel Table help calculate?**
+
+A. Workbook size  
+B. Summary values such as totals and averages  
+C. Worksheet names  
+D. Font size
+
+Correct answer: B
+
+**Q9. What is a structured reference?**
+
+A. A reference using Excel Table names and column names  
+B. A reference to an image  
+C. A password  
+D. A chart title
+
+Correct answer: A
+
+**Q10. What happens when a date filter is applied?**
+
+A. Excel deletes old dates  
+B. Excel displays records matching the selected date conditions  
+C. Excel changes all dates to text  
+D. Excel removes the worksheet
+
+Correct answer: B
+
+---
+
+# MODULE 7 — DATA CLEANING & DATA MANAGEMENT
+
+## 1. Module Information
+
+**Module Title:** Data Cleaning & Data Management
+
+**Level:** Intermediate
+
+**Purpose:** Teach students to identify, correct, standardize and prepare messy Excel data for reporting and analysis.
+
+## 2. YouTube Lesson
+
+**Video Title:** Top 10 Data Cleaning Techniques in Excel | Step-by-Step Tutorial for Beginners
+
+**Publisher:** Excel Map
+
+**YouTube Video ID:** `tOY6_yhqR-w`
+
+**Video URL:** https://www.youtube.com/watch?v=tOY6_yhqR-w
+
+**Embed URL:** https://www.youtube.com/embed/tOY6_yhqR-w
+
+Embed this video at the top of Module 7.
+
+Verify the video ID, title, publisher and availability before publishing.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- Identify inconsistent data.
+- Remove duplicate records.
+- Remove unnecessary spaces.
+- Standardize text.
+- Split and combine text.
+- Find and replace values.
+- Handle blank cells.
+- Standardize dates and numbers.
+- Clean imported data.
+- Prepare datasets for reporting.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+### Lesson 1: Understanding Poor-Quality Data
+
+Explain:
+- Duplicate records.
+- Extra spaces.
+- Incorrect spelling.
+- Inconsistent capitalization.
+- Missing values.
+- Incorrect date formats.
+- Numbers stored as text.
+
+### Lesson 2: Remove Duplicates
+
+Explain how to identify and remove duplicate records safely.
+
+### Lesson 3: TRIM and CLEAN
+
+Teach:
+
+`=TRIM(A2)`
+
+`=CLEAN(A2)`
+
+Explain the difference between extra spaces and non-printable characters.
+
+### Lesson 4: Text Standardization
+
+Teach:
+
+`=PROPER(A2)`
+
+`=UPPER(A2)`
+
+`=LOWER(A2)`
+
+### Lesson 5: Extracting Text
+
+Teach:
+
+`=LEFT(A2,3)`
+
+`=RIGHT(A2,4)`
+
+`=MID(A2,2,3)`
+
+`=LEN(A2)`
+
+### Lesson 6: Finding and Replacing Text
+
+Teach FIND, SEARCH, SUBSTITUTE and REPLACE.
+
+### Lesson 7: Combining Text
+
+Teach:
+
+`=CONCAT(A2," ",B2)`
+
+`=TEXTJOIN(" ",TRUE,A2:C2)`
+
+### Lesson 8: Text to Columns
+
+Explain how to split full names, codes and imported data into separate columns.
+
+### Lesson 9: Flash Fill
+
+Explain how Flash Fill identifies patterns and automatically fills data.
+
+### Lesson 10: Handling Blank Cells
+
+Explain how to identify, filter and manage missing values without accidentally deleting valid records.
+
+### Lesson 11: Standardizing Dates and Numbers
+
+Explain text-to-date conversion, number formatting and numbers stored as text.
+
+### Lesson 12: Preparing Clean Datasets
+
+Explain how clean datasets improve PivotTables, formulas and dashboards.
+
+## 5. Practical Workplace Activity
+
+**Activity: Supplier Data Cleaning**
+
+Create deliberately inconsistent supplier records containing:
+
+- Extra spaces.
+- Inconsistent capitalization.
+- Duplicate supplier IDs.
+- Different spellings of cities.
+- Different date formats.
+- Blank fields.
+- Numbers stored as text.
+- Inconsistent categories.
+
+Students must:
+
+1. Identify data quality issues.
+2. Remove duplicates.
+3. Clean spaces.
+4. Standardize supplier names.
+5. Standardize city and category names.
+6. Correct date formats.
+7. Convert numbers stored as text.
+8. Handle blank fields.
+9. Validate the cleaned dataset.
+
+Do not delete important information during cleaning.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Raw Supplier Data.
+3. Cleaning Practice.
+4. Cleaned Answer Sheet.
+
+Include deliberately messy sample data and completed reference formulas.
+
+## 7. Module 7 Quiz
+
+Exactly 10 questions.
+
+**Q1. What is data cleaning?**
+
+A. Adding colors to cells  
+B. Identifying and correcting inaccurate or inconsistent data  
+C. Creating charts only  
+D. Deleting the workbook
+
+Correct answer: B
+
+**Q2. Which function removes unnecessary extra spaces?**
+
+A. LEN  
+B. TRIM  
+C. MAX  
+D. COUNT
+
+Correct answer: B
+
+**Q3. Which function removes non-printable characters?**
+
+A. CLEAN  
+B. SUM  
+C. LEFT  
+D. TODAY
+
+Correct answer: A
+
+**Q4. Which feature removes duplicate records?**
+
+A. Sort A–Z  
+B. Remove Duplicates  
+C. AutoSum  
+D. Merge Cells
+
+Correct answer: B
+
+**Q5. Which function converts text to proper capitalization?**
+
+A. LOWER  
+B. UPPER  
+C. PROPER  
+D. COUNTIF
+
+Correct answer: C
+
+**Q6. Which function returns the number of characters in text?**
+
+A. LEN  
+B. LEFT  
+C. RIGHT  
+D. SUM
+
+Correct answer: A
+
+**Q7. Which feature splits text into separate columns?**
+
+A. Freeze Panes  
+B. Text to Columns  
+C. Conditional Formatting  
+D. PivotTable
+
+Correct answer: B
+
+**Q8. What does Flash Fill do?**
+
+A. Deletes empty rows  
+B. Recognizes patterns and fills data automatically  
+C. Creates charts  
+D. Changes formulas into values
+
+Correct answer: B
+
+**Q9. Why should missing data be reviewed before deleting it?**
+
+A. It may contain information required for reporting  
+B. Excel cannot save blank cells  
+C. It changes the font  
+D. It automatically creates duplicates
+
+Correct answer: A
+
+**Q10. Why should numbers stored as text be corrected?**
+
+A. They cannot be formatted  
+B. They may not calculate or analyze correctly as numbers  
+C. They create new worksheets  
+D. They automatically become dates
+
+Correct answer: B
+
+---
+
+# MODULE 8 — CONDITIONAL FORMATTING
+
+## 1. Module Information
+
+**Module Title:** Conditional Formatting
+
+**Level:** Intermediate
+
+**Purpose:** Teach students to highlight important information and business exceptions automatically using formatting rules.
+
+## 2. YouTube Lesson
+
+**Video Title:** Conditional Formatting in Excel Tutorial
+
+**Publisher:** Kevin Stratvert
+
+**YouTube Video ID:** `Jp29JYGq5Hw`
+
+**Video URL:** https://www.youtube.com/watch?v=Jp29JYGq5Hw
+
+**Embed URL:** https://www.youtube.com/embed/Jp29JYGq5Hw
+
+Embed this video at the top of Module 8.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- Understand conditional formatting.
+- Highlight duplicate values.
+- Highlight high and low values.
+- Highlight overdue dates.
+- Use color scales.
+- Use data bars.
+- Use icon sets.
+- Create formula-based formatting rules.
+- Manage and remove rules.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+1. Introduction to conditional formatting.
+2. Highlight cell rules.
+3. Greater than and less than.
+4. Between and equal to.
+5. Text containing.
+6. Duplicate and unique values.
+7. Top and bottom rules.
+8. Data bars.
+9. Color scales.
+10. Icon sets.
+11. Formula-based rules.
+12. Highlighting overdue invoices.
+13. Highlighting pending purchase orders.
+14. Managing conditional formatting rules.
+
+Include and explain:
+
+`=B2>50000`
+
+`=COUNTIF($A$2:$A$20,A2)>1`
+
+`=AND($E2="Pending",$D2<TODAY())`
+
+Explain how formula-based formatting can highlight entire rows.
+
+## 5. Practical Workplace Activity
+
+**Activity: Purchase and Invoice Tracking**
+
+Create columns:
+
+- Invoice Number
+- Supplier
+- Invoice Date
+- Due Date
+- Invoice Amount
+- Payment Status
+
+Students must:
+
+1. Highlight overdue invoices.
+2. Highlight duplicate invoice numbers.
+3. Highlight invoices above ₹50,000.
+4. Apply color scales to invoice amounts.
+5. Apply data bars.
+6. Create a formula-based rule for pending overdue invoices.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Invoice Data.
+3. Conditional Formatting Practice.
+4. Completed Reference.
+
+Include actual conditional formatting rules wherever supported by the workbook-generation technology.
+
+## 7. Module 8 Quiz
+
+Exactly 10 questions.
+
+**Q1. What is conditional formatting used for?**
+
+A. Automatically formatting cells based on rules  
+B. Deleting worksheets  
+C. Creating formulas only  
+D. Saving files
+
+Correct answer: A
+
+**Q2. Which feature highlights repeated values?**
+
+A. Remove Duplicates  
+B. Duplicate Values rule  
+C. AutoSum  
+D. Freeze Panes
+
+Correct answer: B
+
+**Q3. What do data bars represent?**
+
+A. Relative values inside cells  
+B. Worksheet names  
+C. Formula errors  
+D. Dates only
+
+Correct answer: A
+
+**Q4. What do color scales show?**
+
+A. Relative values using different colors  
+B. File size  
+C. Sheet order  
+D. Cell addresses
+
+Correct answer: A
+
+**Q5. Which feature displays symbols such as arrows or indicators?**
+
+A. Icon Sets  
+B. Data Validation  
+C. Text to Columns  
+D. Flash Fill
+
+Correct answer: A
+
+**Q6. What does the formula `=B2>50000` test?**
+
+A. Whether B2 is less than 50,000  
+B. Whether B2 is greater than 50,000  
+C. Whether B2 is blank  
+D. Whether B2 contains text
+
+Correct answer: B
+
+**Q7. Which function can identify repeated values using a formula-based rule?**
+
+A. COUNTIF  
+B. TODAY  
+C. LEFT  
+D. MAX
+
+Correct answer: A
+
+**Q8. What does `TODAY()` return?**
+
+A. Current date  
+B. Current month only  
+C. Current time only  
+D. Workbook name
+
+Correct answer: A
+
+**Q9. Why is conditional formatting useful for overdue invoices?**
+
+A. It can visually highlight invoices past their due dates  
+B. It automatically pays invoices  
+C. It deletes pending invoices  
+D. It changes supplier details
+
+Correct answer: A
+
+**Q10. Where can existing conditional formatting rules be reviewed and changed?**
+
+A. Manage Rules  
+B. Save As  
+C. Print Preview  
+D. Name Box
+
+Correct answer: A
+
+---
+
+# MODULE 9 — PIVOTTABLES & DATA ANALYSIS
+
+## 1. Module Information
+
+**Module Title:** PivotTables & Data Analysis
+
+**Level:** Intermediate to Advanced
+
+**Purpose:** Teach students to summarize large datasets and create meaningful business reports using PivotTables.
+
+## 2. YouTube Lesson
+
+**Video Title:** Excel Pivot Table Tutorial for Beginners | Step-by-Step Course
+
+**Publisher:** Data Universe
+
+**YouTube Video ID:** `wZDpNXZCyFQ`
+
+**Video URL:** https://www.youtube.com/watch?v=wZDpNXZCyFQ
+
+**Embed URL:** https://www.youtube.com/embed/wZDpNXZCyFQ
+
+Embed this video at the top of Module 9.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- What PivotTables are.
+- Prepare source data.
+- Create PivotTables.
+- Arrange Rows, Columns, Values and Filters.
+- Summarize totals.
+- Count records.
+- Calculate averages.
+- Group dates by month.
+- Sort and filter PivotTables.
+- Use slicers.
+- Refresh PivotTables.
+- Create PivotCharts.
+- Analyze business performance.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+1. What is a PivotTable?
+2. Why businesses use PivotTables.
+3. Preparing source data.
+4. Creating a PivotTable.
+5. Rows, Columns, Values and Filters.
+6. Sum, Count and Average.
+7. Sorting PivotTable results.
+8. Filtering PivotTable results.
+9. Grouping dates by month and year.
+10. Slicers.
+11. Refreshing PivotTables.
+12. PivotCharts.
+13. Common PivotTable errors.
+14. Business reporting applications.
+
+Include practical examples for procurement, sales, inventory and HR.
+
+## 5. Practical Workplace Activity
+
+**Activity: Purchase Analysis Report**
+
+Create at least 40 realistic purchase records.
+
+Fields:
+
+- PO Number
+- Supplier
+- Department
+- Purchase Date
+- Category
+- Purchase Amount
+- Buyer
+- Order Status
+
+Students must create PivotTables to calculate:
+
+1. Total purchases by department.
+2. Total purchases by supplier.
+3. Monthly purchasing trends.
+4. Purchase count by order status.
+5. Average purchase value by category.
+6. Purchase amount by buyer.
+
+Add slicers where supported.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Purchase Transactions.
+3. PivotTable Practice.
+4. Completed Analysis Reference.
+
+Important:
+
+Generate actual Excel PivotTables and PivotCharts where the workbook-generation technology supports them.
+
+Do not claim static summary tables are PivotTables.
+
+If actual PivotTable generation is not supported, provide a structured dataset and clear step-by-step instructions for creating the PivotTables inside Microsoft Excel.
+
+## 7. Module 9 Quiz
+
+Exactly 10 questions.
+
+**Q1. What is a PivotTable primarily used for?**
+
+A. Formatting fonts  
+B. Summarizing and analyzing data  
+C. Deleting worksheets  
+D. Creating passwords
+
+Correct answer: B
+
+**Q2. Which PivotTable area contains fields used to group records vertically?**
+
+A. Rows  
+B. Values  
+C. Filters  
+D. Charts
+
+Correct answer: A
+
+**Q3. Where are numerical calculations such as Sum and Average normally placed?**
+
+A. Rows  
+B. Columns  
+C. Values  
+D. Filters
+
+Correct answer: C
+
+**Q4. Which feature can filter a PivotTable visually?**
+
+A. Slicer  
+B. WordArt  
+C. Wrap Text  
+D. AutoFit
+
+Correct answer: A
+
+**Q5. What must be done when the source data changes and the PivotTable needs updated results?**
+
+A. Delete the workbook  
+B. Refresh the PivotTable  
+C. Rename the worksheet  
+D. Change the font
+
+Correct answer: B
+
+**Q6. Which calculation adds all purchase amounts?**
+
+A. Count  
+B. Sum  
+C. Average  
+D. Minimum
+
+Correct answer: B
+
+**Q7. What does the Columns area control?**
+
+A. Horizontal grouping of PivotTable data  
+B. Workbook password  
+C. File location  
+D. Page margins
+
+Correct answer: A
+
+**Q8. Why should source data have consistent column headings?**
+
+A. To allow Excel to identify and organize fields correctly  
+B. To increase file size  
+C. To delete blank worksheets  
+D. To change the theme
+
+Correct answer: A
+
+**Q9. What is a PivotChart?**
+
+A. A chart connected to PivotTable data  
+B. A picture of a worksheet  
+C. A type of password  
+D. A formula error
+
+Correct answer: A
+
+**Q10. Which analysis identifies the total purchasing amount for each department?**
+
+A. Department-wise PivotTable summary  
+B. Text to Columns  
+C. Find and Replace  
+D. Freeze Panes
+
+Correct answer: A
+
+---
+
+# MODULE 10 — CHARTS, REPORTS & DASHBOARDS
+
+## 1. Module Information
+
+**Module Title:** Charts, Reports & Dashboards
+
+**Level:** Intermediate to Advanced
+
+**Purpose:** Teach students to convert spreadsheet data into professional visual reports and interactive dashboards.
+
+## 2. YouTube Lesson
+
+**Video Title:** Build This Excel Dashboard from Scratch in 30 MINUTES
+
+**Publisher:** Excel Campus — Jon Acampora
+
+**YouTube Video ID:** `qdYXuPyltkA`
+
+**Video URL:** https://www.youtube.com/watch?v=qdYXuPyltkA
+
+**Embed URL:** https://www.youtube.com/embed/qdYXuPyltkA
+
+Embed this video at the top of Module 10.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- Understand data visualization.
+- Create column charts.
+- Create bar charts.
+- Create line charts.
+- Create pie and doughnut charts.
+- Create combination charts.
+- Format chart titles and labels.
+- Build professional reports.
+- Design dashboards.
+- Create KPI cards.
+- Use slicers for interactive dashboards.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+1. Why businesses use charts.
+2. Preparing data for charts.
+3. Column charts.
+4. Bar charts.
+5. Line charts.
+6. Pie and doughnut charts.
+7. Combination charts.
+8. Chart titles and labels.
+9. Formatting axes and legends.
+10. Choosing the right chart.
+11. Professional report layout.
+12. KPI cards.
+13. Dashboard design principles.
+14. Interactive dashboards.
+15. Printing and sharing reports.
+
+Explain when to use each chart type.
+
+## 5. Practical Workplace Activity
+
+**Activity: Monthly Procurement Dashboard**
+
+Students must create a dashboard showing:
+
+- Total Purchase Value.
+- Total Purchase Orders.
+- Average Purchase Value.
+- Pending Orders.
+- Monthly Purchase Trend.
+- Department-wise Purchase Chart.
+- Supplier-wise Purchase Chart.
+- Category-wise Purchase Analysis.
+
+Use realistic sample purchase data.
+
+Students must create a professional dashboard with KPI cards, charts, readable labels and consistent formatting.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Purchase Data.
+3. Dashboard Practice.
+4. Completed Dashboard Reference.
+
+The completed workbook must contain real Excel charts and formula-driven KPI calculations, not screenshots.
+
+Use PivotTables and slicers where supported.
+
+## 7. Module 10 Quiz
+
+Exactly 10 questions.
+
+**Q1. What is a dashboard used for?**
+
+A. Displaying important information and performance metrics  
+B. Deleting records  
+C. Changing passwords  
+D. Creating worksheets only
+
+Correct answer: A
+
+**Q2. Which chart is most suitable for showing trends over time?**
+
+A. Pie chart  
+B. Line chart  
+C. Doughnut chart  
+D. Radar chart
+
+Correct answer: B
+
+**Q3. Which chart is commonly used to compare categories?**
+
+A. Column chart  
+B. Scatter chart only  
+C. Surface chart  
+D. Stock chart
+
+Correct answer: A
+
+**Q4. What does KPI stand for?**
+
+A. Key Performance Indicator  
+B. Key Purchase Information  
+C. Known Product Index  
+D. Key Process Input
+
+Correct answer: A
+
+**Q5. What is the purpose of a slicer in an interactive dashboard?**
+
+A. Filter connected data visually  
+B. Delete records  
+C. Change formulas  
+D. Protect the workbook
+
+Correct answer: A
+
+**Q6. Which chart is useful for showing proportions of a whole?**
+
+A. Pie chart  
+B. Line chart  
+C. Scatter chart  
+D. Histogram only
+
+Correct answer: A
+
+**Q7. Why should dashboards avoid unnecessary decoration?**
+
+A. To improve readability and focus on important information  
+B. To reduce the number of worksheets  
+C. To delete data  
+D. To prevent calculations
+
+Correct answer: A
+
+**Q8. What is a KPI card?**
+
+A. A visual display of an important metric  
+B. A worksheet password  
+C. A chart legend  
+D. A formula error
+
+Correct answer: A
+
+**Q9. What should be done before creating a dashboard?**
+
+A. Prepare and organize reliable source data  
+B. Delete all source records  
+C. Hide every worksheet  
+D. Remove formulas
+
+Correct answer: A
+
+**Q10. What is the benefit of connecting charts to PivotTables?**
+
+A. Charts can reflect changes in summarized data  
+B. Charts become static images  
+C. Formulas stop working  
+D. Worksheets are deleted
+
+Correct answer: A
+
+---
+
+# MODULE 11 — EXCEL FOR REAL JOBS & WORKPLACE TASKS
+
+## 1. Module Information
+
+**Module Title:** Excel for Real Jobs & Workplace Tasks
+
+**Level:** Job-Ready
+
+**Purpose:** Teach students how Excel is used in actual workplace roles, especially procurement, purchasing, HR, finance, sales, inventory and operations.
+
+## 2. YouTube Lesson
+
+**Video Title:** How to Make an Inventory Tracker in Excel | Beginner Tutorial
+
+**Publisher:** Excel Your Mind
+
+**YouTube Video ID:** `IeDKwNeZ2Sg`
+
+**Video URL:** https://www.youtube.com/watch?v=IeDKwNeZ2Sg
+
+**Embed URL:** https://www.youtube.com/embed/IeDKwNeZ2Sg
+
+Embed this video at the top of Module 11.
+
+## 3. Learning Objectives
+
+Students must understand how to use Excel in real jobs.
+
+### Procurement and Purchasing
+
+Teach:
+- Purchase order trackers.
+- Supplier comparison.
+- Quotation analysis.
+- Purchase summaries.
+- Pending delivery tracking.
+
+### HR and Administration
+
+Teach:
+- Employee master sheets.
+- Attendance trackers.
+- Leave trackers.
+- Employee joining and exit reports.
+
+### Finance and Accounts
+
+Teach:
+- Expense trackers.
+- Invoice registers.
+- Payment status trackers.
+- Monthly expense summaries.
+
+### Sales
+
+Teach:
+- Sales registers.
+- Target versus achievement.
+- Salesperson performance.
+- Monthly sales reports.
+
+### Inventory and Operations
+
+Teach:
+- Stock registers.
+- Inward and outward movement.
+- Reorder-level tracking.
+- Low-stock alerts.
+- Pending task trackers.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+1. Professional spreadsheet structure.
+2. Maintaining master data.
+3. Creating workplace trackers.
+4. Using formulas in reports.
+5. Using lookup functions in daily work.
+6. Using PivotTables for summaries.
+7. Data validation for controlled entry.
+8. Conditional formatting for alerts.
+9. Creating monthly reports.
+10. Checking accuracy.
+11. Common workplace mistakes.
+12. Professional Excel file management.
+
+Provide real examples for each job category.
+
+## 5. Practical Workplace Activity
+
+**Activity: Complete Procurement Operations Workbook**
+
+Create a workbook combining:
+
+1. Supplier Master.
+2. Purchase Requisition Tracker.
+3. Purchase Order Register.
+4. Delivery Tracker.
+5. Invoice Tracker.
+6. Monthly Purchase Summary.
+
+Students must use:
+
+- Formulas.
+- Dropdowns.
+- Conditional formatting.
+- Lookup functions.
+- Sorting and filtering.
+- Summary reports.
+- Appropriate formatting.
+
+The exercise must be suitable for someone applying for Purchase Executive, Procurement Buyer or Operations roles.
+
+## 6. Downloadable Workbook
+
+Create an `.xlsx` workbook containing:
+
+1. Instructions.
+2. Supplier Master.
+3. Purchase Register.
+4. Delivery Tracker.
+5. Invoice Tracker.
+6. Monthly Summary.
+7. Completed Reference.
+
+Use realistic business data and working formulas.
+
+## 7. Module 11 Quiz
+
+Exactly 10 questions.
+
+**Q1. Which Excel document is commonly used to track purchase orders?**
+
+A. Purchase Order Register  
+B. Music Playlist  
+C. Photo Album  
+D. Presentation Theme
+
+Correct answer: A
+
+**Q2. What information is normally stored in a Supplier Master?**
+
+A. Supplier details and identifiers  
+B. Employee passwords  
+C. Chart colors  
+D. Computer settings
+
+Correct answer: A
+
+**Q3. Which function can retrieve a supplier name from a supplier ID?**
+
+A. XLOOKUP  
+B. TODAY  
+C. LEN  
+D. MAX
+
+Correct answer: A
+
+**Q4. What is the purpose of a delivery tracker?**
+
+A. Monitoring order and delivery progress  
+B. Formatting charts  
+C. Calculating employee age only  
+D. Changing workbook themes
+
+Correct answer: A
+
+**Q5. Which feature can visually identify overdue invoices?**
+
+A. Conditional Formatting  
+B. Merge Cells  
+C. WordArt  
+D. Freeze Panes only
+
+Correct answer: A
+
+**Q6. Which Excel feature can summarize purchase spending by department?**
+
+A. PivotTable  
+B. Spell Check  
+C. Page Layout  
+D. Find and Replace
+
+Correct answer: A
+
+**Q7. What is a stock register used for?**
+
+A. Recording inventory quantities and movements  
+B. Recording employee passwords  
+C. Creating presentations  
+D. Formatting text only
+
+Correct answer: A
+
+**Q8. Why are dropdown lists useful in workplace trackers?**
+
+A. They help standardize data entry  
+B. They delete formulas  
+C. They remove worksheets  
+D. They stop calculations
+
+Correct answer: A
+
+**Q9. What should a Purchase Executive check when recording a purchase order?**
+
+A. Supplier, quantity, price and order details  
+B. Only the font size  
+C. Only the worksheet color  
+D. Only the workbook name
+
+Correct answer: A
+
+**Q10. What is the main benefit of maintaining an organized invoice register?**
+
+A. Tracking invoice details and payment status  
+B. Creating animations  
+C. Changing computer settings  
+D. Removing supplier records
+
+Correct answer: A
+
+---
+
+# MODULE 12 — AI WITH EXCEL, AUTOMATION & FINAL PROJECT
+
+## 1. Module Information
+
+**Module Title:** AI with Excel, Automation & Final Project
+
+**Level:** Advanced / Job-Ready
+
+**Purpose:** Introduce students to AI-assisted Excel workflows, automation and a comprehensive final workplace project.
+
+## 2. YouTube Lesson
+
+**Video Title:** Automate Data Tasks in Excel & Power BI
+
+**Publisher:** Excel Campus — Jon Acampora
+
+**YouTube Video ID:** `vq9AgAtSvQg`
+
+**Video URL:** https://www.youtube.com/watch?v=vq9AgAtSvQg
+
+**Embed URL:** https://www.youtube.com/embed/vq9AgAtSvQg
+
+Embed this video at the top of Module 12.
+
+## 3. Learning Objectives
+
+Students must learn:
+
+- How AI can support Excel tasks.
+- How to write prompts for Excel formulas.
+- How to ask AI to explain formulas.
+- How to troubleshoot Excel errors using AI.
+- How to generate sample datasets using AI.
+- How to analyze data with AI assistance.
+- What Excel macros are.
+- Basic VBA concepts.
+- Power Query fundamentals.
+- Importing and transforming data.
+- Automating repetitive spreadsheet work.
+- Responsible AI usage.
+- How to complete the final project.
+
+## 4. Study Material
+
+Create detailed lessons covering:
+
+### Lesson 1: Introduction to AI with Excel
+
+Explain how AI can assist with spreadsheet tasks.
+
+### Lesson 2: AI-Assisted Formula Creation
+
+Teach students to ask AI for formulas.
+
+Example prompt:
+
+"Write an Excel formula that calculates net salary using Basic Salary, Allowance and Deduction."
+
+Explain how to test the generated formula.
+
+### Lesson 3: Explaining Formulas with AI
+
+Teach:
+
+"Explain this Excel formula step by step in simple language."
+
+### Lesson 4: Troubleshooting with AI
+
+Example:
+
+"Explain why my VLOOKUP formula is returning #N/A and help me troubleshoot it."
+
+### Lesson 5: Generating Sample Data
+
+Explain how AI can create practice datasets without using confidential workplace information.
+
+### Lesson 6: AI-Assisted Data Cleaning
+
+Teach how to request formulas and steps for cleaning inconsistent data.
+
+### Lesson 7: AI-Assisted Data Analysis
+
+Explain how AI can help interpret reports and identify trends.
+
+### Lesson 8: Introduction to Macros
+
+Explain what macros are and how they automate repetitive tasks.
+
+### Lesson 9: Introduction to VBA
+
+Explain:
+- What VBA means.
+- What macros do.
+- Basic VBA structure.
+- How to record and inspect a macro.
+- Safe macro practices.
+
+Do not require students to become advanced programmers.
+
+### Lesson 10: Power Query Fundamentals
+
+Explain:
+- Importing data.
+- Removing columns and rows.
+- Removing blanks.
+- Changing data types.
+- Splitting and merging columns.
+- Filtering.
+- Combining files.
+- Refreshing queries.
+
+### Lesson 11: Automating Repetitive Tasks
+
+Provide practical examples of repeatable data cleaning and reporting workflows.
+
+### Lesson 12: Responsible AI Use
+
+Teach:
+- Never share confidential supplier or employee information with unauthorized AI tools.
+- Verify AI-generated formulas.
+- Check calculations.
+- Protect business data.
+- Understand that AI can make mistakes.
+
+Do not require students to purchase a paid AI subscription.
+
+## 5. Final Project
+
+**Project Title: Complete Procurement Management and Reporting System**
+
+Students must build a professional Excel workbook combining the skills learned in Modules 1–11.
+
+The workbook must contain:
+
+1. Supplier Master.
+2. Employee or Buyer Master.
+3. Purchase Requisition Register.
+4. Purchase Order Register.
+5. Delivery Tracking.
+6. Invoice Register.
+7. Expense Summary.
+8. Supplier Lookup.
+9. Automated Status Classification.
+10. Conditional Formatting Alerts.
+11. PivotTable Analysis.
+12. Procurement Dashboard.
+
+Required capabilities:
+
+- Data entry and formatting.
+- Formula-based calculations.
+- SUM, AVERAGE, COUNTIF, SUMIF and IF.
+- VLOOKUP or XLOOKUP.
+- Sorting and filtering.
+- Data validation dropdowns.
+- Duplicate identification.
+- Conditional formatting.
+- PivotTable analysis.
+- Charts and dashboards.
+- AI-assisted formula explanation and troubleshooting.
+
+Provide step-by-step project instructions.
+
+Include realistic sample business data.
+
+Students must be able to complete the project without a paid AI subscription.
+
+## 6. Downloadable Final Project Workbook
+
+Generate a real downloadable `.xlsx` workbook containing:
+
+1. Project Instructions.
+2. Sample Data.
+3. Blank Student Project.
+4. Completed Reference Project.
+
+The workbook must be usable in Microsoft Excel.
+
+Include working formulas, proper formatting, and actual charts and PivotTables where supported.
+
+Provide a clear project evaluation checklist.
+
+## 7. Module 12 Quiz
+
+Exactly 10 questions.
+
+**Q1. How can AI help with Excel?**
+
+A. Generate and explain formulas  
+B. Guarantee that every calculation is correct  
+C. Replace all business judgment  
+D. Delete all errors automatically
+
+Correct answer: A
+
+**Q2. Why should AI-generated Excel formulas be tested?**
+
+A. AI can produce incorrect formulas  
+B. Excel cannot calculate formulas  
+C. Testing changes the workbook name  
+D. AI formulas never work
+
+Correct answer: A
+
+**Q3. What is an Excel macro?**
+
+A. A recorded or programmed sequence of actions used to automate tasks  
+B. A chart type  
+C. A worksheet color  
+D. A password
+
+Correct answer: A
+
+**Q4. What does VBA stand for?**
+
+A. Visual Basic for Applications  
+B. Variable Business Analysis  
+C. Verified Backup Application  
+D. Visual Browser Access
+
+Correct answer: A
+
+**Q5. What is Power Query mainly used for?**
+
+A. Importing, transforming and preparing data  
+B. Creating email accounts  
+C. Changing desktop settings  
+D. Recording audio
+
+Correct answer: A
+
+**Q6. What happens when a Power Query is refreshed?**
+
+A. It reruns the data transformation process against its source  
+B. It deletes the workbook  
+C. It changes all formulas into text  
+D. It removes all worksheets
+
+Correct answer: A
+
+**Q7. Which task is suitable for AI-assisted Excel work?**
+
+A. Explaining why a formula returns an error  
+B. Sharing confidential passwords  
+C. Guaranteeing business results  
+D. Avoiding all verification
+
+Correct answer: A
+
+**Q8. Why should confidential business information be protected when using AI?**
+
+A. To protect sensitive company and personal data  
+B. To make formulas longer  
+C. To change worksheet names  
+D. To remove charts
+
+Correct answer: A
+
+**Q9. What should students do before trusting an AI-generated formula?**
+
+A. Test it against known examples  
+B. Submit it without checking  
+C. Delete the source data  
+D. Hide the formula
+
+Correct answer: A
+
+**Q10. What is the purpose of the final procurement project?**
+
+A. Combine Excel skills into a practical workplace system  
+B. Memorize Excel shortcuts only  
+C. Create a photo gallery  
+D. Avoid using formulas
+
+Correct answer: A
+
+---
+
+# PART 4 — QUIZ REQUIREMENTS FOR ALL MODULES
+
+Apply these rules to Modules 5–12:
+
+- Exactly 10 MCQs per module.
+- Four answer options per question.
+- One correct answer per question.
+- Short explanation for each answer.
+- Server-side answer validation.
+- No client-side correct-answer leakage.
+- Score out of 10.
+- Passing score 7/10.
+- Unlimited retakes.
+- Show feedback after submission.
+- Keep quiz locked until video completion.
+
+The quiz questions must be stored using the existing quiz architecture.
+
+Do not create additional quizzes for the same module.
+
+---
+
+# PART 5 — DOWNLOADABLE EXCEL WORKBOOKS
+
+Every module from 5 to 12 must have its own actual downloadable `.xlsx` workbook.
+
+The workbook must:
+
+- Open in Microsoft Excel.
+- Contain an Instructions sheet.
+- Contain realistic sample data.
+- Contain blank student practice areas.
+- Contain a separate completed answer/reference sheet.
+- Use working formulas wherever appropriate.
+- Use professional formatting.
+- Include appropriate column widths and number formats.
+- Be stored using the existing secure file-handling system.
+- Be downloadable by authenticated enrolled students.
+
+Do not create fake download buttons or placeholder files.
+
+If a feature cannot be generated programmatically, explain the limitation and provide instructions for creating that feature in Excel.
+
+---
+
+# PART 6 — STUDENT PROGRESSION
+
+Connect the modules in this exact order:
+
+Module 1 → Module 2 → Module 3 → Module 4 → Module 5 → Module 6 → Module 7 → Module 8 → Module 9 → Module 10 → Module 11 → Module 12.
+
+Rules:
+
+1. Module 1 is the starting module.
+2. Each next module unlocks only after the previous module is passed.
+3. Video completion is required before quiz access.
+4. Passing score is 70%.
+5. Students can retake failed quizzes without limits.
+6. Student progress must be stored in the authenticated backend.
+7. Progress must persist across refreshes, logout and login.
+8. Preserve all existing student progress.
+9. Do not allow users to bypass locked modules using direct URLs or client-side state manipulation.
+10. Enforce module access using the existing server-side architecture.
+
+After passing Module 12, mark the course as completed and display an appropriate completion message.
+
+Do not invent a certificate feature if one does not already exist.
+
+---
+
+# PART 7 — ADMIN AND CONTENT MANAGEMENT
+
+Use the existing admin/content management system.
+
+Ensure administrators can identify:
+
+- Module title.
+- Video title.
+- Publisher.
+- Video ID.
+- Watch URL.
+- Embed URL.
+- Video verification status.
+- Study material.
+- Quiz questions.
+- Workbook download.
+- Module availability.
+- Student completion status.
+
+Do not create a second admin system.
+
+Do not expose administrative editing features to ordinary students.
+
+---
+
+# PART 8 — SECURITY AND DATA INTEGRITY
+
+Preserve the existing security architecture.
+
+Verify:
+
+- Students cannot access administrative functions.
+- Students cannot bypass server-side quiz validation.
+- Correct answers are not exposed before submission.
+- Students cannot unlock modules by modifying browser state.
+- Student progress belongs to the authenticated student.
+- Workbook downloads follow existing authorization rules.
+- Existing authentication and database security rules are not weakened.
+- Recruitment data remains untouched.
+
+Do not modify security rules unnecessarily.
+
+---
+
+# PART 9 — TESTING
+
+After implementation, run a complete test for every module.
+
+For each module verify:
+
+1. Correct title and position.
+2. Correct video title.
+3. Correct publisher.
+4. Correct YouTube ID.
+5. Correct watch URL.
+6. Correct embed URL.
+7. Video loads inside the website.
+8. Video playback works.
+9. Video completion tracking works.
+10. Study material displays correctly.
+11. Practical activity displays correctly.
+12. Workbook downloads successfully.
+13. Workbook opens in Excel.
+14. Exactly 10 quiz questions appear.
+15. Four options appear per question.
+16. Answer validation works.
+17. Explanations display correctly.
+18. 70% passing threshold works.
+19. Retakes work.
+20. Next module unlocks after passing.
+
+Also test:
+
+- Course navigation.
+- Mobile layout.
+- Desktop layout.
+- Refresh persistence.
+- Logout/login persistence.
+- Locked-module access protection.
+- Existing Modules 1–4.
+- Authentication.
+- ABHI JOBS recruitment features.
+
+Run the build, TypeScript checks, lint checks and relevant automated tests.
+
+Fix implementation errors before reporting completion.
+
+---
+
+# PART 10 — IMPLEMENTATION STRATEGY
+
+Implement Modules 5–12 in this single coordinated task.
+
+You may work internally in phases, but do not ask me to submit a separate prompt for each module.
+
+For every module:
+
+1. Check whether the module already exists.
+2. Create or update only what is required.
+3. Add the specified video details.
+4. Verify the video.
+5. Add the study material.
+6. Add the practical activity.
+7. Generate the workbook.
+8. Add exactly 10 quiz questions.
+9. Connect video completion and quiz unlocking.
+10. Connect progression.
+11. Test the module.
+12. Mark it complete only after successful verification.
+
+If you reach a processing limit or context limit:
+
+- Save all successfully completed work.
+- Do not mark unfinished modules as completed.
+- Do not duplicate existing modules when resuming.
+- Report exactly which modules are complete.
+- Report which modules remain unfinished.
+- Preserve all working features.
+- Do not deploy.
+
+Do not stop after Module 5.
+
+---
+
+# PART 11 — FINAL IMPLEMENTATION REPORT
+
+After completing the implementation, provide this report:
+
+| Module | Created | Video Added | Video Verified | Workbook Verified | Quiz Verified | Progression Verified |
+|---|---|---|---|---|---|---|
+| 5 | | | | | | |
+| 6 | | | | | | |
+| 7 | | | | | | |
+| 8 | | | | | | |
+| 9 | | | | | | |
+| 10 | | | | | | |
+| 11 | | | | | | |
+| 12 | | | | | | |
+
+Also report:
+
+- Number of modules created.
+- Number of video links added.
+- Number of videos successfully verified.
+- Number of downloadable Excel workbooks.
+- Total number of new quiz questions.
+- Progression test results.
+- Security test results.
+- Build and TypeScript results.
+- Lint results.
+- Any unresolved issues.
+
+Clearly distinguish implemented, tested, verified and unverified features.
+
+---
+
+# FINAL INSTRUCTION
+
+Implement **all remaining modules from Module 5 through Module 12 together**.
+
+Follow the existing Module 4 prompt structure.
+
+Every module must have its own actual embedded YouTube video, full study material, practical activity, downloadable Excel workbook and exactly 10 quiz questions.
+
+Do not merely mention video URLs in text. Add the actual video ID, watch URL and embed URL to each module's configuration and display the video inside the module page.
+
+Preserve Modules 1–4 and all existing platform features.
+
+Do not deploy the application.
+
+Do not ask me to choose videos, topics, questions or activities.
+
+Do not stop after Module 5.
+
+Complete and test the entire remaining Excel for Job Seekers course, Modules 5–12.
