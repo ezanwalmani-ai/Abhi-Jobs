@@ -2,3 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
+# SPA Fallback: Route all client-side React Router paths (including /abhi-control-center,
+# /jobs/*, /learn/*, /verify/*) to /index.html while serving static assets directly.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+

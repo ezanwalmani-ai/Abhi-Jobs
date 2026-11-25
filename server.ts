@@ -1579,6 +1579,183 @@ async function startServer() {
   );
 
   // --------------------------------------------------------------------------
+  // SUPER ADMIN AUTHORIZED CSV DATA EXPORT API
+  // --------------------------------------------------------------------------
+
+  const ALLOWED_EXPORT_DATASETS = new Set([
+    'jobs',
+    'applications',
+    'candidates',
+    'employers',
+    'hiring_enquiries',
+    'student_progress',
+  ]);
+
+  const STUDENT_PROGRESS_CSV_HEADERS = [
+    'User ID',
+    'Student Name',
+    'Student Email',
+    'Course ID',
+    'Course Title',
+    'Record Type',
+    'Module ID',
+    'Assessment Title',
+    'Attempt #',
+    'Score (%)',
+    'Pass Mark (%)',
+    'Result',
+    'Course Progress (%)',
+    'Unlocked Module',
+    'Status',
+    'Recorded At',
+  ];
+
+  const escapeServerCsvCell = (rawValue: unknown): string => {
+    if (rawValue === null || rawValue === undefined) return '';
+    let text = String(rawValue)
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/\0/g, '')
+      .slice(0, 2000);
+
+    // Neutralize spreadsheet formula injection (=, +, -, @, tab, CR)
+    if (/^[\s]*[=+\-@\t\r]/.test(text)) {
+      text = `'${text}`;
+    }
+
+    if (
+      text.includes(',') ||
+      text.includes('"') ||
+      text.includes('\n') ||
+      text.startsWith(' ') ||
+      text.endsWith(' ')
+    ) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  };
+
+  const buildServerCsv = (headers: string[], rows: unknown[][]): string => {
+    const headerLine = headers.map(escapeServerCsvCell).join(',');
+    const bodyLines = rows.map((row) => row.map(escapeServerCsvCell).join(','));
+    return `\uFEFF${[headerLine, ...bodyLines].join('\r\n')}\r\n`;
+  };
+
+  app.post(
+    '/api/admin/export-csv',
+    requireAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const dataset = sanitizeShortText(req.body?.dataset, 40);
+        if (!dataset || !ALLOWED_EXPORT_DATASETS.has(dataset)) {
+          res.status(400).json({
+            error:
+              'Invalid dataset requested. Allowed values: jobs, applications, candidates, employers, hiring_enquiries, student_progress.',
+            code: 'INVALID_EXPORT_DATASET',
+          });
+          return;
+        }
+
+        let headers: string[] = [];
+        let rows: unknown[][] = [];
+
+        if (dataset === 'student_progress') {
+          headers = STUDENT_PROGRESS_CSV_HEADERS;
+
+          // Authoritative server-side assessment attempts (excluding cryptographic signatures)
+          const serverAttempts = await listAllServerAttempts({});
+          const attemptRows: unknown[][] = serverAttempts.map((att) => [
+            att.userId,
+            att.candidateName,
+            att.candidateEmail,
+            att.courseId,
+            att.courseTitle,
+            att.assessmentType,
+            att.moduleId || '',
+            att.assessmentTitle,
+            att.attemptNumber,
+            att.scorePercent,
+            att.passPercentage,
+            att.passed ? 'Passed' : 'Not Passed',
+            '',
+            '',
+            att.passed ? 'passed' : 'attempted',
+            att.submittedAt,
+          ]);
+
+          // Optional Super Admin enriched enrolment snapshots (strictly validated & bounded)
+          const rawEnrolments = Array.isArray(req.body?.enrolments)
+            ? req.body.enrolments.slice(0, 5000)
+            : [];
+
+          const enrolmentRows: unknown[][] = rawEnrolments
+            .filter((item: unknown) => item && typeof item === 'object')
+            .map((item: any) => [
+              sanitizeShortText(item.userId, 128),
+              sanitizeShortText(item.studentName, 120),
+              sanitizeShortText(item.studentEmail, 150),
+              sanitizeShortText(item.courseId, 128),
+              sanitizeShortText(item.courseTitle, 160),
+              'enrolment',
+              sanitizeShortText(item.moduleId, 128),
+              sanitizeShortText(item.assessmentTitle, 160),
+              '',
+              typeof item.scorePercent === 'number' ? Math.round(item.scorePercent) : '',
+              typeof item.passPercentage === 'number' ? Math.round(item.passPercentage) : 70,
+              item.passed === true ? 'Passed' : item.passed === false ? 'In Progress' : '',
+              typeof item.progressPercent === 'number' ? Math.round(item.progressPercent) : 0,
+              typeof item.unlockedModuleOrder === 'number' ? Math.round(item.unlockedModuleOrder) : 1,
+              sanitizeShortText(item.status, 40) || 'enrolled',
+              sanitizeShortText(item.timestamp, 64),
+            ]);
+
+          rows = [...enrolmentRows, ...attemptRows];
+        } else {
+          const rawHeaders = Array.isArray(req.body?.headers) ? req.body.headers : [];
+          const rawRows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+
+          if (rawHeaders.length === 0 || rawHeaders.length > 30) {
+            res.status(400).json({
+              error: 'Valid export column headers are required (1–30 columns).',
+              code: 'INVALID_EXPORT_HEADERS',
+            });
+            return;
+          }
+
+          if (rawRows.length > 10000) {
+            res.status(413).json({
+              error: 'Export exceeds maximum allowed row limit (10,000 rows per export).',
+              code: 'EXPORT_LIMIT_EXCEEDED',
+            });
+            return;
+          }
+
+          headers = rawHeaders.map((h: unknown) => sanitizeShortText(h, 80));
+          rows = rawRows
+            .filter((r: unknown) => Array.isArray(r))
+            .map((r: unknown[]) =>
+              headers.map((_, colIdx) => (colIdx < r.length ? r[colIdx] : ''))
+            );
+        }
+
+        const dateStamp = new Date().toISOString().slice(0, 10);
+        const safeDatasetSlug = dataset.replace(/[^a-z0-9_-]/gi, '-').replace(/_/g, '-');
+        const filename = `abhi-jobs-${safeDatasetSlug}-${dateStamp}.csv`;
+        const csvPayload = buildServerCsv(headers, rows);
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Export-Row-Count', String(rows.length));
+        res.status(200).send(csvPayload);
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    }
+  );
+
+  // --------------------------------------------------------------------------
   // VITE MIDDLEWARE (DEV) OR STATIC DIST SERVING (PROD)
   // --------------------------------------------------------------------------
 

@@ -213,7 +213,9 @@ function AppContent() {
       route === '/terms-and-conditions' ||
       route === '/how-it-works' ||
       route === '/password-checker-demo' ||
-      route.startsWith('/admin')
+      route.startsWith('/admin') ||
+      route === '/abhi-control-center' ||
+      route.startsWith('/abhi-control-center/')
     ) {
       return false;
     }
@@ -583,8 +585,9 @@ function AppContent() {
       case '/employer/candidates':
         return <CandidatesPage navigate={navigate} />;
 
-      // Admin Portal
+      // Private Central Admin Panel (never linked in public navigation)
       case '/admin':
+      case '/abhi-control-center':
         return <AdminDashboard navigate={navigate} />;
 
       case '/404':

@@ -39,6 +39,8 @@ import {
 import { AbhiJobsLogo } from '../../components/AbhiJobsLogo';
 import { AdminCourseContentManager } from '../../components/learning/AdminCourseContentManager';
 import { AdminAssessmentManager } from '../../components/learning/AdminAssessmentManager';
+import { AdminCsvExportModal } from '../../components/admin/AdminCsvExportModal';
+import type { AdminCsvDataset } from '../../utils/csvExport';
 
 interface AdminDashboardProps {
   navigate: (route: string) => void;
@@ -103,6 +105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
     jobs,
     courses,
     candidates,
+    companies,
     applications,
     hiringEnquiries,
     courseEnquiries,
@@ -118,11 +121,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
     addApplicationNote,
     scheduleInterview,
     updateHiringEnquiry,
-    exportCsvReport,
     showToast,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [csvModalDataset, setCsvModalDataset] = useState<AdminCsvDataset>('jobs');
+
+  const openCsvExportModal = (dataset?: AdminCsvDataset) => {
+    const defaultByTab: Record<AdminTab, AdminCsvDataset> = {
+      overview: 'jobs',
+      jobs: 'jobs',
+      applications: 'applications',
+      candidates: 'candidates',
+      enquiries: 'hiring_enquiries',
+      courses: 'student_progress',
+    };
+    setCsvModalDataset(dataset || defaultByTab[activeTab]);
+    setCsvModalOpen(true);
+  };
 
   // Search & Filter State
   const [jobSearch, setJobSearch] = useState('');
@@ -578,11 +595,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               </button>
               <button
                 type="button"
-                onClick={() => exportCsvReport('applications')}
-                className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/15 border border-white/15 text-slate-200 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                onClick={() => openCsvExportModal()}
+                className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                aria-label="Download CSV"
               >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export CSV</span>
+                <Download className="w-4 h-4 text-[#F47A24]" />
+                <span>Download CSV</span>
               </button>
             </div>
           </div>
@@ -828,14 +846,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   <option value="closed">Closed</option>
                 </select>
               </div>
-              <button
-                type="button"
-                onClick={openCreateJobModal}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Job</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal('jobs')}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreateJobModal}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Job</span>
+                </button>
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-[#E5EAF0] overflow-hidden">
@@ -968,11 +996,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               </div>
               <button
                 type="button"
-                onClick={() => exportCsvReport('applications')}
+                onClick={() => openCsvExportModal('applications')}
                 className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Export Applications</span>
+                <span>Download CSV</span>
               </button>
             </div>
 
@@ -1208,11 +1236,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
               </div>
               <button
                 type="button"
-                onClick={() => exportCsvReport('candidates')}
+                onClick={() => openCsvExportModal('candidates')}
                 className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Export Candidate Pool</span>
+                <span>Download CSV</span>
               </button>
             </div>
 
@@ -1290,18 +1318,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
                   Enquiries submitted through the Hire Talent consultancy page.
                 </p>
               </div>
-              <select
-                value={enquiryStatusFilter}
-                onChange={(e) => setEnquiryStatusFilter(e.target.value)}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5EAF0] text-sm text-[#253449] bg-white focus:outline-none focus:border-[#102B4E]"
-              >
-                <option value="all">All Statuses</option>
-                {ENQUIRY_STATUSES.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <select
+                  value={enquiryStatusFilter}
+                  onChange={(e) => setEnquiryStatusFilter(e.target.value)}
+                  className="min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5EAF0] text-sm text-[#253449] bg-white focus:outline-none focus:border-[#102B4E]"
+                >
+                  <option value="all">All Statuses</option>
+                  {ENQUIRY_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => openCsvExportModal('hiring_enquiries')}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download CSV</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -1463,39 +1501,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
         {activeTab === 'courses' && (
           <div className="space-y-6">
             {/* Sub-tab navigation for Learn with ABHI Lessons, Quizzes & Assessments, and Partner Programmes */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCoursesSubTab('lessons')}
+                  className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                    coursesSubTab === 'lessons'
+                      ? 'bg-[#102B4E] text-white'
+                      : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                  }`}
+                >
+                  Course Lessons
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCoursesSubTab('assessments')}
+                  className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                    coursesSubTab === 'assessments'
+                      ? 'bg-[#102B4E] text-white'
+                      : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                  }`}
+                >
+                  Quizzes &amp; Assessments
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCoursesSubTab('partner')}
+                  className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
+                    coursesSubTab === 'partner'
+                      ? 'bg-[#102B4E] text-white'
+                      : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
+                  }`}
+                >
+                  Partner Programmes ({courses.length})
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={() => setCoursesSubTab('lessons')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
-                  coursesSubTab === 'lessons'
-                    ? 'bg-[#102B4E] text-white'
-                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
-                }`}
+                onClick={() => openCsvExportModal('student_progress')}
+                className="min-h-[42px] px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] hover:bg-[#F6F8FB] text-[#102B4E] text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shrink-0"
               >
-                Course Lessons
-              </button>
-              <button
-                type="button"
-                onClick={() => setCoursesSubTab('assessments')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
-                  coursesSubTab === 'assessments'
-                    ? 'bg-[#102B4E] text-white'
-                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
-                }`}
-              >
-                Quizzes &amp; Assessments
-              </button>
-              <button
-                type="button"
-                onClick={() => setCoursesSubTab('partner')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-colors ${
-                  coursesSubTab === 'partner'
-                    ? 'bg-[#102B4E] text-white'
-                    : 'bg-white border border-[#E5EAF0] text-[#566479] hover:text-[#102B4E]'
-                }`}
-              >
-                Partner Programmes ({courses.length})
+                <Download className="w-4 h-4" />
+                <span>Download Student Progress CSV</span>
               </button>
             </div>
 
@@ -2239,6 +2287,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate }) => {
           </div>
         </div>
       )}
+
+      {/* Super Admin Secure CSV Export Modal */}
+      <AdminCsvExportModal
+        isOpen={csvModalOpen}
+        initialDataset={csvModalDataset}
+        sources={{
+          jobs,
+          applications,
+          candidates,
+          employers: companies,
+          hiringEnquiries,
+        }}
+        onClose={() => setCsvModalOpen(false)}
+        onNotify={showToast}
+      />
     </div>
   );
 };

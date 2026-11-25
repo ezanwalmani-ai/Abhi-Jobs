@@ -38,6 +38,12 @@ import {
   firebaseSignOut,
   onAuthStateChanged as onFirebaseAuthStateChanged,
 } from '../lib/firebase';
+import {
+  buildSafeCsvFilename,
+  mapDatasetToCsvRows,
+  serializeCsvDocument,
+  triggerCsvBlobDownload,
+} from '../utils/csvExport';
 
 interface ToastInfo {
   id: string;
@@ -1813,74 +1819,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const exportCsvReport = (type: 'candidates' | 'employers' | 'jobs' | 'applications') => {
-    let headers: string[] = [];
-    let rows: string[][] = [];
-    let filename = `abhijobs_${type}_report_${new Date().toISOString().substring(0, 10)}.csv`;
-
-    if (type === 'candidates') {
-      headers = ['ID', 'Name', 'Email', 'Location', 'ExperienceLevel', 'YearsExp', 'Skills', 'CompletionRate', 'Availability'];
-      rows = candidates.map((c) => [
-        c.id,
-        `"${c.name}"`,
-        c.email,
-        `"${c.location}"`,
-        c.experienceLevel,
-        String(c.yearsOfExperience),
-        `"${c.skills.join(', ')}"`,
-        `${c.completionPercentage}%`,
-        c.availability,
-      ]);
-    } else if (type === 'employers') {
-      headers = ['ID', 'Company', 'Industry', 'Location', 'Recruiter', 'Email', 'Status', 'ActiveJobs'];
-      rows = companies.map((comp) => [
-        comp.id,
-        `"${comp.companyName}"`,
-        `"${comp.industry}"`,
-        `"${comp.location}"`,
-        `"${comp.recruiterName}"`,
-        comp.recruiterEmail,
-        comp.verificationStatus,
-        String(comp.activeJobsCount),
-      ]);
-    } else if (type === 'jobs') {
-      headers = ['ID', 'Title', 'Company', 'Location', 'Type', 'WorkMode', 'SalaryMin', 'SalaryMax', 'Applicants', 'Status'];
-      rows = jobs.map((j) => [
-        j.id,
-        `"${j.title}"`,
-        `"${j.companyName}"`,
-        `"${j.location}"`,
-        j.employmentType,
-        j.workMode,
-        String(j.salary.min),
-        String(j.salary.max),
-        String(j.applicantsCount),
-        j.status,
-      ]);
-    } else if (type === 'applications') {
-      headers = ['ID', 'JobTitle', 'Company', 'Candidate', 'Email', 'Experience', 'Status', 'AppliedDate', 'MatchScore'];
-      rows = applications.map((a) => [
-        a.id,
-        `"${a.jobTitle}"`,
-        `"${a.companyName}"`,
-        `"${a.candidateName}"`,
-        a.candidateEmail,
-        `${a.candidateExperienceYears} yrs`,
-        a.status,
-        a.appliedDate,
-        `${a.matchScore || 85}%`,
-      ]);
+    if (currentRole !== 'admin') {
+      showToast('error', 'Unauthorized', 'Administrator access is required to export system data.');
+      return;
     }
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const { headers, rows } = mapDatasetToCsvRows(type, {
+      candidates,
+      employers: companies,
+      jobs,
+      applications,
+    });
 
-    showToast('success', 'Report Exported', `Generated CSV report for ${type}.`);
+    const filename = buildSafeCsvFilename(type);
+    const csvContent = serializeCsvDocument(headers, rows);
+    triggerCsvBlobDownload(csvContent, filename);
+
+    showToast('success', 'Report Exported', `Generated sanitized CSV report for ${type}.`);
     trackEvent('report_exported', { reportType: type });
   };
 

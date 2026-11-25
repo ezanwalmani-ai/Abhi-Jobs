@@ -1,0 +1,22 @@
+# ABHI JOBS — Supabase CLI & Edge Functions Configuration (Prepared for Review)
+# Project Ref: ruagizqernsqypujeutu
+# NOTE: Do not deploy until Phase 3/4 approval is explicitly granted.
+
+project_id = "ruagizqernsqypujeutu"
+
+[functions.learning-assessments]
+# Strictly authenticated learners only
+verify_jwt = true
+
+[functions.learning-certificates]
+# Public GET/POST `verify` endpoint does not require JWT;
+# `issue` and `mine` strictly verify JWT inside the function via requireAuthenticatedUser().
+verify_jwt = false
+
+[functions.admin-operations]
+# Strictly authenticated & verified-email administrators only
+verify_jwt = true
+
+[functions.public-enquiries]
+# Public hiring/course enquiry submission with input validation, honeypot & rate limiting
+verify_jwt = false

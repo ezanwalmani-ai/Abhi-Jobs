@@ -51,7 +51,7 @@ async function getFirebaseIdTokenHeader(): Promise<Record<string, string>> {
   }
 }
 
-async function getAdminAuthHeaders(): Promise<Record<string, string>> {
+export async function getAdminAuthHeaders(): Promise<Record<string, string>> {
   if (inMemoryAdminToken) {
     return { Authorization: `Bearer ${inMemoryAdminToken}` };
   }

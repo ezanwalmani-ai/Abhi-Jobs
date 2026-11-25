@@ -328,7 +328,7 @@
     },
     "CourseCertificate": {
       "title": "CourseCertificate",
-      "description": "Immutable Course Completion Certificate issued to an authenticated candidate after completing all required lessons, module quizzes, and passing the final assessment (>= 70%). Keyed by courseId under /users/{userId}/certificates/{courseId} to prevent duplicates.",
+      "description": "Course Completion Certificate issued via preserved server_hmac flow or interim admin_approved flow. Keyed by courseId under /users/{userId}/certificates/{courseId} to prevent duplicates.",
       "type": "object",
       "properties": {
         "certificateId": { "type": "string", "description": "Unique human-readable certificate identifier (e.g., ABHI-2026-XXXXXXXX)", "maxLength": 64, "pattern": "^[A-Z0-9\\-]+$" },
@@ -338,11 +338,14 @@
         "courseSlug": { "type": "string", "description": "Completed course URL slug", "maxLength": 128 },
         "courseTitle": { "type": "string", "description": "Completed course display title", "maxLength": 160 },
         "completionDate": { "type": "string", "description": "ISO date of course completion", "maxLength": 64 },
-        "finalAssessmentScore": { "type": "number", "description": "Verified final assessment percentage score (70-100)" },
-        "finalAttemptId": { "type": "string", "description": "Document ID of the passing final_assessment attempt", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "finalAssessmentScore": { "type": "number", "description": "Verified final assessment percentage score (70-100 for server_hmac; optional 0-100 for admin_approved)" },
+        "finalAttemptId": { "type": "string", "description": "Document ID of the passing final_assessment attempt (required for server_hmac)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "templateId": { "type": "string", "description": "Certificate template ID used to render this credential", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "status": { "type": "string", "description": "Certificate validity status", "enum": ["valid", "revoked"] },
-        "verificationSignature": { "type": "string", "description": "Backend HMAC integrity signature", "maxLength": 128, "pattern": "^[a-fA-F0-9]{32,128}$" },
+        "issuanceMethod": { "type": "string", "description": "Distinguishes legacy/future server HMAC issuance from Starter-tier Admin-Approved issuance", "enum": ["server_hmac", "admin_approved"] },
+        "approvedBy": { "type": "string", "description": "Admin UID who approved issuance (required for admin_approved)", "maxLength": 128 },
+        "approvalNote": { "type": "string", "description": "Optional admin review note for admin-approved issuance", "maxLength": 500 },
+        "verificationSignature": { "type": "string", "description": "Backend HMAC integrity signature (required for server_hmac; omitted for admin_approved)", "maxLength": 128, "pattern": "^[a-fA-F0-9]{32,128}$" },
         "issuedAt": { "type": "string", "description": "Server timestamp of certificate issuance" }
       },
       "required": [
@@ -353,11 +356,8 @@
         "courseSlug",
         "courseTitle",
         "completionDate",
-        "finalAssessmentScore",
-        "finalAttemptId",
         "templateId",
         "status",
-        "verificationSignature",
         "issuedAt"
       ]
     },
@@ -372,6 +372,7 @@
         "courseTitle": { "type": "string", "description": "Completed course title", "maxLength": 160 },
         "issueDate": { "type": "string", "description": "ISO issue date", "maxLength": 64 },
         "status": { "type": "string", "description": "Certificate validity status", "enum": ["valid", "revoked"] },
+        "issuanceMethod": { "type": "string", "description": "Optional transparent indicator of server_hmac vs admin_approved issuance", "enum": ["server_hmac", "admin_approved"] },
         "issuedAt": { "type": "string", "description": "Server timestamp of issuance" }
       },
       "required": [
@@ -416,6 +417,657 @@
         "updatedBy",
         "updatedAt"
       ]
+    },
+    "AdminRole": {
+      "title": "AdminRole",
+      "description": "Authoritative 5-role RBAC assignment keyed by Firebase Auth UID. Provisioned manually for initial Super Admin and managed strictly by active super_admin accounts.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Target staff Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "description": "Staff verified email address", "maxLength": 150 },
+        "displayName": { "type": "string", "description": "Staff display name", "maxLength": 120 },
+        "role": { "type": "string", "description": "Assigned administrative role", "enum": ["super_admin", "recruitment_admin", "course_admin", "content_admin", "support_admin"] },
+        "status": { "type": "string", "description": "Role activation status (use revoked instead of delete)", "enum": ["active", "revoked"] },
+        "assignedBy": { "type": "string", "description": "Super Admin UID who granted or updated the role", "maxLength": 128 },
+        "notes": { "type": "string", "description": "Optional assignment or revocation reason", "maxLength": 500 },
+        "assignedAt": { "type": "string", "description": "Server timestamp of initial assignment" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last status or role change" }
+      },
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "role",
+        "status",
+        "assignedBy",
+        "assignedAt",
+        "updatedAt"
+      ]
+    },
+    "AdminActivityLog": {
+      "title": "AdminActivityLog",
+      "description": "Server-written tamper-proof audit log schema. Client writes are strictly denied in firestore.rules until a trusted backend or Cloud Functions is enabled.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Audit log document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorUid": { "type": "string", "description": "UID of the admin who triggered the server action", "maxLength": 128 },
+        "actorEmail": { "type": "string", "description": "Verified email of the actor", "maxLength": 150 },
+        "actorRole": { "type": "string", "description": "Active admin role at execution time", "enum": ["super_admin", "recruitment_admin", "course_admin", "content_admin", "support_admin"] },
+        "category": { "type": "string", "description": "Operational domain category", "enum": ["rbac", "recruitment", "learning", "cms", "enquiries", "export", "system"] },
+        "action": { "type": "string", "description": "Machine-readable action key", "maxLength": 120 },
+        "targetCollection": { "type": "string", "description": "Affected collection name", "maxLength": 100 },
+        "targetId": { "type": "string", "description": "Affected document ID", "maxLength": 128 },
+        "summary": { "type": "string", "description": "Human-readable audit summary", "maxLength": 600 },
+        "metadata": { "type": "object", "description": "Bounded structured event metadata (max 15 keys)" },
+        "createdAt": { "type": "string", "description": "Server timestamp of event" }
+      },
+      "required": [
+        "id",
+        "actorUid",
+        "actorEmail",
+        "actorRole",
+        "category",
+        "action",
+        "targetCollection",
+        "targetId",
+        "summary",
+        "createdAt"
+      ]
+    },
+    "PlatformMetrics": {
+      "title": "PlatformMetrics",
+      "description": "Admin-only platform metric snapshot documents (Starter tier uses live getCountFromServer aggregations plus optional Super Admin snapshots; automated rollups wait for Cloud Functions).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Metric snapshot ID (e.g., latest or YYYY-MM-DD)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "periodType": { "type": "string", "description": "Snapshot cadence", "enum": ["manual_snapshot", "daily", "monthly"] },
+        "totalCandidates": { "type": "number", "description": "Candidate profile count" },
+        "totalEmployers": { "type": "number", "description": "Total employer accounts" },
+        "verifiedEmployers": { "type": "number", "description": "Verified employer count" },
+        "publishedJobs": { "type": "number", "description": "Published job count" },
+        "totalApplications": { "type": "number", "description": "Total applications count" },
+        "totalEnrolments": { "type": "number", "description": "Learn with ABHI enrolments count" },
+        "totalCertificates": { "type": "number", "description": "Issued certificates count" },
+        "openHiringEnquiries": { "type": "number", "description": "Active hiring enquiries count" },
+        "openCourseEnquiries": { "type": "number", "description": "Active course enquiries count" },
+        "generatedBy": { "type": "string", "description": "Super Admin UID or system identifier", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of snapshot calculation" }
+      },
+      "required": [
+        "id",
+        "periodType",
+        "totalCandidates",
+        "totalEmployers",
+        "verifiedEmployers",
+        "publishedJobs",
+        "totalApplications",
+        "totalEnrolments",
+        "totalCertificates",
+        "openHiringEnquiries",
+        "openCourseEnquiries",
+        "generatedBy",
+        "updatedAt"
+      ]
+    },
+    "CandidateProfile": {
+      "title": "CandidateProfile",
+      "description": "Private full candidate profile containing personal contact information and career details. Strictly unreadable by unauthenticated visitors or other candidates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Candidate document ID (matches auth UID)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "description": "Candidate full name", "maxLength": 120 },
+        "email": { "type": "string", "description": "Candidate private email", "maxLength": 150 },
+        "phone": { "type": "string", "description": "Candidate private phone number", "maxLength": 30 },
+        "location": { "type": "string", "description": "Current location label", "maxLength": 120 },
+        "city": { "type": "string", "description": "City", "maxLength": 80 },
+        "state": { "type": "string", "description": "State or region", "maxLength": 80 },
+        "headline": { "type": "string", "description": "Professional headline", "maxLength": 200 },
+        "about": { "type": "string", "description": "Profile summary", "maxLength": 2500 },
+        "currentRole": { "type": "string", "description": "Current job title", "maxLength": 120 },
+        "desiredRole": { "type": "string", "description": "Target role", "maxLength": 120 },
+        "experienceLevel": { "type": "string", "description": "Seniority tier", "enum": ["Fresher", "Junior", "Mid", "Senior", "Lead"] },
+        "experienceType": { "type": "string", "description": "Fresher vs experienced indicator", "enum": ["fresher", "experienced"] },
+        "workStatus": { "type": "string", "description": "Current employment status label", "maxLength": 80 },
+        "yearsOfExperience": { "type": "number", "description": "Total years of work experience (0-60)" },
+        "preferredLocation": { "type": "string", "description": "Preferred job location", "maxLength": 120 },
+        "workPreference": { "type": "string", "description": "Preferred work mode", "enum": ["Remote", "Hybrid", "On-site", "Flexible"] },
+        "preferredIndustry": { "type": "string", "description": "Preferred industry sector", "maxLength": 100 },
+        "expectedSalary": { "type": "object", "description": "Private expected compensation range object (max 5 keys)" },
+        "willingToRelocate": { "type": "boolean", "description": "Relocation preference" },
+        "gender": { "type": "string", "description": "Optional self-reported gender", "maxLength": 40 },
+        "dob": { "type": "string", "description": "Optional private date of birth ISO string", "maxLength": 32 },
+        "marketingConsent": { "type": "boolean", "description": "Optional communication consent" },
+        "availability": { "type": "string", "description": "Notice period / availability", "enum": ["Immediate", "15 Days", "30 Days", "Exploring"] },
+        "profileVisibility": { "type": "string", "description": "Discovery visibility preference", "enum": ["employers_only", "private"] },
+        "availableForOpportunities": { "type": "boolean", "description": "Whether actively open to roles" },
+        "skills": { "type": "array", "description": "Bounded list of skill strings (max 40)" },
+        "education": { "type": "array", "description": "Bounded list of education objects (max 15)" },
+        "experiences": { "type": "array", "description": "Bounded list of experience objects (max 20)" },
+        "certifications": { "type": "array", "description": "Bounded list of certification objects (max 25)" },
+        "primaryResumeId": { "type": "string", "description": "Optional ID of candidate's primary structured resume", "maxLength": 128 },
+        "completionPercentage": { "type": "number", "description": "Profile completeness score (0-100)" },
+        "avatar": { "type": "string", "description": "Avatar HTTPS URL", "maxLength": 500 },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "email",
+        "location",
+        "headline",
+        "experienceLevel",
+        "yearsOfExperience",
+        "workPreference",
+        "availability",
+        "profileVisibility",
+        "availableForOpportunities",
+        "skills",
+        "education",
+        "experiences",
+        "certifications",
+        "completionPercentage",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CandidateDirectoryEntry": {
+      "title": "CandidateDirectoryEntry",
+      "description": "Split-collection non-PII candidate discovery summary readable strictly by verified employers and recruitment/super admins. Never stores email, phone, DOB, salary expectations, or resume files.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Candidate Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "description": "Candidate public display name", "maxLength": 120 },
+        "headline": { "type": "string", "description": "Professional headline", "maxLength": 200 },
+        "location": { "type": "string", "description": "City / region label", "maxLength": 120 },
+        "desiredRole": { "type": "string", "description": "Target role title", "maxLength": 120 },
+        "experienceLevel": { "type": "string", "description": "Experience seniority tier", "enum": ["Fresher", "Junior", "Mid", "Senior", "Lead"] },
+        "yearsOfExperience": { "type": "number", "description": "Years of experience (0-60)" },
+        "workPreference": { "type": "string", "description": "Work mode preference", "enum": ["Remote", "Hybrid", "On-site", "Flexible"] },
+        "availability": { "type": "string", "description": "Availability window", "enum": ["Immediate", "15 Days", "30 Days", "Exploring"] },
+        "skills": { "type": "array", "description": "Bounded non-PII skill tags (max 40)" },
+        "availableForOpportunities": { "type": "boolean", "description": "Explicit opt-in flag for verified employer discovery" },
+        "completionPercentage": { "type": "number", "description": "Profile completeness (0-100)" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "headline",
+        "location",
+        "experienceLevel",
+        "yearsOfExperience",
+        "workPreference",
+        "availability",
+        "skills",
+        "availableForOpportunities",
+        "completionPercentage",
+        "updatedAt"
+      ]
+    },
+    "CandidateResume": {
+      "title": "CandidateResume",
+      "description": "Private structured JSON resume built by a candidate under /users/{userId}/resumes/{resumeId}. Strictly owner-only; zero public or employer access.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Resume document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Owner candidate UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "description": "Resume label", "maxLength": 140 },
+        "targetRole": { "type": "string", "description": "Target role", "maxLength": 140 },
+        "fullName": { "type": "string", "description": "Candidate full name on resume", "maxLength": 120 },
+        "professionalTitle": { "type": "string", "description": "Professional title", "maxLength": 140 },
+        "email": { "type": "string", "description": "Resume contact email", "maxLength": 150 },
+        "phone": { "type": "string", "description": "Resume contact phone", "maxLength": 30 },
+        "city": { "type": "string", "description": "City", "maxLength": 80 },
+        "state": { "type": "string", "description": "State", "maxLength": 80 },
+        "linkedIn": { "type": "string", "description": "LinkedIn URL", "maxLength": 300 },
+        "portfolio": { "type": "string", "description": "Portfolio URL", "maxLength": 300 },
+        "summary": { "type": "string", "description": "Professional summary", "maxLength": 3000 },
+        "template": { "type": "string", "description": "Resume visual template ID", "maxLength": 64 },
+        "design": { "type": "object", "description": "Bounded design configuration map (max 15 keys)" },
+        "skillCategories": { "type": "object", "description": "Bounded categorized skills map (max 8 keys)" },
+        "skills": { "type": "array", "description": "Flat bounded skills list (max 60)" },
+        "experiences": { "type": "array", "description": "Bounded experience entries (max 20)" },
+        "education": { "type": "array", "description": "Bounded education entries (max 15)" },
+        "projects": { "type": "array", "description": "Bounded project entries (max 15)" },
+        "certifications": { "type": "array", "description": "Bounded certification entries (max 20)" },
+        "languages": { "type": "array", "description": "Bounded language entries (max 15)" },
+        "achievements": { "type": "array", "description": "Bounded achievements list (max 20)" },
+        "awards": { "type": "array", "description": "Bounded awards list (max 15)" },
+        "training": { "type": "array", "description": "Bounded training list (max 15)" },
+        "volunteer": { "type": "array", "description": "Bounded volunteer list (max 15)" },
+        "publications": { "type": "array", "description": "Bounded publications list (max 15)" },
+        "memberships": { "type": "array", "description": "Bounded memberships list (max 15)" },
+        "customSections": { "type": "array", "description": "Bounded custom sections list (max 10)" },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "fullName",
+        "template",
+        "skills",
+        "experiences",
+        "education",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SavedJob": {
+      "title": "SavedJob",
+      "description": "Private candidate saved job bookmark keyed by jobId",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string", "description": "Referenced job document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jobTitle": { "type": "string", "description": "Cached job title for display", "maxLength": 180 },
+        "companyName": { "type": "string", "description": "Cached company name", "maxLength": 140 },
+        "savedAt": { "type": "string", "description": "Server timestamp when bookmarked" }
+      },
+      "required": ["jobId", "userId", "jobTitle", "companyName", "savedAt"]
+    },
+    "RecentlyViewedJob": {
+      "title": "RecentlyViewedJob",
+      "description": "Private candidate recently viewed job reference keyed by jobId",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string", "description": "Referenced job document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "viewedAt": { "type": "string", "description": "Server timestamp of last view" }
+      },
+      "required": ["jobId", "userId", "viewedAt"]
+    },
+    "UserNotification": {
+      "title": "UserNotification",
+      "description": "Private per-user in-app notification record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Notification document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Recipient Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "description": "Notification heading", "maxLength": 160 },
+        "message": { "type": "string", "description": "Notification body", "maxLength": 800 },
+        "type": { "type": "string", "description": "Notification category", "enum": ["application", "interview", "job", "system", "verification", "learning"] },
+        "read": { "type": "boolean", "description": "Read status flag" },
+        "link": { "type": "string", "description": "Optional in-app route path", "maxLength": 250 },
+        "createdBy": { "type": "string", "description": "Admin UID or system sender", "maxLength": 128 },
+        "createdAt": { "type": "string", "description": "Server timestamp of delivery" }
+      },
+      "required": ["id", "userId", "title", "message", "type", "read", "createdBy", "createdAt"]
+    },
+    "EmployerProfile": {
+      "title": "EmployerProfile",
+      "description": "Company profile document. Publicly readable ONLY when verificationStatus == 'verified'. Recruiter personal email/phone PII is isolated in /employers/{employerId}/private_contacts/{contactId}.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Employer document ID (equals ownerUid for self-registered employers)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "description": "Employer account Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "description": "Official organization name", "maxLength": 150 },
+        "website": { "type": "string", "description": "Company website URL", "maxLength": 300 },
+        "industry": { "type": "string", "description": "Primary industry sector", "maxLength": 100 },
+        "companySize": { "type": "string", "description": "Headcount band", "maxLength": 60 },
+        "location": { "type": "string", "description": "Headquarters or primary city", "maxLength": 140 },
+        "logo": { "type": "string", "description": "Public HTTPS logo URL", "maxLength": 500 },
+        "about": { "type": "string", "description": "Company overview", "maxLength": 3000 },
+        "culture": { "type": "string", "description": "Workplace culture description", "maxLength": 1500 },
+        "benefits": { "type": "array", "description": "Bounded list of company benefits (max 20)" },
+        "socialLinks": { "type": "object", "description": "Bounded map of public social links (max 6 keys)" },
+        "verificationStatus": { "type": "string", "description": "Admin-controlled verification state (immutable to employers)", "enum": ["pending", "verified", "rejected", "suspended"] },
+        "verified": { "type": "boolean", "description": "Boolean mirror of verificationStatus == 'verified' (admin-only)" },
+        "verifiedBy": { "type": "string", "description": "Admin UID who verified/updated status", "maxLength": 128 },
+        "verifiedAt": { "type": "string", "description": "ISO timestamp of admin verification", "maxLength": 64 },
+        "activeJobsCount": { "type": "number", "description": "Admin/server-maintained active jobs metric (>= 0)" },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "ownerUid",
+        "companyName",
+        "industry",
+        "companySize",
+        "location",
+        "about",
+        "benefits",
+        "verificationStatus",
+        "verified",
+        "activeJobsCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EmployerPrivateContact": {
+      "title": "EmployerPrivateContact",
+      "description": "Split-collection private recruiter contact details and verification notes under /employers/{employerId}/private_contacts/{contactId}. Strictly unreadable publicly.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Contact document ID (e.g., default)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerId": { "type": "string", "description": "Parent employer document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "description": "Parent employer owner UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recruiterName": { "type": "string", "description": "Primary recruiter full name", "maxLength": 120 },
+        "recruiterRole": { "type": "string", "description": "Recruiter designation", "maxLength": 100 },
+        "recruiterEmail": { "type": "string", "description": "Private recruiter email", "maxLength": 150 },
+        "recruiterPhone": { "type": "string", "description": "Private recruiter phone", "maxLength": 30 },
+        "verificationNotes": { "type": "string", "description": "Optional business registration or verification notes", "maxLength": 1000 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "employerId",
+        "ownerUid",
+        "recruiterName",
+        "recruiterRole",
+        "recruiterEmail",
+        "recruiterPhone",
+        "updatedAt"
+      ]
+    },
+    "JobPosting": {
+      "title": "JobPosting",
+      "description": "Job listing document. Publicly readable ONLY when status == 'published'. Candidates have zero write access; counters and verification/featured flags cannot be modified by employers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Job document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerId": { "type": "string", "description": "Parent employer document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerOwnerUid": { "type": "string", "description": "Denormalized immutable employer owner UID for O(1) rule enforcement", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "description": "Company display name", "maxLength": 150 },
+        "companyLogo": { "type": "string", "description": "Company logo HTTPS URL", "maxLength": 500 },
+        "title": { "type": "string", "description": "Job role title", "maxLength": 160 },
+        "department": { "type": "string", "description": "Department or function", "maxLength": 100 },
+        "industry": { "type": "string", "description": "Industry category", "maxLength": 100 },
+        "location": { "type": "string", "description": "Job city / region", "maxLength": 140 },
+        "employmentType": { "type": "string", "description": "Employment arrangement", "enum": ["Full-time", "Part-time", "Contract", "Internship", "Freelance"] },
+        "workMode": { "type": "string", "description": "Workplace arrangement", "enum": ["Remote", "Hybrid", "On-site"] },
+        "experienceLevel": { "type": "string", "description": "Target experience band", "enum": ["Fresher", "Junior", "Mid", "Senior", "Lead"] },
+        "minExperienceYears": { "type": "number", "description": "Minimum years of experience (0-50)" },
+        "salary": { "type": "object", "description": "Salary range map (min, max, currency, period)" },
+        "overview": { "type": "string", "description": "Job role summary", "maxLength": 4000 },
+        "responsibilities": { "type": "array", "description": "Bounded responsibilities list (max 25)" },
+        "requirements": { "type": "array", "description": "Bounded requirements list (max 25)" },
+        "preferredSkills": { "type": "array", "description": "Bounded skill tags (max 25)" },
+        "benefits": { "type": "array", "description": "Bounded job benefits list (max 20)" },
+        "deadline": { "type": "string", "description": "Application deadline ISO date", "maxLength": 64 },
+        "status": { "type": "string", "description": "Job publication lifecycle status", "enum": ["draft", "published", "paused", "closed", "archived"] },
+        "applicantsCount": { "type": "number", "description": "Admin/server-only metric (0 on create; never candidate-writable)" },
+        "viewsCount": { "type": "number", "description": "Admin/server-only metric (0 on create; never candidate-writable)" },
+        "isVerifiedCompany": { "type": "boolean", "description": "Verified company badge flag (requires verified employer or recruitment_admin)" },
+        "featured": { "type": "boolean", "description": "Admin-only featured placement flag" },
+        "postedAt": { "type": "string", "description": "Server timestamp of publication or creation" },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "employerId",
+        "employerOwnerUid",
+        "companyName",
+        "title",
+        "department",
+        "industry",
+        "location",
+        "employmentType",
+        "workMode",
+        "experienceLevel",
+        "minExperienceYears",
+        "salary",
+        "overview",
+        "responsibilities",
+        "requirements",
+        "preferredSkills",
+        "benefits",
+        "status",
+        "applicantsCount",
+        "viewsCount",
+        "isVerifiedCompany",
+        "featured",
+        "postedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "JobApplication": {
+      "title": "JobApplication",
+      "description": "Candidate job application document. Strictly readable by the applicant, the owning employer, and recruitment/super admins. Recruiter internal notes live in /applications/{applicationId}/internal_notes/{noteId}.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Application document ID (recommended deterministic jobId__candidateId)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jobId": { "type": "string", "description": "Target published job ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerId": { "type": "string", "description": "Target employer ID (verified against parent job on create)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerOwnerUid": { "type": "string", "description": "Denormalized immutable employer owner UID (verified against parent job on create)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jobTitle": { "type": "string", "description": "Snapshot job title", "maxLength": 160 },
+        "companyName": { "type": "string", "description": "Snapshot company name", "maxLength": 150 },
+        "candidateId": { "type": "string", "description": "Applicant Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateName": { "type": "string", "description": "Applicant full name", "maxLength": 120 },
+        "candidateEmail": { "type": "string", "description": "Applicant email submitted with application", "maxLength": 150 },
+        "candidatePhone": { "type": "string", "description": "Applicant phone submitted with application", "maxLength": 30 },
+        "candidateHeadline": { "type": "string", "description": "Applicant headline snapshot", "maxLength": 200 },
+        "candidateLocation": { "type": "string", "description": "Applicant location snapshot", "maxLength": 140 },
+        "candidateExperienceYears": { "type": "number", "description": "Applicant years of experience (0-60)" },
+        "candidateSkills": { "type": "array", "description": "Bounded applicant skill tags (max 40)" },
+        "resumeId": { "type": "string", "description": "Optional structured resume ID reference", "maxLength": 128 },
+        "resumeName": { "type": "string", "description": "Submitted resume title or label", "maxLength": 160 },
+        "coverNote": { "type": "string", "description": "Optional candidate cover note", "maxLength": 2000 },
+        "status": { "type": "string", "description": "Application pipeline stage", "enum": ["Applied", "Under Review", "Shortlisted", "Interview", "Interview Scheduled", "Selected", "Rejected", "Not Selected", "Withdrawn"] },
+        "timeline": { "type": "array", "description": "Bounded pipeline transition history objects (max 30)" },
+        "interviewId": { "type": "string", "description": "Optional linked interview ID", "maxLength": 128 },
+        "matchScore": { "type": "number", "description": "Optional employer/admin evaluation score (0-100)" },
+        "appliedAt": { "type": "string", "description": "Server timestamp of application submission" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last status change" }
+      },
+      "required": [
+        "id",
+        "jobId",
+        "employerId",
+        "employerOwnerUid",
+        "jobTitle",
+        "companyName",
+        "candidateId",
+        "candidateName",
+        "candidateEmail",
+        "candidateHeadline",
+        "candidateLocation",
+        "candidateExperienceYears",
+        "candidateSkills",
+        "resumeName",
+        "status",
+        "timeline",
+        "appliedAt",
+        "updatedAt"
+      ]
+    },
+    "ApplicationInternalNote": {
+      "title": "ApplicationInternalNote",
+      "description": "Private recruiter/admin evaluation note under /applications/{applicationId}/internal_notes/{noteId}. Strictly forbidden to candidates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Note document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "applicationId": { "type": "string", "description": "Parent application ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUid": { "type": "string", "description": "Author Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "description": "Author display name", "maxLength": 120 },
+        "authorRole": { "type": "string", "description": "Author role label", "enum": ["employer", "recruitment_admin", "super_admin"] },
+        "text": { "type": "string", "description": "Internal note body", "maxLength": 2000 },
+        "createdAt": { "type": "string", "description": "Server timestamp of note creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last edit" }
+      },
+      "required": ["id", "applicationId", "authorUid", "authorName", "authorRole", "text", "createdAt", "updatedAt"]
+    },
+    "InterviewSchedule": {
+      "title": "InterviewSchedule",
+      "description": "Scheduled job interview linked to a job application. Strictly readable by candidate, owning employer, and recruitment/super admins; writable only by owning employer or recruitment/super admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Interview document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "applicationId": { "type": "string", "description": "Linked application document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jobId": { "type": "string", "description": "Linked job document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jobTitle": { "type": "string", "description": "Role title", "maxLength": 160 },
+        "candidateId": { "type": "string", "description": "Candidate Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateName": { "type": "string", "description": "Candidate display name", "maxLength": 120 },
+        "employerId": { "type": "string", "description": "Employer document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "employerOwnerUid": { "type": "string", "description": "Denormalized immutable employer owner UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "description": "Company display name", "maxLength": 150 },
+        "scheduledDate": { "type": "string", "description": "Interview date ISO string (YYYY-MM-DD)", "maxLength": 32 },
+        "scheduledTime": { "type": "string", "description": "Interview time label", "maxLength": 32 },
+        "type": { "type": "string", "description": "Interview format", "enum": ["Video", "Phone", "In-person"] },
+        "meetingLink": { "type": "string", "description": "Optional HTTPS video meeting link", "maxLength": 500 },
+        "location": { "type": "string", "description": "Optional physical interview address", "maxLength": 300 },
+        "notes": { "type": "string", "description": "Candidate-visible interview instructions", "maxLength": 1500 },
+        "status": { "type": "string", "description": "Interview lifecycle state", "enum": ["Scheduled", "Rescheduled", "Completed", "Cancelled"] },
+        "createdBy": { "type": "string", "description": "Employer or admin UID who scheduled the interview", "maxLength": 128 },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "applicationId",
+        "jobId",
+        "jobTitle",
+        "candidateId",
+        "candidateName",
+        "employerId",
+        "employerOwnerUid",
+        "companyName",
+        "scheduledDate",
+        "scheduledTime",
+        "type",
+        "status",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WebsiteContent": {
+      "title": "WebsiteContent",
+      "description": "Website CMS content document (homepage sections, announcements, career guides, FAQs, policy pages). Publicly readable when status == 'published'; writable strictly by content_admin and super_admin.",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "description": "Content document key", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "section": { "type": "string", "description": "Site section grouping", "enum": ["homepage", "announcement", "career_guide", "faq", "legal", "banner", "footer"] },
+        "title": { "type": "string", "description": "Content heading", "maxLength": 200 },
+        "subtitle": { "type": "string", "description": "Optional subtitle", "maxLength": 400 },
+        "body": { "type": "string", "description": "Structured markdown or plain text content body", "maxLength": 20000 },
+        "ctaLabel": { "type": "string", "description": "Optional button text", "maxLength": 80 },
+        "ctaUrl": { "type": "string", "description": "Optional relative or HTTPS CTA URL", "maxLength": 300 },
+        "sortOrder": { "type": "number", "description": "Display ordering integer (0-1000)" },
+        "status": { "type": "string", "description": "Publication visibility", "enum": ["draft", "published", "archived"] },
+        "updatedBy": { "type": "string", "description": "Content/Super Admin UID", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last edit" }
+      },
+      "required": ["key", "section", "title", "body", "sortOrder", "status", "updatedBy", "updatedAt"]
+    },
+    "PublicSetting": {
+      "title": "PublicSetting",
+      "description": "Publicly readable non-secret platform configuration (social URLs, support email, feature display toggles). Strictly writable by content_admin and super_admin.",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "description": "Setting document key", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "label": { "type": "string", "description": "Human-readable setting label", "maxLength": 120 },
+        "value": { "type": "object", "description": "Bounded non-secret setting values map (max 25 keys)" },
+        "updatedBy": { "type": "string", "description": "Content/Super Admin UID", "maxLength": 128 },
+        "updatedAt": { "type": "string", "description": "Server timestamp of update" }
+      },
+      "required": ["key", "label", "value", "updatedBy", "updatedAt"]
+    },
+    "HiringEnquiry": {
+      "title": "HiringEnquiry",
+      "description": "Employer hiring consultancy lead. Public create-only with status == 'New'; strictly unreadable publicly; managed by recruitment_admin, support_admin, and super_admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Enquiry document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "description": "Enquiring company name", "maxLength": 150 },
+        "contactPerson": { "type": "string", "description": "Contact person full name", "maxLength": 120 },
+        "businessEmail": { "type": "string", "description": "Business email address", "maxLength": 150 },
+        "phoneNumber": { "type": "string", "description": "Contact phone number", "maxLength": 30 },
+        "jobTitle": { "type": "string", "description": "Role being hired", "maxLength": 160 },
+        "vacancies": { "type": "number", "description": "Number of open positions (1-1000)" },
+        "jobLocation": { "type": "string", "description": "Role location", "maxLength": 140 },
+        "additionalRequirements": { "type": "string", "description": "Detailed hiring requirements", "maxLength": 3000 },
+        "status": { "type": "string", "description": "Lead triage status", "enum": ["New", "Contacted", "In Progress", "Fulfilled", "Closed"] },
+        "assignedRecruiter": { "type": "string", "description": "Admin-assigned recruiter name or UID", "maxLength": 128 },
+        "internalNotes": { "type": "string", "description": "Admin-only internal follow-up notes", "maxLength": 2000 },
+        "submittedByUid": { "type": "string", "description": "Optional Firebase Auth UID if submitted while signed in", "maxLength": 128 },
+        "createdAt": { "type": "string", "description": "Server timestamp of submission" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last admin update" }
+      },
+      "required": [
+        "id",
+        "companyName",
+        "contactPerson",
+        "businessEmail",
+        "phoneNumber",
+        "jobTitle",
+        "vacancies",
+        "jobLocation",
+        "additionalRequirements",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CourseEnquiry": {
+      "title": "CourseEnquiry",
+      "description": "Learn with ABHI training enquiry. Public create-only with status == 'New'; strictly unreadable publicly; managed by course_admin, support_admin, and super_admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Enquiry document ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "description": "Referenced course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseTitle": { "type": "string", "description": "Referenced course title", "maxLength": 160 },
+        "name": { "type": "string", "description": "Enquirer full name", "maxLength": 120 },
+        "email": { "type": "string", "description": "Enquirer email address", "maxLength": 150 },
+        "phone": { "type": "string", "description": "Enquirer phone number", "maxLength": 30 },
+        "message": { "type": "string", "description": "Optional enquiry message", "maxLength": 2000 },
+        "status": { "type": "string", "description": "Triage status", "enum": ["New", "Contacted", "Enrolled", "Closed"] },
+        "internalNotes": { "type": "string", "description": "Admin-only internal follow-up notes", "maxLength": 2000 },
+        "submittedByUid": { "type": "string", "description": "Optional Firebase Auth UID if signed in", "maxLength": 128 },
+        "createdAt": { "type": "string", "description": "Server timestamp of submission" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last admin update" }
+      },
+      "required": [
+        "id",
+        "courseId",
+        "courseTitle",
+        "name",
+        "email",
+        "phone",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CertificateApprovalRequest": {
+      "title": "CertificateApprovalRequest",
+      "description": "Interim Starter-tier Admin-Approved Certificate Issuance request queue. Verified enrolled students submit pending requests; only course_admin or super_admin may approve or reject.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Request document ID (recommended deterministic courseId__userId)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Candidate Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateName": { "type": "string", "description": "Requested full name to appear on certificate", "maxLength": 120 },
+        "courseId": { "type": "string", "description": "Completed course ID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseSlug": { "type": "string", "description": "Completed course URL slug", "maxLength": 128 },
+        "courseTitle": { "type": "string", "description": "Completed course title", "maxLength": 160 },
+        "completedLessonsCount": { "type": "number", "description": "Self-reported completed lessons snapshot (verified by admin against enrolment)" },
+        "candidateNote": { "type": "string", "description": "Optional candidate submission note or exercise summary", "maxLength": 1000 },
+        "status": { "type": "string", "description": "Admin approval workflow status", "enum": ["pending", "approved", "rejected"] },
+        "reviewedBy": { "type": "string", "description": "Course/Super Admin UID who reviewed the request", "maxLength": 128 },
+        "reviewNote": { "type": "string", "description": "Admin review feedback or rejection reason", "maxLength": 1000 },
+        "issuedCertificateId": { "type": "string", "description": "Issued certificate ID upon approval", "maxLength": 64, "pattern": "^[A-Z0-9\\-]+$" },
+        "requestedAt": { "type": "string", "description": "Server timestamp of student request" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "candidateName",
+        "courseId",
+        "courseSlug",
+        "courseTitle",
+        "completedLessonsCount",
+        "status",
+        "requestedAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -441,7 +1093,23 @@
     },
     "/users/{userId}/certificates/{courseId}": {
       "schema": "CourseCertificate",
-      "description": "Private per-candidate immutable Course Completion Certificates keyed by courseId to prevent duplicates"
+      "description": "Private per-candidate Course Completion Certificates keyed by courseId to prevent duplicates (supports preserved server_hmac and interim admin_approved issuance)"
+    },
+    "/users/{userId}/resumes/{resumeId}": {
+      "schema": "CandidateResume",
+      "description": "Private per-candidate structured JSON resumes strictly readable and writable only by the owner"
+    },
+    "/users/{userId}/saved_jobs/{jobId}": {
+      "schema": "SavedJob",
+      "description": "Private per-user saved job bookmarks keyed by jobId"
+    },
+    "/users/{userId}/recently_viewed/{jobId}": {
+      "schema": "RecentlyViewedJob",
+      "description": "Private per-user recently viewed job references keyed by jobId"
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": "UserNotification",
+      "description": "Private per-user in-app notifications"
     },
     "/public_certificates/{certificateId}": {
       "schema": "PublicCertificateVerification",
@@ -466,6 +1134,70 @@
     "/certificate_templates/{templateId}": {
       "schema": "CertificateTemplate",
       "description": "Admin-managed branding and layout templates for Course Completion Certificates"
+    },
+    "/certificate_requests/{requestId}": {
+      "schema": "CertificateApprovalRequest",
+      "description": "Admin-Approved Certificate Issuance review queue for Learn with ABHI on Starter tier"
+    },
+    "/admin_roles/{uid}": {
+      "schema": "AdminRole",
+      "description": "Authoritative 5-role RBAC registry keyed by Firebase Auth UID (super_admin, recruitment_admin, course_admin, content_admin, support_admin)"
+    },
+    "/admin_activity_logs/{logId}": {
+      "schema": "AdminActivityLog",
+      "description": "Trusted server-written admin audit logs (browser writes strictly denied until Cloud Functions backend exists)"
+    },
+    "/platform_metrics/{metricId}": {
+      "schema": "PlatformMetrics",
+      "description": "Admin-only platform metric snapshot documents supplementing Starter-tier getCountFromServer aggregations"
+    },
+    "/candidates/{uid}": {
+      "schema": "CandidateProfile",
+      "description": "Private candidate profiles containing PII and career details keyed by Firebase Auth UID"
+    },
+    "/candidate_directory/{uid}": {
+      "schema": "CandidateDirectoryEntry",
+      "description": "Split-collection non-PII opt-in candidate discovery summaries readable strictly by verified employers and recruitment/super admins"
+    },
+    "/employers/{employerId}": {
+      "schema": "EmployerProfile",
+      "description": "Employer company profiles (publicly visible only when verificationStatus == 'verified'; recruiter PII excluded)"
+    },
+    "/employers/{employerId}/private_contacts/{contactId}": {
+      "schema": "EmployerPrivateContact",
+      "description": "Split-collection private recruiter contact details and verification notes gated by parent employer ownership"
+    },
+    "/jobs/{jobId}": {
+      "schema": "JobPosting",
+      "description": "Job postings (publicly readable only when status == 'published'; zero candidate writes)"
+    },
+    "/applications/{applicationId}": {
+      "schema": "JobApplication",
+      "description": "Private job applications strictly scoped to applicant, owning employer, and recruitment/super admins"
+    },
+    "/applications/{applicationId}/internal_notes/{noteId}": {
+      "schema": "ApplicationInternalNote",
+      "description": "Private recruiter and admin application evaluation notes strictly isolated from candidates"
+    },
+    "/interviews/{interviewId}": {
+      "schema": "InterviewSchedule",
+      "description": "Scheduled interviews linked to job applications (candidate read-only; owning employer and recruitment/super admins manage)"
+    },
+    "/website_content/{contentKey}": {
+      "schema": "WebsiteContent",
+      "description": "Website CMS blocks managed by content_admin and super_admin (publicly readable when published)"
+    },
+    "/public_settings/{settingKey}": {
+      "schema": "PublicSetting",
+      "description": "Public non-secret site configuration managed by content_admin and super_admin"
+    },
+    "/hiring_enquiries/{enquiryId}": {
+      "schema": "HiringEnquiry",
+      "description": "Employer hiring enquiries (public create-only with status == 'New'; admin read/manage only)"
+    },
+    "/course_enquiries/{enquiryId}": {
+      "schema": "CourseEnquiry",
+      "description": "Learn with ABHI course enquiries (public create-only with status == 'New'; admin read/manage only)"
     }
   }
 }
