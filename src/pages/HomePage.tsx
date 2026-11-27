@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import {
@@ -15,7 +15,6 @@ import {
   Clock,
   Calendar,
   BookOpen,
-  Search,
   Briefcase,
   Building2,
   GraduationCap,
@@ -27,8 +26,6 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ navigate }) => {
   const { currentUser, jobs, courses } = useApp();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
 
   // Latest 4 published and active jobs
   const latestJobs = useMemo(() => {
@@ -49,15 +46,6 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate }) => {
     } else {
       navigate('/register/job-seeker');
     }
-  };
-
-  const handleHeroSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set('query', searchQuery.trim());
-    if (searchLocation.trim()) params.set('location', searchLocation.trim());
-    const qs = params.toString();
-    navigate(qs ? `/jobs?${qs}` : '/jobs');
   };
 
   return (
@@ -96,49 +84,6 @@ export const HomePage: React.FC<HomePageProps> = ({ navigate }) => {
             >
               Connect with vetted hiring mandates across technology, finance, engineering, and operations. Build your profile, apply directly, and advance your career with ABHI JOBS.
             </motion.p>
-
-            {/* Integrated Functional Job Search Bar */}
-            <motion.form
-              onSubmit={handleHeroSearch}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.22, ease: EASE_PREMIUM }}
-              className="abhi-search-shell bg-white rounded-xl border border-[#D4DCE6] p-2 shadow-[0_2px_10px_rgba(16,43,78,0.04)] flex flex-col md:flex-row items-stretch md:items-center gap-2 pt-2"
-            >
-              <div className="relative flex-1 min-w-0">
-                <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Job title, skill, or company"
-                  aria-label="Job title, skill, or company"
-                  className="w-full min-h-[44px] pl-10 pr-3 py-2 rounded-lg bg-transparent text-sm text-[#081D36] placeholder:text-[#64748B] focus:outline-none focus:bg-[#FAFBFD]"
-                />
-              </div>
-
-              <div className="hidden md:block w-px h-7 bg-[#E5EAF0] shrink-0" />
-
-              <div className="relative md:w-[220px] shrink-0">
-                <MapPin className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchLocation}
-                  onChange={(e) => setSearchLocation(e.target.value)}
-                  placeholder="City or Remote"
-                  aria-label="City or Remote"
-                  className="w-full min-h-[44px] pl-10 pr-3 py-2 rounded-lg bg-transparent text-sm text-[#081D36] placeholder:text-[#64748B] focus:outline-none focus:bg-[#FAFBFD]"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white text-sm font-semibold shadow-2xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <span>Search Jobs</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </motion.form>
 
             {/* Primary & Secondary Action Links */}
             <motion.div

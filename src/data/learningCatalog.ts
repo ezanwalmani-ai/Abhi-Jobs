@@ -73,6 +73,7 @@ export const LEARNING_CATALOGUE_COURSES: LearningCourseItem[] = [
     categoryId: 'excel-digital-skills',
     categoryName: 'Excel and Digital Skills',
     title: 'Excel for Job Seekers',
+    thumbnailUrl: '/assets/aistudio/Excel_for_Job_Seekers__Grow_Your_Career_a22047c4.png',
     shortDescription:
       'Build job-ready Microsoft Excel skills step by step — starting with Module 01: Excel Fundamentals and Module 02: Data Entry, Formatting & Worksheets.',
     fullDescription:

@@ -12,14 +12,15 @@ import { CourseEnrolmentRecord, LearningCourseItem } from '../../types/learning'
 import { AbhiJobsMarkSVG } from '../AbhiJobsLogo';
 import { EASE_PREMIUM, VIEWPORT_ONCE } from '../../lib/motion';
 import { resolveCourseCatalogueState } from '../../utils/courseCatalogueState';
-import excelCourseCoverImg from '../../assets/images/course_cover_excel_workplace_1795590498780.jpg';
+const EXCEL_COURSE_THUMBNAIL_URL =
+  '/assets/aistudio/Excel_for_Job_Seekers__Grow_Your_Career_a22047c4.png';
 
 const COURSE_COVER_BY_ID: Record<string, string> = {
-  excel_for_job_seekers: excelCourseCoverImg,
+  excel_for_job_seekers: EXCEL_COURSE_THUMBNAIL_URL,
 };
 
 const COURSE_COVER_BY_CATEGORY: Record<string, string> = {
-  'excel-digital-skills': excelCourseCoverImg,
+  'excel-digital-skills': EXCEL_COURSE_THUMBNAIL_URL,
 };
 
 function resolveCourseThumbnailUrl(course: LearningCourseItem): string | null {
@@ -196,11 +197,6 @@ export const CourseCatalogueCard: React.FC<CourseCatalogueCardProps> = ({
               {course.title}
             </button>
           </h3>
-
-          {/* Concise 2-Line Description */}
-          <p className="text-[12px] text-[#566479] leading-relaxed line-clamp-2">
-            {course.shortDescription}
-          </p>
 
           {/* Compact Metadata Line: Level · Modules · Free/Paid */}
           <div className="pt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11.5px] text-[#566479] tabular-nums">
