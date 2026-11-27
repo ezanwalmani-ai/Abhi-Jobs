@@ -138,7 +138,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
       .toUpperCase() || 'A';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#E5EAF0]">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#E5EAF0] shadow-[0_1px_2px_rgba(16,43,78,0.03)]">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-[70px] gap-3 sm:gap-5 min-w-0">
           {/* LEFT: Official Exact abhi Jobs Logo */}
@@ -154,28 +154,28 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
           </div>
 
           {/* CENTER: Primary Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 min-w-0" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 min-w-0" aria-label="Main navigation">
             {navLinks.map((link) => (
               <motion.button
                 key={link.label}
                 type="button"
-                whileTap={{ scale: 0.97 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(link.path)}
-                className={`group relative px-3 py-2 text-[14px] font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`group relative px-3.5 py-2.5 text-[14px] tracking-[-0.005em] transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/25 ${
                   link.isActive
                     ? 'text-[#102B4E] font-semibold'
-                    : 'text-[#566479] hover:text-[#102B4E]'
+                    : 'text-[#475569] hover:text-[#102B4E] font-medium'
                 }`}
               >
                 <span>{link.label}</span>
                 {link.isActive ? (
                   <motion.span
                     layoutId="nav-active-underline"
-                    transition={{ duration: 0.22, ease: EASE_PREMIUM }}
-                    className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#F47A24] rounded-full"
+                    transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#F47A24] rounded-full"
                   />
                 ) : (
-                  <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#102B4E]/35 rounded-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-150 ease-out" />
+                  <span className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#102B4E]/30 rounded-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-150 ease-out" />
                 )}
               </motion.button>
             ))}
@@ -189,7 +189,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
                 <button
                   type="button"
                   onClick={() => navigate(isAdmin ? '/admin' : '/dashboard')}
-                  className="hidden md:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold text-[#102B4E] hover:bg-[#F6F8FB] border border-[#E5EAF0] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="hidden md:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-lg text-[13px] font-semibold text-[#102B4E] bg-[#FAFBFD] hover:bg-[#F1F5FA] border border-[#D4DCE6] hover:border-[#102B4E]/35 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/25"
                 >
                   {isAdmin ? (
                     <>
@@ -209,10 +209,10 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
                       setNotifOpen((prev) => !prev);
                       setUserMenuOpen(false);
                     }}
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-[#E5EAF0] bg-white hover:bg-[#F6F8FB] flex items-center justify-center text-[#253449] transition-colors cursor-pointer"
+                    className="relative w-10 h-10 rounded-lg border border-[#E5EAF0] bg-white hover:bg-[#F6F8FB] hover:border-[#D4DCE6] flex items-center justify-center text-[#1E293B] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/25"
                     aria-label="Notifications"
                   >
-                    <Bell className="w-4 h-4 transition-transform duration-200 group-hover:rotate-6" />
+                    <Bell className="w-4 h-4" />
                     <AnimatePresence>
                       {unreadCount > 0 && (
                         <motion.span
@@ -220,7 +220,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentRoute, navigate }
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0.5, opacity: 0 }}
-                          transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+                          transition={{ duration: 0.18, ease: EASE_PREMIUM }}
                           className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F47A24] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white tabular-nums"
                         >
                           {unreadCount > 9 ? '9+' : unreadCount}

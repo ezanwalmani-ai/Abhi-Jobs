@@ -54,10 +54,10 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
       {/* Content Body */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-8">
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl border border-[#E4E7EC] p-5 sm:p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-2xl border border-[#E5EAF0] p-5 sm:p-6 shadow-xs space-y-6">
             <section className="space-y-3">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
-                <Lock className="w-5 h-5 text-[#004D40]" />
+                <Lock className="w-5 h-5 text-[#102B4E]" />
                 <span>1. Overview &amp; Scope</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
@@ -67,7 +67,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
 
             <section className="space-y-3 border-t border-slate-100 pt-6">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
-                <Eye className="w-5 h-5 text-[#004D40]" />
+                <Eye className="w-5 h-5 text-[#102B4E]" />
                 <span>2. Information We Collect</span>
               </h2>
               <ul className="space-y-2 text-sm sm:text-base text-slate-700 list-disc list-outside pl-5 leading-relaxed">
@@ -80,7 +80,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
 
             <section className="space-y-3 border-t border-slate-100 pt-6">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#004D40]" />
+                <CheckCircle2 className="w-5 h-5 text-[#102B4E]" />
                 <span>3. How We Use Your Information</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
@@ -96,7 +96,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
 
             <section className="space-y-3 border-t border-slate-100 pt-6">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#004D40]" />
+                <Shield className="w-5 h-5 text-[#102B4E]" />
                 <span>4. Data Security &amp; Sharing</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
@@ -106,7 +106,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
 
             <section className="space-y-3 border-t border-slate-100 pt-6">
               <h2 className="text-xl font-bold text-[#101828] flex items-center gap-2">
-                <Mail className="w-5 h-5 text-[#004D40]" />
+                <Mail className="w-5 h-5 text-[#102B4E]" />
                 <span>5. Contact Privacy Officer</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
@@ -128,7 +128,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ navigate }
               </button>
               <button
                 onClick={() => navigate('/')}
-                className="px-4 py-2.5 rounded-xl border border-[#D0D5DD] text-[#101828] text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px]"
+                className="px-4 py-2.5 rounded-xl border border-[#D4DCE6] text-[#101828] text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px]"
               >
                 Back to Home
               </button>

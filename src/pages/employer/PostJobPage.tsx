@@ -289,7 +289,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
               {skills.map((s) => (
                 <span
                   key={s}
-                  className="px-2.5 py-1 rounded-lg bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-semibold flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-lg bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-semibold flex items-center gap-1.5"
                 >
                   <span>{s}</span>
                   <button
@@ -313,14 +313,14 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 required
-                className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#004D40] focus:ring-[#004D40] cursor-pointer accent-[#004D40] shrink-0"
+                className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#102B4E] focus:ring-[#102B4E] cursor-pointer accent-[#102B4E] shrink-0"
               />
               <span className="leading-snug">
                 I agree to ABHI JOBS&apos;s{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/terms-and-conditions')}
-                  className="text-[#004D40] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
+                  className="text-[#102B4E] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
                 >
                   Terms &amp; Conditions
                 </button>{' '}
@@ -328,7 +328,7 @@ export const PostJobPage: React.FC<PostJobPageProps> = ({ navigate }) => {
                 <button
                   type="button"
                   onClick={() => navigate('/privacy')}
-                  className="text-[#004D40] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
+                  className="text-[#102B4E] font-semibold underline hover:text-[#102B4E] cursor-pointer inline"
                 >
                   Privacy Policy
                 </button>

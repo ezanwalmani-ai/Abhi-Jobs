@@ -174,18 +174,18 @@ export function evaluatePasswordStrength(
   } else if (metCount === 4) {
     level = 'good';
     label = 'Good';
-    color = 'bg-teal-600';
-    bgColor = 'bg-teal-50';
-    borderColor = 'border-teal-200';
-    textColor = 'text-teal-800';
+    color = 'bg-[#102B4E]';
+    bgColor = 'bg-[#F1F5FA]';
+    borderColor = 'border-[#D4DCE6]';
+    textColor = 'text-[#102B4E]';
     feedback = 'Almost there! Add the remaining requirement.';
   } else {
     level = 'strong';
     label = cleanPassword.length >= 12 ? 'Very Strong' : 'Strong';
-    color = 'bg-[#004D40]';
-    bgColor = 'bg-teal-50';
-    borderColor = 'border-teal-200';
-    textColor = 'text-[#004D40]';
+    color = 'bg-[#102B4E]';
+    bgColor = 'bg-[#F1F5FA]';
+    borderColor = 'border-[#D4DCE6]';
+    textColor = 'text-[#102B4E]';
     feedback = cleanPassword.length >= 12
       ? 'Outstanding! Your password offers enterprise-grade security.'
       : 'Great job! Your password meets all security standards.';
@@ -267,14 +267,14 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
     if (details.metCount <= 1) return 'bg-[#FF2B1A]';
     if (details.metCount === 2) return 'bg-orange-500';
     if (details.metCount === 3) return 'bg-amber-500';
-    if (details.metCount === 4) return 'bg-teal-600';
-    return 'bg-[#004D40]';
+    if (details.metCount === 4) return 'bg-[#102B4E]';
+    return 'bg-[#102B4E]';
   };
 
   // Helper icon for current level
   const renderLevelIcon = () => {
     if (details.level === 'strong') {
-      return <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" />;
+      return <ShieldCheck className="w-3.5 h-3.5 text-[#102B4E]" />;
     }
     if (details.level === 'good' || details.level === 'fair') {
       return <Shield className="w-3.5 h-3.5 text-amber-600" />;
@@ -365,8 +365,8 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
                 {details.label}
               </span>
               {details.isValid && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-teal-100 text-[#004D40] text-[10px] font-bold">
-                  <Sparkles className="w-2.5 h-2.5 text-[#004D40]" /> Verified
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-[#E5EAF0] text-[#102B4E] text-[10px] font-bold">
+                  <Sparkles className="w-2.5 h-2.5 text-[#102B4E]" /> Verified
                 </span>
               )}
             </div>
@@ -378,7 +378,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
             <span
               className={`text-[11px] font-mono px-2 py-0.5 rounded-md border transition-colors ${
                 password.length >= minLength
-                  ? 'bg-teal-50 border-teal-200 text-[#004D40] font-semibold'
+                  ? 'bg-[#F1F5FA] border-[#D4DCE6] text-[#102B4E] font-semibold'
                   : 'bg-white border-slate-200 text-slate-600'
               }`}
             >
@@ -436,14 +436,14 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
                   id={`password-criterion-${criterion.id}`}
                   className={`flex items-center gap-2 p-1.5 rounded-lg text-xs transition-all duration-200 ${
                     isMet
-                      ? 'bg-white/90 text-[#101828] font-medium border border-teal-200 shadow-2xs'
+                      ? 'bg-white/90 text-[#101828] font-medium border border-[#D4DCE6] shadow-2xs'
                       : 'bg-white/40 text-[#667085] border border-transparent'
                   }`}
                 >
                   <div
                     className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                       isMet
-                        ? 'bg-[#004D40] text-white'
+                        ? 'bg-[#102B4E] text-white'
                         : 'bg-slate-200 text-slate-400'
                     }`}
                   >
@@ -461,7 +461,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
                     <span
                       className={`text-[10px] font-mono shrink-0 ml-1 px-1 rounded ${
                         isMet
-                          ? 'text-[#004D40] bg-teal-50 font-medium border border-teal-200/60'
+                          ? 'text-[#102B4E] bg-[#F1F5FA] font-medium border border-[#D4DCE6]'
                           : 'text-[#667085] bg-slate-100'
                       }`}
                     >
@@ -534,7 +534,7 @@ export const PasswordInputWithStrength: React.FC<PasswordInputWithStrengthProps>
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="text-xs font-semibold text-[#004D40] hover:text-[#102B4E] flex items-center gap-1 cursor-pointer transition-colors"
+          className="text-xs font-semibold text-[#102B4E] hover:text-[#102B4E] flex items-center gap-1 cursor-pointer transition-colors"
         >
           {showPassword ? (
             <>
@@ -557,7 +557,7 @@ export const PasswordInputWithStrength: React.FC<PasswordInputWithStrengthProps>
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={`w-full px-4 py-3 rounded-xl border text-sm text-[#101828] placeholder:text-[#667085] focus:outline-none focus:ring-2 focus:ring-[#102B4E] focus:border-[#102B4E] transition-all ${
-            error ? 'border-red-400 bg-red-50/20' : 'border-[#D0D5DD] bg-white'
+            error ? 'border-red-400 bg-red-50/20' : 'border-[#D4DCE6] bg-white'
           }`}
         />
       </div>

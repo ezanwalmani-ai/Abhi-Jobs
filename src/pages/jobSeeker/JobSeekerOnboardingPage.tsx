@@ -207,7 +207,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
         <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-bold text-[#004D40] uppercase tracking-widest">
+              <span className="text-xs font-bold text-[#102B4E] uppercase tracking-widest">
                 ABHI JOBS Onboarding
               </span>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
@@ -248,7 +248,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                   onClick={() => setCurrentStep(s.num)}
                   className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-center transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-teal-50 text-[#102B4E] font-bold border border-teal-200'
+                      ? 'bg-[#F1F5FA] text-[#102B4E] font-bold border border-[#D4DCE6]'
                       : isPast
                       ? 'text-slate-700 hover:bg-slate-50'
                       : 'text-slate-400 opacity-60'
@@ -259,7 +259,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                       isActive
                         ? 'bg-[#102B4E] text-white'
                         : isPast
-                        ? 'bg-teal-100 text-[#004D40]'
+                        ? 'bg-[#E5EAF0] text-[#102B4E]'
                         : 'bg-slate-100 text-slate-400'
                     }`}
                   >
@@ -286,7 +286,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                 <img
                   src={avatar}
                   alt="Profile"
-                  className="w-20 h-20 rounded-full border-2 border-[#004D40] object-cover shadow-sm"
+                  className="w-20 h-20 rounded-full border-2 border-[#102B4E] object-cover shadow-sm"
                 />
                 <div className="space-y-1 text-center sm:text-left flex-1">
                   <div className="text-sm font-bold text-slate-900">{currentCandidate?.name || 'Job Seeker'}</div>
@@ -536,20 +536,20 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
 
               {/* Fresher specific banner */}
               {isFresher ? (
-                <div className="p-6 rounded-2xl bg-teal-50 border border-teal-200 space-y-4">
+                <div className="p-6 rounded-2xl bg-[#F1F5FA] border border-[#D4DCE6] space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#102B4E] text-white flex items-center justify-center flex-shrink-0">
                       <GraduationCap className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-[#102B4E]">You selected Fresher</h3>
-                      <p className="text-xs text-[#004D40] leading-relaxed mt-1">
+                      <p className="text-xs text-[#102B4E] leading-relaxed mt-1">
                         No prior full-time corporate work experience is required. ABHI JOBS matches freshers based on your education, academic projects, certifications, and technical skills.
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-white border border-teal-200 text-xs text-slate-600">
+                  <div className="p-3 rounded-xl bg-white border border-[#D4DCE6] text-xs text-slate-600">
                     <div className="font-semibold text-slate-800">Optional: Added internships or project work?</div>
                     <p className="text-slate-500 mt-0.5">
                       You may optionally add internships or college capstone projects below, or skip straight to Skills!
@@ -896,7 +896,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
               </div>
 
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 sm:p-6 text-center hover:border-slate-400 transition-colors bg-slate-50/50 space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-teal-100 text-[#102B4E] flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-[#E5EAF0] text-[#102B4E] flex items-center justify-center mx-auto">
                   <Upload className="w-7 h-7 text-[#102B4E]" />
                 </div>
                 <div>
@@ -923,9 +923,9 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
               </div>
 
               {resumeName && (
-                <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-between">
+                <div className="p-4 rounded-2xl bg-[#F1F5FA] border border-[#D4DCE6] flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-teal-300 flex items-center justify-center text-[#004D40]">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#102B4E]/35 flex items-center justify-center text-[#102B4E]">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
@@ -933,7 +933,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                       <div className="text-[11px] text-slate-500">{resumeSize} &bull; Ready to submit</div>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-teal-200/60 text-[#004D40] text-[11px] font-bold">
+                  <span className="px-2.5 py-1 rounded-md bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] text-[11px] font-bold">
                     Attached
                   </span>
                 </div>
@@ -967,7 +967,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                   <h2 className="text-lg font-bold text-slate-900">Step 7 — Profile Review</h2>
                   <p className="text-xs text-slate-500">Review your information before completing your profile</p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-teal-100 text-[#004D40] text-xs font-bold">
+                <span className="px-3 py-1 rounded-full bg-[#E5EAF0] text-[#102B4E] text-xs font-bold">
                   95% Complete
                 </span>
               </div>
@@ -978,7 +978,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                   <img src={avatar} alt="Profile" className="w-14 h-14 rounded-full border border-slate-200" />
                   <div className="flex-1 space-y-1">
                     <div className="text-base font-bold text-slate-900">{currentCandidate?.name}</div>
-                    <div className="text-xs text-[#004D40] font-semibold">{headline}</div>
+                    <div className="text-xs text-[#102B4E] font-semibold">{headline}</div>
                     <div className="text-xs text-slate-500">{location} &bull; {currentCandidate?.email}</div>
                   </div>
                 </div>
@@ -998,7 +998,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                     <div className="text-xs font-bold text-slate-700 uppercase">Experience Status</div>
                     <div className="text-xs text-slate-800">
                       {isFresher ? (
-                        <span className="font-semibold text-[#004D40]">Registered as Fresher (Entry-Level)</span>
+                        <span className="font-semibold text-[#102B4E]">Registered as Fresher (Entry-Level)</span>
                       ) : (
                         <span>
                           {experiences.length > 0 ? `${experiences[0].jobTitle} at ${experiences[0].company}` : 'Experienced Candidate'}
@@ -1040,7 +1040,7 @@ export const JobSeekerOnboardingPage: React.FC<JobSeekerOnboardingPageProps> = (
                   onClick={handleFinalSubmit}
                   className="w-full py-4 px-6 rounded-2xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-extrabold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-5 h-5 text-teal-200" />
+                  <Sparkles className="w-5 h-5 text-white/90" />
                   <span>Complete Profile &amp; Discover Opportunities</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>

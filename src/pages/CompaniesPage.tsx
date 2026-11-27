@@ -44,8 +44,8 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
         <ScrollReveal direction="up" distance={16}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-[#004D40] text-xs font-bold border border-teal-200 mb-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" />
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F5FA] text-[#102B4E] text-xs font-bold border border-[#D4DCE6] mb-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#102B4E]" />
                 <span>Accredited Hiring Partners</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101828]">Verified Companies</h1>
@@ -65,8 +65,8 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
 
         {/* Search & Filter */}
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E7EC] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="w-full sm:max-w-md flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5EAF0] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
               <Search className="w-4 h-4 text-[#667085] shrink-0" />
               <input
                 type="text"
@@ -82,7 +82,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
               <select
                 value={industryFilter}
                 onChange={(e) => setIndustryFilter(e.target.value)}
-                className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-white text-[#101828] focus:outline-hidden cursor-pointer"
+                className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-white text-[#101828] focus:outline-hidden cursor-pointer"
               >
                 <option value="All">All Industries</option>
                 <option value="Cloud Infrastructure & AI">Cloud &amp; AI</option>
@@ -110,26 +110,26 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
               <StaggerItem key={comp.id}>
                 <motion.div
                   whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
-                  className="bg-white rounded-2xl border border-[#E4E7EC] hover:border-[#102B4E]/30 p-6 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full"
+                  className="bg-white rounded-2xl border border-[#E5EAF0] hover:border-[#102B4E]/30 p-6 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full"
                 >
                   <div>
                     <div className="flex items-start gap-4">
                       <img
                         src={comp.logo}
                         alt={compName}
-                        className="w-14 h-14 rounded-2xl object-cover border border-[#E4E7EC] shadow-xs shrink-0"
+                        className="w-14 h-14 rounded-2xl object-cover border border-[#E5EAF0] shadow-xs shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-base font-bold text-[#101828] leading-tight">{compName}</h3>
                           {(comp.verificationStatus === 'verified' || comp.verified) && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-50 text-[#004D40] text-[10px] font-bold border border-teal-200">
-                              <CheckCircle2 className="w-3 text-[#004D40]" />
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] text-[10px] font-bold border border-[#D4DCE6]">
+                              <CheckCircle2 className="w-3 text-[#102B4E]" />
                               Verified
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-[#004D40] font-medium mt-0.5">{comp.industry}</p>
+                        <p className="text-xs text-[#102B4E] font-medium mt-0.5">{comp.industry}</p>
                         <div className="flex items-center gap-3 text-xs text-[#667085] mt-2">
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-[#667085]" />
@@ -147,9 +147,9 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ navigate }) => {
                     <p className="text-xs text-[#667085] line-clamp-3 mt-4 leading-relaxed">{comp.about || comp.description}</p>
                   </div>
 
-                  <div className="pt-4 mt-5 border-t border-[#E4E7EC] flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#004D40]">
-                      <Briefcase className="w-3.5 h-3.5 text-[#004D40]" />
+                  <div className="pt-4 mt-5 border-t border-[#E5EAF0] flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#102B4E]">
+                      <Briefcase className="w-3.5 h-3.5 text-[#102B4E]" />
                       <span>{companyJobs.length} Open Position{companyJobs.length === 1 ? '' : 's'}</span>
                     </div>
 

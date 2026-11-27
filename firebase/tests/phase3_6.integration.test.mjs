@@ -279,7 +279,8 @@ describe('Phase 3 & 4 — Security Hardening & Static Codebase Invariants', () =
       'src/pages/auth/LoginPage.tsx',
       'src/pages/jobSeeker/JobSeekerRegisterPage.tsx',
       'src/pages/employer/EmployerRegisterPage.tsx',
-      'src/pages/admin/AdminDashboard.tsx',
+      'src/pages/admin/AdminControlCenterPage.tsx',
+      'src/pages/admin/AdminLoginPage.tsx',
       'src/services/resumeService.ts',
     ];
     for (const rel of activeFiles) {

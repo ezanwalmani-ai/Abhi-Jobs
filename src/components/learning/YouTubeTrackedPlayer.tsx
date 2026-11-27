@@ -397,7 +397,7 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
       {/* Video Header */}
       <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-teal-700 mb-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#102B4E] mb-1">
             <span className="inline-flex items-center gap-1.5">
               <Video className="w-3.5 h-3.5 shrink-0" />
               Video Lesson
@@ -494,7 +494,7 @@ export const YouTubeTrackedPlayer: React.FC<YouTubeTrackedPlayerProps> = ({
                   ? 'bg-emerald-500'
                   : manualCompleted
                   ? 'bg-amber-500'
-                  : 'bg-teal-600'
+                  : 'bg-[#102B4E]'
               }`}
               style={{
                 width: `${completedViaPlayer ? Math.max(90, maxPercent) : maxPercent}%`,

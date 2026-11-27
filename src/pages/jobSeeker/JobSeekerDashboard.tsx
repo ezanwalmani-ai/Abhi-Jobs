@@ -275,11 +275,11 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
       case 'under_review':
         return { label: 'Under Review', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
       case 'shortlisted':
-        return { label: 'Shortlisted', bg: 'bg-teal-50 text-[#004D40] border-teal-200' };
+        return { label: 'Shortlisted', bg: 'bg-[#F1F5FA] text-[#102B4E] border-[#D4DCE6]' };
       case 'interview_scheduled':
-        return { label: 'Interview Scheduled', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
+        return { label: 'Interview Scheduled', bg: 'bg-[#FFF4EC] text-[#F47A24] border-[#F47A24]/30' };
       case 'hired':
-        return { label: 'Selected', bg: 'bg-teal-50 text-teal-800 border-teal-200' };
+        return { label: 'Selected', bg: 'bg-[#F1F5FA] text-[#102B4E] border-[#D4DCE6]' };
       case 'rejected':
         return { label: 'Not Selected', bg: 'bg-rose-50 text-rose-700 border-rose-200' };
       default:
@@ -406,6 +406,17 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
                   <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight truncate">
                     Welcome back, {displayGreetingName}
                   </h1>
+                  {(currentCandidate?.candidateCode || currentUser?.candidateCode) && (
+                    <span
+                      data-testid="dashboard-candidate-id"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#F47A24]/20 border border-[#F47A24]/45 text-[11px] font-semibold text-white shrink-0"
+                    >
+                      <span className="text-orange-200">ABHI JOBS Candidate ID:</span>
+                      <span className="font-mono font-bold tracking-wider tabular-nums">
+                        {currentCandidate?.candidateCode || currentUser?.candidateCode}
+                      </span>
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-[11px] font-semibold text-slate-200 shrink-0">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#F47A24]" />
                     Verified Job Seeker
@@ -450,15 +461,15 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-[#102B4E] text-xs font-bold inline-flex items-center gap-1">
-                    <User className="w-3 h-3 text-[#004D40]" />
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#E5EAF0] text-[#102B4E] text-xs font-bold inline-flex items-center gap-1">
+                    <User className="w-3 h-3 text-[#102B4E]" />
                     Profile Completion
                   </span>
                   <span className="text-base sm:text-lg font-extrabold text-slate-900">
                     <CountUpNumber target={profileCompletion} suffix="% Complete" duration={900} />
                   </span>
                   {profileCompletion === 100 ? (
-                    <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-semibold inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-semibold inline-flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> Profile Completed
                     </span>
                   ) : (
@@ -561,10 +572,10 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
               className="bg-white rounded-xl border border-[#E5EAF0] p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-[#FFF4EC] border border-[#F47A24]/25 flex items-center justify-center text-[#F47A24] shrink-0">
                   <GraduationCap className="w-4 h-4" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#F47A24] group-hover:translate-x-0.5 transition-all shrink-0" />
               </div>
               <div className="mt-3">
                 <div className="font-display text-2xl font-extrabold text-[#102B4E] tabular-nums">
@@ -617,9 +628,9 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
             <button
               onClick={() => navigate('/jobs')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-[#102B4E] hover:bg-[#F1F5FA] text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
             >
-              <Briefcase className="w-4 h-4 text-[#004D40] shrink-0 group-hover:scale-105 transition-transform" />
+              <Briefcase className="w-4 h-4 text-[#102B4E] shrink-0 group-hover:scale-105 transition-transform" />
               <span className="truncate">Find Jobs</span>
             </button>
 
@@ -638,12 +649,12 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
             <button
               onClick={() => navigate('/saved-jobs')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-[#102B4E] hover:bg-[#F1F5FA] text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
             >
-              <Bookmark className="w-4 h-4 text-[#004D40] shrink-0 group-hover:scale-105 transition-transform" />
+              <Bookmark className="w-4 h-4 text-[#102B4E] shrink-0 group-hover:scale-105 transition-transform" />
               <span className="truncate">Saved Jobs</span>
               {mySavedJobs.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-teal-100 text-[#004D40] text-[10px] font-extrabold shrink-0">
+                <span className="px-1.5 py-0.5 rounded-full bg-[#E5EAF0] text-[#102B4E] text-[10px] font-extrabold shrink-0">
                   {mySavedJobs.length}
                 </span>
               )}
@@ -651,9 +662,9 @@ export const JobSeekerDashboard: React.FC<JobSeekerDashboardProps> = ({ navigate
 
             <button
               onClick={() => navigate('/learning')}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-purple-500 hover:bg-purple-50/50 text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-[#F47A24] hover:bg-[#FFF4EC] text-slate-800 text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] group text-center"
             >
-              <GraduationCap className="w-4 h-4 text-purple-700 shrink-0 group-hover:scale-105 transition-transform" />
+              <GraduationCap className="w-4 h-4 text-[#F47A24] shrink-0 group-hover:scale-105 transition-transform" />
               <span className="truncate">My Learning</span>
             </button>
 

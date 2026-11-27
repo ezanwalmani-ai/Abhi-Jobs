@@ -57,7 +57,7 @@ export const LocalDataMigrationCard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <CloudUpload className="w-4 h-4 text-[#004D40]" />
+            <CloudUpload className="w-4 h-4 text-[#102B4E]" />
             <span className="text-xs sm:text-sm font-bold text-slate-900">
               Import Legacy Browser Data to Firebase Cloud
             </span>
@@ -114,7 +114,7 @@ export const LocalDataMigrationCard: React.FC = () => {
               type="checkbox"
               checked={consentChecked}
               onChange={(e) => setConsentChecked(e.target.checked)}
-              className="mt-0.5 rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer shrink-0"
+              className="mt-0.5 rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer shrink-0"
             />
             <span className="text-xs text-slate-700 leading-relaxed">
               I confirm these local browser records belong to my verified account ({preview.matchedEmail}) and consent to importing them into Cloud Firestore.

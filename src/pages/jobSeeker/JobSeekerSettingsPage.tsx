@@ -29,6 +29,7 @@ import {
   Laptop,
 } from 'lucide-react';
 import { LocalDataMigrationCard } from '../../components/LocalDataMigrationCard';
+import { JobSearchAlertsManager } from '../../components/JobSearchAlertsManager';
 
 interface JobSeekerSettingsPageProps {
   navigate: (route: string) => void;
@@ -431,7 +432,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#004D40]/10 text-[#004D40] text-xs font-bold mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#102B4E]/10 text-[#102B4E] text-xs font-bold mb-2">
               <User className="w-3.5 h-3.5" />
               <span>Job Seeker Settings</span>
             </div>
@@ -473,7 +474,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     className="w-full p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors text-left cursor-pointer min-h-[56px]"
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                      <div className="w-9 h-9 rounded-xl bg-slate-100 text-[#004D40] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 text-[#102B4E] flex items-center justify-center shrink-0">
                         <Icon className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
@@ -497,7 +498,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                 onClick={() => setMobileViewSection(null)}
                 className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[44px]"
               >
-                <ArrowLeft className="w-4 h-4 text-[#004D40]" />
+                <ArrowLeft className="w-4 h-4 text-[#102B4E]" />
                 <span>Back to Settings List</span>
               </button>
 
@@ -527,7 +528,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setActiveSection(section.id)}
                   className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer min-h-[44px] ${
                     isActive
-                      ? 'bg-[#004D40] text-white shadow-2xs'
+                      ? 'bg-[#102B4E] text-white shadow-2xs'
                       : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
@@ -559,7 +560,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-[#004D40]" />
+                <Mail className="w-5 h-5 text-[#102B4E]" />
                 <span>Verify Email Change</span>
               </h3>
               <button
@@ -585,20 +586,20 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="Enter new email (e.g. user@example.com)"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#004D40] bg-slate-50 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#102B4E] bg-slate-50 min-h-[44px]"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleSendEmailOtp}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold transition-all min-h-[44px] cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-bold transition-all min-h-[44px] cursor-pointer"
                 >
                   Send Verification Code
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-800">
+                <div className="p-3 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-xs text-[#102B4E]">
                   Code sent to <strong>{newEmail}</strong>. (Simulated code: <strong>{generatedEmailOtp}</strong>)
                 </div>
                 <div>
@@ -611,7 +612,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={emailOtp}
                     onChange={(e) => setEmailOtp(e.target.value)}
                     placeholder="e.g. 482910"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono tracking-widest text-center focus:outline-hidden focus:border-[#004D40] bg-slate-50 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono tracking-widest text-center focus:outline-hidden focus:border-[#102B4E] bg-slate-50 min-h-[44px]"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -625,7 +626,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleVerifyEmail}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#004D40] text-white text-xs font-bold hover:bg-[#00382e] min-h-[44px] cursor-pointer"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-[#081D36] min-h-[44px] cursor-pointer"
                   >
                     Verify & Update
                   </button>
@@ -642,7 +643,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Phone className="w-5 h-5 text-[#004D40]" />
+                <Phone className="w-5 h-5 text-[#102B4E]" />
                 <span>Verify Phone Number</span>
               </h3>
               <button
@@ -672,21 +673,21 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="9876543210"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#004D40] bg-slate-50 min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#102B4E] bg-slate-50 min-h-[44px]"
                     />
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleSendPhoneOtp}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold transition-all min-h-[44px] cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-bold transition-all min-h-[44px] cursor-pointer"
                 >
                   Send SMS OTP
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-800">
+                <div className="p-3 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-xs text-[#102B4E]">
                   SMS OTP sent to <strong>+91 {newPhone}</strong>. (Simulated code: <strong>{generatedPhoneOtp}</strong>)
                 </div>
                 <div>
@@ -699,7 +700,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={phoneOtp}
                     onChange={(e) => setPhoneOtp(e.target.value)}
                     placeholder="e.g. 739201"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono tracking-widest text-center focus:outline-hidden focus:border-[#004D40] bg-slate-50 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono tracking-widest text-center focus:outline-hidden focus:border-[#102B4E] bg-slate-50 min-h-[44px]"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -713,7 +714,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleVerifyPhone}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#004D40] text-white text-xs font-bold hover:bg-[#00382e] min-h-[44px] cursor-pointer"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-[#081D36] min-h-[44px] cursor-pointer"
                   >
                     Verify & Save
                   </button>
@@ -880,7 +881,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsEditingName(true)}
-                    className="text-xs font-bold text-[#004D40] hover:underline cursor-pointer"
+                    className="text-xs font-bold text-[#102B4E] hover:underline cursor-pointer"
                   >
                     Edit
                   </button>
@@ -893,12 +894,12 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-hidden focus:border-[#004D40] min-h-[44px]"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-hidden focus:border-[#102B4E] min-h-[44px]"
                   />
                   <button
                     type="button"
                     onClick={handleSaveName}
-                    className="px-4 py-2 rounded-xl bg-[#004D40] text-white text-xs font-bold min-h-[44px] hover:bg-[#00382e] cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-bold min-h-[44px] hover:bg-[#081D36] cursor-pointer"
                   >
                     Save
                   </button>
@@ -983,7 +984,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
             <form onSubmit={handleChangePassword} className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
               <div>
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <KeyRound className="w-4 h-4 text-[#004D40]" />
+                  <KeyRound className="w-4 h-4 text-[#102B4E]" />
                   <span>Change Password</span>
                 </span>
                 <p className="text-[11px] text-slate-500 mt-0.5">
@@ -1001,7 +1002,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#004D40]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
                 <div>
@@ -1013,7 +1014,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="New password"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#004D40]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
                 <div>
@@ -1025,7 +1026,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat password"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#004D40]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 min-h-[40px] focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
               </div>
@@ -1041,7 +1042,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#004D40] text-white text-xs font-bold hover:bg-[#00382e] min-h-[40px] cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-xl bg-[#102B4E] text-white text-xs font-bold hover:bg-[#081D36] min-h-[40px] cursor-pointer transition-colors"
                 >
                   Update Password
                 </button>
@@ -1120,7 +1121,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setProfileVisibility('visible')}
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                     profileVisibility === 'visible'
-                      ? 'border-[#004D40] bg-teal-50/40'
+                      ? 'border-[#102B4E] bg-[#F1F5FA]/40'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
                   }`}
                 >
@@ -1131,7 +1132,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       name="profileVisibility"
                       checked={profileVisibility === 'visible'}
                       onChange={() => setProfileVisibility('visible')}
-                      className="text-[#004D40] focus:ring-[#004D40]"
+                      className="text-[#102B4E] focus:ring-[#102B4E]"
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
@@ -1144,7 +1145,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setProfileVisibility('hidden')}
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                     profileVisibility === 'hidden'
-                      ? 'border-[#004D40] bg-teal-50/40'
+                      ? 'border-[#102B4E] bg-[#F1F5FA]/40'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
                   }`}
                 >
@@ -1155,7 +1156,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       name="profileVisibility"
                       checked={profileVisibility === 'hidden'}
                       onChange={() => setProfileVisibility('hidden')}
-                      className="text-[#004D40] focus:ring-[#004D40]"
+                      className="text-[#102B4E] focus:ring-[#102B4E]"
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
@@ -1176,7 +1177,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setResumeVisibility('viewable')}
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                     resumeVisibility === 'viewable'
-                      ? 'border-[#004D40] bg-teal-50/40'
+                      ? 'border-[#102B4E] bg-[#F1F5FA]/40'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
                   }`}
                 >
@@ -1189,7 +1190,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       name="resumeVisibility"
                       checked={resumeVisibility === 'viewable'}
                       onChange={() => setResumeVisibility('viewable')}
-                      className="text-[#004D40] focus:ring-[#004D40]"
+                      className="text-[#102B4E] focus:ring-[#102B4E]"
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
@@ -1201,7 +1202,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setResumeVisibility('private')}
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                     resumeVisibility === 'private'
-                      ? 'border-[#004D40] bg-teal-50/40'
+                      ? 'border-[#102B4E] bg-[#F1F5FA]/40'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
                   }`}
                 >
@@ -1214,7 +1215,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       name="resumeVisibility"
                       checked={resumeVisibility === 'private'}
                       onChange={() => setResumeVisibility('private')}
-                      className="text-[#004D40] focus:ring-[#004D40]"
+                      className="text-[#102B4E] focus:ring-[#102B4E]"
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
@@ -1241,7 +1242,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onChange={(e) => setAllowEmployerContact(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#004D40]"></div>
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#102B4E]"></div>
               </label>
             </div>
 
@@ -1249,7 +1250,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
               <button
                 type="button"
                 onClick={handleSavePrivacy}
-                className="px-6 py-2.5 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+                className="px-6 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
               >
                 Save Privacy Settings
               </button>
@@ -1287,7 +1288,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       }}
                       className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] ${
                         isSelected
-                          ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                          ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -1319,7 +1320,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       }}
                       className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] ${
                         isSelected
-                          ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                          ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -1340,7 +1341,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onChange={(e) => setLocationInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLocation())}
                   placeholder="Type city (e.g. Pune, Hyderabad, Remote) and press Add"
-                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-hidden focus:border-[#004D40] min-h-[44px]"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-hidden focus:border-[#102B4E] min-h-[44px]"
                 />
                 <button
                   type="button"
@@ -1355,9 +1356,9 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                 {preferredLocations.map((loc) => (
                   <span
                     key={loc}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 text-teal-800 border border-teal-200 text-xs font-semibold"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-semibold"
                   >
-                    <MapPin className="w-3 h-3 text-[#004D40]" />
+                    <MapPin className="w-3 h-3 text-[#102B4E]" />
                     <span>{loc}</span>
                     <button
                       type="button"
@@ -1381,7 +1382,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onChange={(e) => setRoleInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRole())}
                   placeholder="Type job title (e.g. Data Analyst, UX Designer) and press Add"
-                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-hidden focus:border-[#004D40] min-h-[44px]"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-hidden focus:border-[#102B4E] min-h-[44px]"
                 />
                 <button
                   type="button"
@@ -1424,7 +1425,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={expectedSalaryMin}
                     onChange={(e) => setExpectedSalaryMin(e.target.value)}
                     placeholder="e.g. 6"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold min-h-[44px] focus:outline-hidden focus:border-[#004D40]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold min-h-[44px] focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
                 <div>
@@ -1434,7 +1435,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                     value={expectedSalaryMax}
                     onChange={(e) => setExpectedSalaryMax(e.target.value)}
                     placeholder="e.g. 18"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold min-h-[44px] focus:outline-hidden focus:border-[#004D40]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold min-h-[44px] focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
               </div>
@@ -1444,7 +1445,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
               <button
                 type="button"
                 onClick={handleSavePreferences}
-                className="px-6 py-2.5 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
+                className="px-6 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
               >
                 Save Preferences
               </button>
@@ -1500,12 +1501,20 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       type="checkbox"
                       checked={notifications[item.key]}
                       onChange={() => handleToggleNotification(item.key)}
-                      className="rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer"
+                      className="rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer"
                     />
                   </label>
                 ))}
               </div>
             </div>
+
+            {/* Firestore-Backed Per-Query Email Alerts */}
+            <JobSearchAlertsManager
+              mode="settings-panel"
+              navigate={navigate}
+              onNotify={showToast}
+              fallbackEmail={currentUser?.email || currentCandidate?.email}
+            />
 
             {/* Application Updates */}
             <div className="space-y-3 pt-2">
@@ -1547,7 +1556,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       type="checkbox"
                       checked={notifications[item.key]}
                       onChange={() => handleToggleNotification(item.key)}
-                      className="rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer"
+                      className="rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer"
                     />
                   </label>
                 ))}
@@ -1584,7 +1593,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       type="checkbox"
                       checked={notifications[item.key]}
                       onChange={() => handleToggleNotification(item.key)}
-                      className="rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer"
+                      className="rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer"
                     />
                   </label>
                 ))}
@@ -1621,7 +1630,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       type="checkbox"
                       checked={notifications[item.key]}
                       onChange={() => handleToggleNotification(item.key)}
-                      className="rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer"
+                      className="rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer"
                     />
                   </label>
                 ))}
@@ -1657,7 +1666,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       type="checkbox"
                       checked={notifications[channel.key]}
                       onChange={() => handleToggleNotification(channel.key)}
-                      className="rounded text-[#004D40] focus:ring-[#004D40] w-4 h-4 cursor-pointer ml-2"
+                      className="rounded text-[#102B4E] focus:ring-[#102B4E] w-4 h-4 cursor-pointer ml-2"
                     />
                   </label>
                 ))}
@@ -1683,7 +1692,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <KeyRound className="w-4 h-4 text-[#004D40]" />
+                  <KeyRound className="w-4 h-4 text-[#102B4E]" />
                   <span>Account Password</span>
                 </span>
                 <p className="text-[11px] text-slate-500 mt-0.5">
@@ -1704,10 +1713,10 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Shield className="w-4 h-4 text-purple-600" />
+                    <Shield className="w-4 h-4 text-[#F47A24]" />
                     <span>Two-Factor Authentication (2FA)</span>
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#FFF4EC] text-[#102B4E] text-[10px] font-bold">
                     Coming Soon
                   </span>
                 </div>
@@ -1730,7 +1739,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
               <div className="space-y-2">
                 <div className="p-4 rounded-2xl border border-slate-200 bg-white flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center">
                       <Laptop className="w-5 h-5" />
                     </div>
                     <div>
@@ -1799,7 +1808,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                   onClick={() => setLanguage('en')}
                   className={`p-3 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer min-h-[44px] flex items-center justify-between ${
                     language === 'en'
-                      ? 'border-[#004D40] bg-teal-50 text-[#004D40]'
+                      ? 'border-[#102B4E] bg-[#F1F5FA] text-[#102B4E]'
                       : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-white'
                   }`}
                 >
@@ -1837,7 +1846,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                       onClick={() => handleAppearanceChange(t.id)}
                       className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[#004D40] bg-teal-50/40'
+                          ? 'border-[#102B4E] bg-[#F1F5FA]/40'
                           : 'border-slate-200 bg-slate-50 hover:bg-white'
                       }`}
                     >
@@ -1848,7 +1857,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                           name="appearanceTheme"
                           checked={isSelected}
                           onChange={() => handleAppearanceChange(t.id)}
-                          className="text-[#004D40] focus:ring-[#004D40]"
+                          className="text-[#102B4E] focus:ring-[#102B4E]"
                         />
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1">{t.desc}</p>
@@ -1880,7 +1889,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Download className="w-4 h-4 text-[#004D40]" />
+                  <Download className="w-4 h-4 text-[#102B4E]" />
                   <span>Download My Data</span>
                 </span>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
@@ -1892,7 +1901,7 @@ export const JobSeekerSettingsPage: React.FC<JobSeekerSettingsPageProps> = ({
                 onClick={handleDownloadData}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 text-xs font-bold shadow-2xs transition-colors cursor-pointer min-h-[44px] shrink-0"
               >
-                <Download className="w-4 h-4 text-[#004D40]" />
+                <Download className="w-4 h-4 text-[#102B4E]" />
                 <span>Export JSON</span>
               </button>
             </div>

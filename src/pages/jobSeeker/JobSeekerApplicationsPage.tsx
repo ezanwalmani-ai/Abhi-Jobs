@@ -278,8 +278,8 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
       case 'interview_scheduled':
         return {
           label: 'Interview Scheduled',
-          badgeClass: 'bg-indigo-50 border-indigo-200 text-indigo-800',
-          dotClass: 'bg-indigo-600',
+          badgeClass: 'bg-[#F1F5FA] border-[#D4DCE6] text-[#102B4E]',
+          dotClass: 'bg-[#102B4E]',
           icon: Video,
           description: 'An interview has been scheduled. Check your interview details below.',
         };
@@ -927,16 +927,16 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
                       </p>
 
                       {matchedInterview && (
-                        <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                        <div className="p-3 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-[#102B4E] text-white flex items-center justify-center shrink-0">
                               <Video className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
                               <div className="font-bold text-[#102B4E]">
                                 {matchedInterview.type} Interview · {matchedInterview.status}
                               </div>
-                              <div className="text-indigo-800">
+                              <div className="text-[#102B4E]">
                                 {matchedInterview.date} at {matchedInterview.time}
                               </div>
                             </div>
@@ -1106,19 +1106,19 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-[#778397]">
                         Interview Information
                       </h3>
-                      <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-3">
+                      <div className="p-4 rounded-2xl bg-[#F1F5FA] border border-[#D4DCE6] space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 font-bold text-[#102B4E]">
                             {matchedInterview.type === 'Phone' ? (
-                              <Phone className="w-4 h-4 text-indigo-600" />
+                              <Phone className="w-4 h-4 text-[#102B4E]" />
                             ) : matchedInterview.type === 'In-person' ? (
-                              <MapPin className="w-4 h-4 text-indigo-600" />
+                              <MapPin className="w-4 h-4 text-[#102B4E]" />
                             ) : (
-                              <Video className="w-4 h-4 text-indigo-600" />
+                              <Video className="w-4 h-4 text-[#102B4E]" />
                             )}
                             <span>{matchedInterview.type} Interview</span>
                           </div>
-                          <span className="px-2.5 py-0.5 rounded-full bg-white border border-indigo-200 text-indigo-700 text-[11px] font-semibold">
+                          <span className="px-2.5 py-0.5 rounded-full bg-white border border-[#D4DCE6] text-[#102B4E] text-[11px] font-semibold">
                             {matchedInterview.status}
                           </span>
                         </div>
@@ -1141,7 +1141,7 @@ export const JobSeekerApplicationsPage: React.FC<JobSeekerApplicationsPageProps>
                         </div>
 
                         {matchedInterview.notes && (
-                          <p className="text-xs text-[#253449] bg-white/80 rounded-xl p-3 border border-indigo-100 leading-relaxed">
+                          <p className="text-xs text-[#253449] bg-white/80 rounded-xl p-3 border border-[#E5EAF0] leading-relaxed">
                             {matchedInterview.notes}
                           </p>
                         )}

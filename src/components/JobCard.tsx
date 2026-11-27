@@ -87,27 +87,27 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
   };
 
   return (
-    <div className="group relative bg-white rounded-xl border border-[#E4E7EC] hover:border-slate-300 p-5 shadow-xs hover:shadow-md transition-all duration-300 md:hover:-translate-y-0.5 flex flex-col justify-between">
+    <div className="group relative bg-white rounded-xl border border-[#E5EAF0] hover:border-[#102B4E]/35 p-5 sm:p-6 shadow-[0_1px_2px_rgba(16,43,78,0.03)] hover:shadow-[0_6px_20px_-10px_rgba(16,43,78,0.14)] transition-all duration-200 flex flex-col justify-between">
       {/* Top Header: Logo, Company, Title, Save */}
       <div>
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
+          <div className="flex items-start gap-3.5 min-w-0">
             {job.companyLogo && !logoError ? (
               <img
                 src={job.companyLogo}
                 alt={job.companyName || 'Company'}
                 onError={() => setLogoError(true)}
-                className="w-11 h-11 rounded-lg object-cover border border-[#E4E7EC] shadow-2xs shrink-0"
+                className="w-11 h-11 rounded-lg object-cover border border-[#E5EAF0] shadow-2xs shrink-0"
                 loading="lazy"
               />
             ) : (
-              <div className="w-11 h-11 rounded-lg bg-[#102B4E]/5 border border-[#E4E7EC] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-lg bg-[#F1F5FA] border border-[#E5EAF0] flex items-center justify-center shrink-0">
                 <EnterpriseMonolithIcon size={22} colorMode="palette" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap text-xs text-[#778397]">
-                <span className="font-semibold text-[#253449] truncate max-w-[180px] sm:max-w-[220px]">
+              <div className="flex items-center gap-2 flex-wrap text-xs text-[#64748B]">
+                <span className="font-semibold text-[#1E293B] truncate max-w-[180px] sm:max-w-[220px]">
                   {job.companyName || 'Company'}
                 </span>
                 {job.isVerifiedCompany && (
@@ -122,7 +122,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
               </div>
               <h3
                 onClick={() => onViewDetails(job.id)}
-                className="font-display text-[17px] sm:text-[18px] font-bold text-[#102B4E] group-hover:text-[#F47A24] transition-colors mt-0.5 cursor-pointer leading-snug line-clamp-1"
+                className="font-display text-[17px] sm:text-[18px] font-semibold text-[#102B4E] group-hover:text-[#F47A24] transition-colors mt-1 cursor-pointer leading-snug tracking-[-0.01em] line-clamp-1"
                 title={job.title}
               >
                 {job.title}
@@ -133,27 +133,26 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
           {/* Save Job button with immediate tactile confirmation */}
           <motion.button
             type="button"
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => (isSaved ? unsaveJob(job.id) : saveJob(job.id))}
-            className={`relative p-2 rounded-lg transition-all duration-200 cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold overflow-visible ${
+            className={`relative px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer shrink-0 flex items-center gap-1.5 text-xs font-semibold overflow-visible ${
               isSaved
-                ? 'bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/35 shadow-2xs'
-                : 'text-[#778397] hover:text-[#102B4E] hover:bg-[#F6F8FB] border border-transparent'
+                ? 'bg-[#FFF4EC] text-[#F47A24] border border-[#F47A24]/35'
+                : 'text-[#64748B] hover:text-[#102B4E] hover:bg-[#F6F8FB] border border-transparent hover:border-[#E5EAF0]'
             }`}
             title={isSaved ? 'Job Saved — Click to remove' : 'Save Job for later'}
             aria-label={isSaved ? 'Saved Job' : 'Save Job'}
             aria-pressed={isSaved}
           >
-            {/* Brief radial pulse ring on save confirmation */}
             <AnimatePresence>
               {isSaved && (
                 <motion.span
                   key="save-ring"
                   aria-hidden="true"
-                  initial={{ scale: 0.7, opacity: 0.6 }}
-                  animate={{ scale: 1.45, opacity: 0 }}
+                  initial={{ scale: 0.7, opacity: 0.5 }}
+                  animate={{ scale: 1.4, opacity: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.45, ease: EASE_PREMIUM }}
+                  transition={{ duration: 0.4, ease: EASE_PREMIUM }}
                   className="pointer-events-none absolute inset-0 rounded-lg border border-[#F47A24]"
                 />
               )}
@@ -161,9 +160,9 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
 
             <motion.span
               key={isSaved ? 'saved-icon' : 'unsaved-icon'}
-              initial={{ scale: 0.75, rotate: isSaved ? -12 : 0 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 22 }}
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 24 }}
               className="inline-flex items-center"
             >
               {isSaved ? (
@@ -186,66 +185,66 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
         </div>
 
         {/* Clean Metadata items */}
-        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[#778397] mt-3.5">
+        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-[13px] text-[#475569] mt-4">
           {job.location && (
             <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#102B4E]/50 shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
               <span>{job.location}</span>
             </div>
           )}
           {(job.employmentType || job.workMode) && (
             <div className="flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-[#102B4E]/50 shrink-0" />
+              <Briefcase className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
               <span>{[job.employmentType, job.workMode].filter(Boolean).join(' · ')}</span>
             </div>
           )}
           {job.experienceLevel && (
-            <div className="font-medium text-[#253449]">
+            <div className="font-medium text-[#1E293B]">
               {job.experienceLevel}
               {typeof job.minExperienceYears === 'number' && job.minExperienceYears > 0
                 ? ` (${job.minExperienceYears}+ yrs)`
                 : ''}
             </div>
           )}
-          <div className="flex items-center gap-1 font-semibold text-[#102B4E]">
-            <span className="text-[#778397] font-normal">Salary:</span>
+          <div className="flex items-center gap-1 font-semibold text-[#102B4E] tabular-nums">
+            <span className="text-[#64748B] font-normal">Salary:</span>
             <span>{formatSalary()}</span>
           </div>
         </div>
 
         {/* Short description */}
         {job.overview && (
-          <p className="text-xs text-[#778397] line-clamp-2 mt-3 leading-relaxed">
+          <p className="text-[13px] text-[#475569] line-clamp-2 mt-3 leading-relaxed">
             {job.overview}
           </p>
         )}
 
         {/* Skills text line */}
         {Array.isArray(job.preferredSkills) && job.preferredSkills.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-3.5 text-[11px] text-[#253449]">
-            <span className="text-[#778397] font-medium">Skills:</span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-3.5 text-xs text-[#1E293B]">
+            <span className="text-[#64748B] font-medium">Skills:</span>
             {job.preferredSkills.slice(0, 4).map((skill, idx) => (
               <React.Fragment key={skill}>
-                {idx > 0 && <span className="text-[#E5EAF0]">•</span>}
+                {idx > 0 && <span className="text-[#CBD5E1]">·</span>}
                 <span className="font-medium">{skill}</span>
               </React.Fragment>
             ))}
             {job.preferredSkills.length > 4 && (
-              <span className="text-[#778397]">+{job.preferredSkills.length - 4} more</span>
+              <span className="text-[#64748B]">+{job.preferredSkills.length - 4} more</span>
             )}
           </div>
         )}
       </div>
 
       {/* Card Footer */}
-      <div className="pt-4 mt-4 border-t border-[#E5EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-[11px] text-[#778397]">
-          <Clock className="w-3.5 h-3.5 shrink-0 text-[#102B4E]/50" />
+      <div className="pt-4 mt-5 border-t border-[#E5EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+          <Clock className="w-3.5 h-3.5 shrink-0 text-[#64748B]" />
           <span>Posted {job.postedDate || 'recently'}</span>
           {matchScore && (
             <>
               <span aria-hidden="true">·</span>
-              <span className="font-semibold text-[#102B4E]">{matchScore}% Profile Match</span>
+              <span className="font-semibold text-[#102B4E] tabular-nums">{matchScore}% Profile Match</span>
             </>
           )}
         </div>
@@ -255,7 +254,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             variant="secondary"
             size="sm"
             onClick={() => onViewDetails(job.id)}
-            iconLeft={<Eye className="w-3.5 h-3.5 text-[#778397]" />}
+            iconLeft={<Eye className="w-3.5 h-3.5 text-[#64748B]" />}
             className="flex-1 sm:flex-none min-h-[38px]"
             title="View complete job details"
           >
@@ -266,11 +265,11 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onApply, onViewDetails })
             {hasApplied ? (
               <motion.span
                 key="applied-state"
-                initial={{ opacity: 0, scale: 0.92 }}
+                initial={{ opacity: 0, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.22, ease: EASE_PREMIUM }}
-                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-h-[38px]"
+                exit={{ opacity: 0, scale: 0.94 }}
+                transition={{ duration: 0.18, ease: EASE_PREMIUM }}
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-h-[38px]"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Applied</span>

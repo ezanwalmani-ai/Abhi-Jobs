@@ -202,10 +202,15 @@ service cloud.firestore {
     // PRESERVED EXISTING VALIDATION BLUEPRINTS (User & CareerAssessment)
     // =========================================================================
 
+    function isValidCandidateCode(code) {
+      return code is string && code.size() == 4 && code.matches('^[1-9][0-9]{3}$');
+    }
+
     function isValidUser(data) {
       return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
-             data.keys().hasOnly(['id', 'name', 'email', 'role', 'avatar', 'createdAt', 'lastActive', 'status']) &&
+             data.keys().hasOnly(['id', 'candidateCode', 'name', 'email', 'role', 'avatar', 'createdAt', 'lastActive', 'status']) &&
              data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             (!('candidateCode' in data) || isValidCandidateCode(data.candidateCode)) &&
              data.name is string && data.name.size() <= 100 &&
              data.email is string && data.email.size() <= 150 &&
              data.role is string && (data.role == 'job_seeker' || data.role == 'employer' || data.role == 'admin') &&
@@ -213,6 +218,69 @@ service cloud.firestore {
              (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
              (!('lastActive' in data) || (data.lastActive is string && data.lastActive.size() <= 50)) &&
              (!('status' in data) || (data.status is string && (data.status == 'active' || data.status == 'suspended')));
+    }
+
+    function isValidCandidateIdRegistry(data, candidateCode) {
+      return data.keys().hasAll(['candidateCode', 'userId', 'assignedAt']) &&
+             data.keys().hasOnly(['candidateCode', 'userId', 'assignedAt']) &&
+             data.candidateCode == candidateCode &&
+             isValidCandidateCode(data.candidateCode) &&
+             isValidId(data.userId);
+    }
+
+    function isValidCandidateDocument(data, uid, docId) {
+      return data.keys().hasAll([
+               'id',
+               'candidateUid',
+               'category',
+               'originalFilename',
+               'mimeType',
+               'extension',
+               'sizeBytes',
+               'versionNumber',
+               'isLatest',
+               'uploadedByUid',
+               'uploadedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'candidateUid',
+               'category',
+               'originalFilename',
+               'mimeType',
+               'extension',
+               'sizeBytes',
+               'versionNumber',
+               'isLatest',
+               'uploadedByUid',
+               'uploadedAt',
+               'sha256'
+             ]) &&
+             data.id == docId &&
+             isValidId(data.id) &&
+             data.candidateUid == uid &&
+             data.uploadedByUid == uid &&
+             data.category is string && (data.category in ['resume', 'certificate', 'supporting']) &&
+             data.originalFilename is string && data.originalFilename.size() > 0 && data.originalFilename.size() <= 180 &&
+             data.mimeType is string && data.mimeType.size() > 0 && data.mimeType.size() <= 120 &&
+             data.extension is string && data.extension.size() > 0 && data.extension.size() <= 12 &&
+             data.sizeBytes is number && data.sizeBytes > 0 && data.sizeBytes <= 10485760 &&
+             data.versionNumber is number && data.versionNumber >= 1 && data.versionNumber <= 500 &&
+             data.isLatest is bool &&
+             (!('sha256' in data) || (data.sha256 is string && data.sha256.size() <= 128));
+    }
+
+    function isValidCandidateInternalNote(data, uid, noteId) {
+      return data.keys().hasAll(['id', 'candidateUid', 'authorUid', 'authorEmail', 'authorName', 'text', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'candidateUid', 'authorUid', 'authorEmail', 'authorName', 'text', 'category', 'createdAt']) &&
+             data.id == noteId &&
+             isValidId(data.id) &&
+             data.candidateUid == uid &&
+             data.authorUid == request.auth.uid &&
+             data.authorEmail is string && data.authorEmail.size() > 0 && data.authorEmail.size() <= 150 &&
+             data.authorName is string && data.authorName.size() > 0 && data.authorName.size() <= 120 &&
+             data.text is string && data.text.size() > 0 && data.text.size() <= 2000 &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 40));
     }
 
     function isValidAssessment(data, userId, assessmentId) {
@@ -913,23 +981,36 @@ service cloud.firestore {
              data.keys().hasOnly([
                'id',
                'userId',
+               'candidateCode',
                'name',
                'email',
                'phone',
+               'altPhone',
                'location',
                'city',
                'state',
+               'country',
+               'pinCode',
                'headline',
                'about',
+               'careerObjective',
                'currentRole',
+               'currentCompany',
                'desiredRole',
+               'noticePeriod',
                'experienceLevel',
                'experienceType',
                'workStatus',
                'yearsOfExperience',
                'preferredLocation',
+               'preferredLocations',
+               'preferredJobTitles',
+               'preferredEmploymentTypes',
+               'preferredShift',
+               'jobSearchStatus',
                'workPreference',
                'preferredIndustry',
+               'currentSalary',
                'expectedSalary',
                'willingToRelocate',
                'gender',
@@ -939,10 +1020,23 @@ service cloud.firestore {
                'profileVisibility',
                'availableForOpportunities',
                'skills',
+               'detailedSkills',
                'education',
                'experiences',
                'certifications',
+               'projects',
+               'languages',
+               'linkedinUrl',
+               'githubUrl',
+               'portfolioUrl',
+               'personalWebsiteUrl',
+               'otherLinks',
                'primaryResumeId',
+               'resumeDocId',
+               'resumeName',
+               'resumeSize',
+               'resumeUpdated',
+               'recruitmentStatus',
                'completionPercentage',
                'avatar',
                'createdAt',
@@ -952,23 +1046,36 @@ service cloud.firestore {
              isValidId(data.id) &&
              data.userId == uid &&
              isValidId(data.userId) &&
+             (!('candidateCode' in data) || isValidCandidateCode(data.candidateCode)) &&
              data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
              data.email is string && data.email.size() > 3 && data.email.size() <= 150 &&
              (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+             (!('altPhone' in data) || (data.altPhone is string && data.altPhone.size() <= 30)) &&
              data.location is string && data.location.size() <= 120 &&
              (!('city' in data) || (data.city is string && data.city.size() <= 80)) &&
              (!('state' in data) || (data.state is string && data.state.size() <= 80)) &&
+             (!('country' in data) || (data.country is string && data.country.size() <= 80)) &&
+             (!('pinCode' in data) || (data.pinCode is string && data.pinCode.size() <= 20)) &&
              data.headline is string && data.headline.size() <= 200 &&
              (!('about' in data) || (data.about is string && data.about.size() <= 2500)) &&
+             (!('careerObjective' in data) || (data.careerObjective is string && data.careerObjective.size() <= 1000)) &&
              (!('currentRole' in data) || (data.currentRole is string && data.currentRole.size() <= 120)) &&
+             (!('currentCompany' in data) || (data.currentCompany is string && data.currentCompany.size() <= 140)) &&
              (!('desiredRole' in data) || (data.desiredRole is string && data.desiredRole.size() <= 120)) &&
+             (!('noticePeriod' in data) || (data.noticePeriod is string && data.noticePeriod.size() <= 60)) &&
              data.experienceLevel is string && (data.experienceLevel in ['Fresher', 'Junior', 'Mid', 'Senior', 'Lead']) &&
              (!('experienceType' in data) || (data.experienceType is string && (data.experienceType == 'fresher' || data.experienceType == 'experienced'))) &&
              (!('workStatus' in data) || (data.workStatus is string && data.workStatus.size() <= 80)) &&
              data.yearsOfExperience is number && data.yearsOfExperience >= 0 && data.yearsOfExperience <= 60 &&
              (!('preferredLocation' in data) || (data.preferredLocation is string && data.preferredLocation.size() <= 120)) &&
+             (!('preferredLocations' in data) || (data.preferredLocations is list && data.preferredLocations.size() <= 15)) &&
+             (!('preferredJobTitles' in data) || (data.preferredJobTitles is list && data.preferredJobTitles.size() <= 15)) &&
+             (!('preferredEmploymentTypes' in data) || (data.preferredEmploymentTypes is list && data.preferredEmploymentTypes.size() <= 10)) &&
+             (!('preferredShift' in data) || (data.preferredShift is string && data.preferredShift.size() <= 40)) &&
+             (!('jobSearchStatus' in data) || (data.jobSearchStatus is string && data.jobSearchStatus.size() <= 80)) &&
              data.workPreference is string && (data.workPreference in ['Remote', 'Hybrid', 'On-site', 'Flexible']) &&
              (!('preferredIndustry' in data) || (data.preferredIndustry is string && data.preferredIndustry.size() <= 100)) &&
+             (!('currentSalary' in data) || (data.currentSalary is map && data.currentSalary.size() <= 4)) &&
              (!('expectedSalary' in data) || (data.expectedSalary is map && data.expectedSalary.size() <= 5)) &&
              (!('willingToRelocate' in data) || data.willingToRelocate is bool) &&
              (!('gender' in data) || (data.gender is string && data.gender.size() <= 40)) &&
@@ -979,13 +1086,26 @@ service cloud.firestore {
              data.availableForOpportunities is bool &&
              data.skills is list && data.skills.size() <= 40 &&
              (data.skills.size() == 0 || (data.skills[0] is string && data.skills[0].size() <= 80)) &&
+             (!('detailedSkills' in data) || (data.detailedSkills is list && data.detailedSkills.size() <= 40 && (data.detailedSkills.size() == 0 || data.detailedSkills[0] is map))) &&
              data.education is list && data.education.size() <= 15 &&
              (data.education.size() == 0 || data.education[0] is map) &&
              data.experiences is list && data.experiences.size() <= 20 &&
              (data.experiences.size() == 0 || data.experiences[0] is map) &&
              data.certifications is list && data.certifications.size() <= 25 &&
              (data.certifications.size() == 0 || data.certifications[0] is map) &&
+             (!('projects' in data) || (data.projects is list && data.projects.size() <= 15 && (data.projects.size() == 0 || data.projects[0] is map))) &&
+             (!('languages' in data) || (data.languages is list && data.languages.size() <= 15 && (data.languages.size() == 0 || data.languages[0] is map))) &&
+             (!('linkedinUrl' in data) || (data.linkedinUrl is string && data.linkedinUrl.size() <= 300)) &&
+             (!('githubUrl' in data) || (data.githubUrl is string && data.githubUrl.size() <= 300)) &&
+             (!('portfolioUrl' in data) || (data.portfolioUrl is string && data.portfolioUrl.size() <= 300)) &&
+             (!('personalWebsiteUrl' in data) || (data.personalWebsiteUrl is string && data.personalWebsiteUrl.size() <= 300)) &&
+             (!('otherLinks' in data) || (data.otherLinks is list && data.otherLinks.size() <= 10 && (data.otherLinks.size() == 0 || data.otherLinks[0] is map))) &&
              (!('primaryResumeId' in data) || (data.primaryResumeId is string && data.primaryResumeId.size() <= 128)) &&
+             (!('resumeDocId' in data) || (data.resumeDocId is string && data.resumeDocId.size() <= 128)) &&
+             (!('resumeName' in data) || (data.resumeName is string && data.resumeName.size() <= 160)) &&
+             (!('resumeSize' in data) || (data.resumeSize is string && data.resumeSize.size() <= 40)) &&
+             (!('resumeUpdated' in data) || (data.resumeUpdated is string && data.resumeUpdated.size() <= 64)) &&
+             (!('recruitmentStatus' in data) || (data.recruitmentStatus is string && data.recruitmentStatus in ['Active', 'Under Review', 'Shortlisted', 'Interviewing', 'Placed', 'On Hold', 'Archived'])) &&
              data.completionPercentage is number && data.completionPercentage >= 0 && data.completionPercentage <= 100 &&
              (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 500));
     }
@@ -1151,6 +1271,72 @@ service cloud.firestore {
              data.read is bool &&
              (!('link' in data) || (data.link is string && data.link.size() <= 250)) &&
              data.createdBy is string && data.createdBy.size() > 0 && data.createdBy.size() <= 128;
+    }
+
+    function isValidJobSearchAlert(data, userId, alertId) {
+      return data.keys().hasAll([
+               'id',
+               'userId',
+               'email',
+               'label',
+               'queryKey',
+               'search',
+               'location',
+               'workMode',
+               'employmentType',
+               'experienceLevel',
+               'salaryRange',
+               'department',
+               'industry',
+               'selectedSkill',
+               'quickMinSalary',
+               'frequency',
+               'enabled',
+               'createdAt',
+               'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'id',
+               'userId',
+               'email',
+               'label',
+               'queryKey',
+               'search',
+               'location',
+               'workMode',
+               'employmentType',
+               'experienceLevel',
+               'salaryRange',
+               'department',
+               'industry',
+               'selectedSkill',
+               'quickMinSalary',
+               'frequency',
+               'enabled',
+               'createdAt',
+               'updatedAt'
+             ]) &&
+             data.id == alertId &&
+             isValidId(data.id) &&
+             data.queryKey == alertId &&
+             isValidId(data.queryKey) &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             isValidId(data.userId) &&
+             data.email is string && data.email.size() > 3 && data.email.size() <= 150 &&
+             data.label is string && data.label.size() > 0 && data.label.size() <= 180 &&
+             data.search is string && data.search.size() <= 120 &&
+             data.location is string && data.location.size() <= 100 &&
+             data.workMode is string && (data.workMode in ['All', 'Remote', 'Hybrid', 'On-site']) &&
+             data.employmentType is string && (data.employmentType in ['All', 'Full-time', 'Part-time', 'Contract', 'Internship', 'Temporary', 'Freelance']) &&
+             data.experienceLevel is string && (data.experienceLevel in ['All', 'Fresher', '1-2_years', '3-5_years', '5_plus_years', 'Junior', 'Mid', 'Senior', 'Lead']) &&
+             data.salaryRange is string && (data.salaryRange in ['All', '0_20k', '20k_40k', '40k_60k', '60k_plus']) &&
+             data.department is string && data.department.size() > 0 && data.department.size() <= 80 &&
+             data.industry is string && data.industry.size() > 0 && data.industry.size() <= 80 &&
+             data.selectedSkill is string && data.selectedSkill.size() > 0 && data.selectedSkill.size() <= 80 &&
+             data.quickMinSalary is bool &&
+             data.frequency is string && (data.frequency in ['instant', 'daily', 'weekly']) &&
+             data.enabled is bool;
     }
 
     function isValidEmployerProfile(data, employerId) {
@@ -1366,6 +1552,7 @@ service cloud.firestore {
                'jobTitle',
                'companyName',
                'candidateId',
+               'candidateCode',
                'candidateName',
                'candidateEmail',
                'candidatePhone',
@@ -1391,6 +1578,7 @@ service cloud.firestore {
              data.jobTitle is string && data.jobTitle.size() > 0 && data.jobTitle.size() <= 160 &&
              data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 150 &&
              isValidId(data.candidateId) &&
+             (!('candidateCode' in data) || isValidCandidateCode(data.candidateCode)) &&
              data.candidateName is string && data.candidateName.size() > 0 && data.candidateName.size() <= 120 &&
              data.candidateEmail is string && data.candidateEmail.size() > 3 && data.candidateEmail.size() <= 150 &&
              (!('candidatePhone' in data) || (data.candidatePhone is string && data.candidatePhone.size() <= 30)) &&
@@ -1791,27 +1979,33 @@ service cloud.firestore {
                        (incoming().role == 'job_seeker' || incoming().role == 'employer') &&
                        (!('status' in incoming()) || incoming().status == 'active');
 
-      // Users cannot alter their role or self-reactivate a suspended account.
+      // Users cannot alter their role, change an assigned candidateCode, or self-reactivate a suspended account.
       allow update: if isSignedIn() &&
                        isValidId(userId) &&
                        isValidUser(incoming()) &&
                        incoming().id == existing().id &&
                        incoming().role == existing().role &&
+                       (!('candidateCode' in existing()) || incoming().candidateCode == existing().candidateCode) &&
                        (
                          (isOwner(userId) &&
                           (!('status' in existing()) || existing().status == 'active') &&
                           (!('status' in incoming()) || incoming().status == existing().status) &&
-                          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'lastActive'])) ||
+                          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'lastActive', 'candidateCode']) &&
+                          (!('candidateCode' in incoming().diff(existing()).affectedKeys()) || !('candidateCode' in existing()))) ||
                          ((isSuperAdmin() || isSupportAdmin()) &&
-                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastActive']))
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastActive', 'candidateCode']) &&
+                          (!('candidateCode' in incoming().diff(existing()).affectedKeys()) || !('candidateCode' in existing()))) ||
+                         (isRecruitmentAdmin() &&
+                          !('candidateCode' in existing()) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['candidateCode']))
                        );
 
       allow delete: if false;
 
-      // PRESERVED: Private per-candidate Career Profile Evaluation Assessments
+      // PRESERVED: Private per-candidate Career Profile Evaluation Assessments (Owner + Authorized Admins)
       match /career_assessments/{assessmentId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(assessmentId);
-        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow get: if isValidId(userId) && isValidId(assessmentId) && (isOwner(userId) || isRecruitmentAdmin() || isSupportAdmin());
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isRecruitmentAdmin() || isSupportAdmin();
 
         allow create: if isVerifiedUser() &&
                          isOwner(userId) &&
@@ -2018,10 +2212,10 @@ service cloud.firestore {
         allow delete: if isAdmin() && isValidId(userId) && isValidId(courseId);
       }
 
-      // PHASE 2B: Private Structured JSON Resumes (Strictly Owner-Only; Zero Public/Employer/Admin Access)
+      // PHASE 2B: Private Structured JSON Resumes (Owner + Authorized Recruitment/Support Admins)
       match /resumes/{resumeId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(resumeId);
-        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow get: if isValidId(userId) && isValidId(resumeId) && (isOwner(userId) || isRecruitmentAdmin() || isSupportAdmin());
+        allow list: if (isOwner(userId) && resource.data.userId == request.auth.uid) || isRecruitmentAdmin() || isSupportAdmin();
 
         allow create: if isVerifiedUser() &&
                          isOwner(userId) &&
@@ -2152,6 +2346,43 @@ service cloud.firestore {
 
         allow delete: if isValidId(userId) && isValidId(notificationId) && (isOwner(userId) || isSuperAdmin());
       }
+
+      // Private Job Search Email Alerts (Strictly Owner-Only)
+      match /job_alerts/{alertId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(alertId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(alertId) &&
+                         isValidJobSearchAlert(incoming(), userId, alertId) &&
+                         incoming().createdAt == request.time &&
+                         incoming().updatedAt == request.time;
+
+        allow update: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(alertId) &&
+                         isValidJobSearchAlert(incoming(), userId, alertId) &&
+                         incoming().id == existing().id &&
+                         incoming().userId == existing().userId &&
+                         incoming().queryKey == existing().queryKey &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt == request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'email',
+                           'label',
+                           'frequency',
+                           'enabled',
+                           'updatedAt'
+                         ]);
+
+        allow delete: if isVerifiedUser() &&
+                         isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(alertId);
+      }
     }
 
     // =========================================================================
@@ -2177,44 +2408,117 @@ service cloud.firestore {
                        incoming().userId == existing().userId &&
                        incoming().createdAt == existing().createdAt &&
                        incoming().updatedAt == request.time &&
-                       incoming().diff(existing()).affectedKeys().hasOnly([
-                         'name',
-                         'email',
-                         'phone',
-                         'location',
-                         'city',
-                         'state',
-                         'headline',
-                         'about',
-                         'currentRole',
-                         'desiredRole',
-                         'experienceLevel',
-                         'experienceType',
-                         'workStatus',
-                         'yearsOfExperience',
-                         'preferredLocation',
-                         'workPreference',
-                         'preferredIndustry',
-                         'expectedSalary',
-                         'willingToRelocate',
-                         'gender',
-                         'dob',
-                         'marketingConsent',
-                         'availability',
-                         'profileVisibility',
-                         'availableForOpportunities',
-                         'skills',
-                         'education',
-                         'experiences',
-                         'certifications',
-                         'primaryResumeId',
-                         'completionPercentage',
-                         'avatar',
-                         'updatedAt'
-                       ]) &&
-                       (isOwner(uid) || isSuperAdmin());
+                       (!('candidateCode' in existing()) || incoming().candidateCode == existing().candidateCode) &&
+                       (
+                         (isOwner(uid) &&
+                          (!('recruitmentStatus' in existing())
+                            ? !('recruitmentStatus' in incoming())
+                            : incoming().recruitmentStatus == existing().recruitmentStatus) &&
+                          (!('candidateCode' in incoming().diff(existing()).affectedKeys()) || !('candidateCode' in existing())) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'candidateCode',
+                            'name',
+                            'email',
+                            'phone',
+                            'altPhone',
+                            'location',
+                            'city',
+                            'state',
+                            'country',
+                            'pinCode',
+                            'headline',
+                            'about',
+                            'careerObjective',
+                            'currentRole',
+                            'currentCompany',
+                            'desiredRole',
+                            'noticePeriod',
+                            'experienceLevel',
+                            'experienceType',
+                            'workStatus',
+                            'yearsOfExperience',
+                            'preferredLocation',
+                            'preferredLocations',
+                            'preferredJobTitles',
+                            'preferredEmploymentTypes',
+                            'preferredShift',
+                            'jobSearchStatus',
+                            'workPreference',
+                            'preferredIndustry',
+                            'currentSalary',
+                            'expectedSalary',
+                            'willingToRelocate',
+                            'gender',
+                            'dob',
+                            'marketingConsent',
+                            'availability',
+                            'profileVisibility',
+                            'availableForOpportunities',
+                            'skills',
+                            'detailedSkills',
+                            'education',
+                            'experiences',
+                            'certifications',
+                            'projects',
+                            'languages',
+                            'linkedinUrl',
+                            'githubUrl',
+                            'portfolioUrl',
+                            'personalWebsiteUrl',
+                            'otherLinks',
+                            'primaryResumeId',
+                            'resumeDocId',
+                            'resumeName',
+                            'resumeSize',
+                            'resumeUpdated',
+                            'completionPercentage',
+                            'avatar',
+                            'updatedAt'
+                          ])) ||
+                         // Authorized Recruitment/Super Admins may ONLY update permitted recruitment status or backfill missing candidateCode (never silently edit candidate-submitted profile fields)
+                         (isRecruitmentAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['recruitmentStatus', 'candidateCode', 'updatedAt']) &&
+                          (!('candidateCode' in incoming().diff(existing()).affectedKeys()) || !('candidateCode' in existing())))
+                       );
 
       allow delete: if false;
+
+      // Private uploaded resume & document metadata/version history (Owner + Authorized Admins; never deleted)
+      match /documents/{docId} {
+        allow get, list: if isValidId(uid) && (isOwner(uid) || isRecruitmentAdmin() || isSupportAdmin());
+        allow create: if isVerifiedUser() &&
+                         isOwner(uid) &&
+                         isValidId(uid) &&
+                         isValidId(docId) &&
+                         isValidCandidateDocument(incoming(), uid, docId) &&
+                         incoming().uploadedAt == request.time;
+        allow update, delete: if false;
+      }
+
+      // Isolated private internal recruitment notes per candidate (Strictly DENIED to candidates)
+      match /internal_notes/{noteId} {
+        allow get, list: if isValidId(uid) && (isRecruitmentAdmin() || isSupportAdmin());
+        allow create: if isVerifiedUser() &&
+                         isRecruitmentAdmin() &&
+                         isValidId(uid) &&
+                         isValidId(noteId) &&
+                         isValidCandidateInternalNote(incoming(), uid, noteId) &&
+                         incoming().createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+
+    // Standard 4-Digit Candidate ID Uniqueness Registry (1000-9999) — Immutable & Never Reused
+    match /candidate_id_registry/{candidateCode} {
+      allow get: if isSignedIn() && isValidCandidateCode(candidateCode);
+      allow list: if isRecruitmentAdmin() || isSupportAdmin();
+      allow create: if isSignedIn() &&
+                       isValidCandidateCode(candidateCode) &&
+                       !exists(/databases/$(database)/documents/candidate_id_registry/$(candidateCode)) &&
+                       isValidCandidateIdRegistry(incoming(), candidateCode) &&
+                       incoming().assignedAt == request.time &&
+                       (incoming().userId == request.auth.uid || isRecruitmentAdmin());
+      allow update, delete: if false;
     }
 
     // Non-PII opt-in discovery card readable strictly by Verified Employers & Recruitment/Support/Super Admins.

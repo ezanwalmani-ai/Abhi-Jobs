@@ -257,23 +257,23 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId, navigate })
 
             {/* Match Score Banner */}
             {matchScore && (
-              <div className="mt-6 p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="mt-6 p-4 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#004D40] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-[#102B4E] text-white flex items-center justify-center font-bold text-sm tabular-nums shrink-0">
                     {matchScore}%
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#101828] flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#004D40]" />
+                    <div className="text-xs font-semibold text-[#102B4E] flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#F47A24]" />
                       <span>Profile Match Detected</span>
                     </div>
-                    <div className="text-xs text-[#004D40] mt-0.5">
+                    <div className="text-xs text-[#475569] mt-0.5">
                       Your ABHI JOBS profile matches skills required for this opening: {matchingSkills.join(', ')}
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-[#004D40] font-semibold flex items-center gap-3">
-                  <span>&bull; Verified Profile Match</span>
+                <div className="text-xs text-[#102B4E] font-semibold flex items-center gap-3 shrink-0">
+                  <span>· Verified Profile Match</span>
                 </div>
               </div>
             )}
@@ -327,12 +327,12 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId, navigate })
               {/* Preferred Skills */}
               {Array.isArray(job.preferredSkills) && job.preferredSkills.length > 0 && (
                 <div className="pt-3 space-y-2.5">
-                  <h3 className="text-sm font-bold text-[#101828]">Required &amp; Preferred Skills</h3>
+                  <h3 className="text-[15px] font-semibold text-[#102B4E]">Required &amp; Preferred Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {job.preferredSkills.map((skill) => (
                       <span
                         key={skill}
-                        className="px-3 py-1 rounded-lg bg-[#F7F8FA] text-[#101828] border border-[#E4E7EC] text-xs font-medium"
+                        className="px-3 py-1.5 rounded-lg bg-[#FAFBFD] text-[#1E293B] border border-[#E5EAF0] text-xs font-medium"
                       >
                         {skill}
                       </span>
@@ -344,11 +344,11 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId, navigate })
               {/* Benefits */}
               {Array.isArray(job.benefits) && job.benefits.length > 0 && (
                 <div className="pt-3 space-y-3">
-                  <h3 className="text-sm font-bold text-[#101828]">Benefits &amp; Perks</h3>
+                  <h3 className="text-[15px] font-semibold text-[#102B4E]">Benefits &amp; Perks</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {job.benefits.map((benefit, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E4E7EC] flex items-center gap-2.5 text-xs text-[#101828] font-medium">
-                        <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0" />
+                      <div key={idx} className="p-3 rounded-lg bg-[#FAFBFD] border border-[#E5EAF0] flex items-center gap-2.5 text-xs text-[#1E293B] font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-[#F47A24] shrink-0" />
                         <span>{benefit}</span>
                       </div>
                     ))}

@@ -42,7 +42,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#004D40]" />
+            <ShieldCheck className="w-4 h-4 text-[#102B4E]" />
             Certifications (Optional)
           </h3>
           <p className="text-xs text-slate-500">
@@ -53,7 +53,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
         <button
           type="button"
           onClick={handleAdd}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Add Certification</span>
@@ -70,7 +70,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
           <button
             type="button"
             onClick={handleAdd}
-            className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#004D40] text-xs font-semibold border border-teal-200 cursor-pointer"
+            className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#F1F5FA] hover:bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold border border-[#D4DCE6] cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Certification</span>
@@ -92,7 +92,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   >
                     <ChevronRight
                       className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
-                        isExpanded ? 'rotate-90 text-[#004D40]' : ''
+                        isExpanded ? 'rotate-90 text-[#102B4E]' : ''
                       }`}
                     />
                     <div className="min-w-0 truncate">
@@ -127,7 +127,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                           value={cert.name}
                           onChange={(e) => handleUpdate(cert.id, { name: e.target.value })}
                           placeholder="e.g. Certified Scrum Master (CSM)"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -140,7 +140,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                           value={cert.issuer}
                           onChange={(e) => handleUpdate(cert.id, { issuer: e.target.value })}
                           placeholder="e.g. Scrum Alliance / Google"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -153,7 +153,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                           value={cert.issueDate}
                           onChange={(e) => handleUpdate(cert.id, { issueDate: e.target.value })}
                           placeholder="e.g. May 2025"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -166,7 +166,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                           value={cert.credentialId}
                           onChange={(e) => handleUpdate(cert.id, { credentialId: e.target.value })}
                           placeholder="e.g. ID-89423984"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
                     </div>

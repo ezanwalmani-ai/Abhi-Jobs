@@ -47,7 +47,7 @@ export const BrandIdentityShowcase: React.FC<{
     { name: 'Signature Red', hex: '#FF2B1A', role: 'Primary brand accent, CTAs & beacon eye' },
     { name: 'Deep Crimson', hex: '#E02213', role: 'Hover states & active interactive vectors' },
     { name: 'Electric Coral', hex: '#FF4D3D', role: 'Dark mode highlights & high-visibility alerts' },
-    { name: 'Enterprise Teal', hex: '#004D40', role: 'Verified company badges & skill indicators' },
+    { name: 'Enterprise Teal', hex: '#102B4E', role: 'Verified company badges & skill indicators' },
     { name: 'Vibrant Teal', hex: '#0D9488', role: 'Secondary verification accents & nodal lines' },
     { name: 'Cyber Cyan', hex: '#14B8A6', role: 'Dark mode telemetry & active radar rays' },
   ];

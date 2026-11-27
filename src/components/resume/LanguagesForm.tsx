@@ -45,7 +45,7 @@ export const LanguagesForm: React.FC<LanguagesFormProps> = ({ languages, onChang
     <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
       <div className="pb-3 border-b border-slate-100">
         <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-          <Languages className="w-4 h-4 text-[#004D40]" />
+          <Languages className="w-4 h-4 text-[#102B4E]" />
           Languages (Optional)
         </h3>
         <p className="text-xs text-slate-500">
@@ -59,13 +59,13 @@ export const LanguagesForm: React.FC<LanguagesFormProps> = ({ languages, onChang
           value={langInput}
           onChange={(e) => setLangInput(e.target.value)}
           placeholder="e.g. English, Hindi, Tamil"
-          className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+          className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
         />
 
         <select
           value={profInput}
           onChange={(e) => setProfInput(e.target.value as ResumeLanguageProficiency)}
-          className="px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+          className="px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
         >
           {PROFICIENCIES.map((p) => (
             <option key={p} value={p}>
@@ -77,7 +77,7 @@ export const LanguagesForm: React.FC<LanguagesFormProps> = ({ languages, onChang
         <button
           type="button"
           onClick={handleAddLanguage}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs sm:text-sm font-semibold shadow-2xs transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-semibold shadow-2xs transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add</span>

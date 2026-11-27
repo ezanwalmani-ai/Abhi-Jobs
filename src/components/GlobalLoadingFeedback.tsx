@@ -20,7 +20,7 @@ export interface GlobalLoadingFeedbackProps {
 /**
  * ABHI JOBS Global Visual Feedback System
  * Provides:
- * 1. A sleek, high-precision top progress bar with brand red (#F47A24) to deep teal (#004D40) gradient glow
+ * 1. A sleek, high-precision top progress bar with brand red (#F47A24) to deep teal (#102B4E) gradient glow
  * 2. A refined, responsive loading overlay with smooth spring physics for asynchronous actions
  */
 export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
@@ -82,7 +82,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
           >
             {/* Base Bar Track */}
             <motion.div
-              className="h-full bg-gradient-to-r from-[#F47A24] via-[#FF6B4A] to-[#004D40] relative"
+              className="h-full bg-gradient-to-r from-[#F47A24] via-[#FF6B4A] to-[#102B4E] relative"
               style={{
                 width: `${progress}%`,
                 boxShadow: '0 0 12px rgba(255, 43, 26, 0.7), 0 0 6px rgba(255, 43, 26, 0.4)',
@@ -134,7 +134,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
                 <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-[#F47A24] border-r-[#F47A24]/40 animate-spin" />
                 {/* Inner Teal Ring */}
                 <div
-                  className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-[#004D40] border-l-[#004D40]/50 animate-spin"
+                  className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-[#102B4E] border-l-[#102B4E]/50 animate-spin"
                   style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}
                 />
                 {/* Center Core Dot */}
@@ -153,7 +153,7 @@ export const GlobalLoadingFeedback: React.FC<GlobalLoadingFeedbackProps> = ({
 
               {/* Mini Indeterminate Loading Track */}
               <div className="w-24 mx-auto h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#F47A24] to-[#004D40] rounded-full animate-pulse" />
+                <div className="h-full bg-gradient-to-r from-[#F47A24] to-[#102B4E] rounded-full animate-pulse" />
               </div>
             </motion.div>
           </motion.div>

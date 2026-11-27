@@ -33,6 +33,7 @@ import confetti from 'canvas-confetti';
 import {
   auth as firebaseAuth,
   testConnection as testFirebaseConnection,
+  ensureUserProfileDoc,
   signInWithFirebaseGoogle,
   signInWithFirebaseEmail,
   registerWithFirebaseEmail,
@@ -44,6 +45,11 @@ import {
   resolveFirebaseAdminSession,
   type ResolvedAdminSession,
 } from '../services/adminRbacService';
+import {
+  ensureCandidateCodeAssigned,
+  isValidCandidateCode,
+} from '../services/candidateIdService';
+import { calculateProfileCompletion } from '../utils/profileCompletion';
 import {
   fetchCandidateProfileFromFirestore,
   saveCandidateProfileToFirestore,
@@ -508,8 +514,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? 'employer'
           : 'job_seeker';
 
+      const initialCandidateCode = isValidCandidateCode(cloudCandidate?.candidateCode)
+        ? cloudCandidate.candidateCode
+        : undefined;
+
       const syncedUser: User = {
         id: fbUser.uid,
+        candidateCode: initialCandidateCode,
         name: displayName,
         email: userEmail,
         role: resolvedRole,
@@ -530,13 +541,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : [syncedUser, ...prev];
       });
 
-      if (cloudCandidate) {
+      // Always ensure this Firebase Auth account has a live /users/{uid} record in Firestore
+      await ensureUserProfileDoc(
+        fbUser,
+        ownerEmployer ? 'employer' : 'job_seeker',
+        displayName
+      ).catch(() => {});
+
+      // Ensure verified non-employer job seekers also have a live /candidates/{uid} record in Firestore
+      if (fbUser.emailVerified && !ownerEmployer && !cloudCandidate) {
+        const localCand = candidates.find(
+          (c) => c.userId === fbUser.uid || c.email.toLowerCase() === userEmail
+        );
+        const syncedCandidate: CandidateProfile = localCand
+          ? { ...localCand, id: fbUser.uid, userId: fbUser.uid, email: userEmail }
+          : {
+              id: fbUser.uid,
+              userId: fbUser.uid,
+              name: displayName,
+              email: userEmail,
+              phone: '',
+              location: 'India',
+              headline: 'Job Seeker',
+              about: '',
+              currentRole: '',
+              desiredRole: '',
+              experienceLevel: 'Fresher',
+              experienceType: 'fresher',
+              workStatus: 'Looking for a job',
+              yearsOfExperience: 0,
+              preferredLocation: 'India',
+              workPreference: 'Hybrid',
+              availability: 'Immediate',
+              profileVisibility: 'employers_only',
+              availableForOpportunities: true,
+              skills: [],
+              education: [],
+              experiences: [],
+              certifications: [],
+              completionPercentage: 25,
+              recommendations: [],
+              avatar: avatarUrl,
+            };
+        await saveCandidateProfileToFirestore(fbUser.uid, syncedCandidate).catch(() => {});
+        setCandidates((prev) => [
+          syncedCandidate,
+          ...prev.filter((c) => c.userId !== fbUser.uid && c.email.toLowerCase() !== userEmail),
+        ]);
+      } else if (cloudCandidate) {
         setCandidates((prev) => {
           const filtered = prev.filter(
             (c) => c.userId !== fbUser.uid && c.email.toLowerCase() !== userEmail
           );
           return [cloudCandidate, ...filtered];
         });
+      }
+
+      // Automatically ensure a unique, immutable 4-digit ABHI JOBS Candidate ID (1000-9999)
+      if (!ownerEmployer) {
+        ensureCandidateCodeAssigned(fbUser.uid)
+          .then((idRes) => {
+            if (!active || !idRes.ok || !idRes.candidateCode) return;
+            const assignedCode = idRes.candidateCode;
+            setCurrentUser((prev) =>
+              prev && prev.id === fbUser.uid ? { ...prev, candidateCode: assignedCode } : prev
+            );
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.id === fbUser.uid ? { ...u, candidateCode: assignedCode } : u
+              )
+            );
+            setCandidates((prev) =>
+              prev.map((c) =>
+                c.userId === fbUser.uid || c.id === fbUser.uid
+                  ? { ...c, candidateCode: assignedCode }
+                  : c
+              )
+            );
+          })
+          .catch(() => {});
       }
 
       if (ownerEmployer) {
@@ -952,8 +1035,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         data.experienceType === 'fresher' ||
         data.experienceLevel?.toLowerCase().includes('fresher');
 
+      const assignedIdResult = await ensureCandidateCodeAssigned(fbReg.user.uid).catch(() => ({
+        ok: false,
+        candidateCode: undefined,
+      }));
+      const assignedCandidateCode = assignedIdResult.ok ? assignedIdResult.candidateCode : undefined;
+
       const newUser: User = {
         id: fbReg.user.uid,
+        candidateCode: assignedCandidateCode,
         name: data.name.trim(),
         email: trimmedEmail,
         role: 'job_seeker',
@@ -966,6 +1056,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const newCandidate: CandidateProfile = {
         id: fbReg.user.uid,
         userId: fbReg.user.uid,
+        candidateCode: assignedCandidateCode,
         name: data.name.trim(),
         email: trimmedEmail,
         phone: data.phone || '',
@@ -1239,36 +1330,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!targetCandidate) return;
 
     const candId = targetCandidate.id;
-    let computedUpdated: CandidateProfile | null = null;
+    const mergedCandidate: CandidateProfile = {
+      ...targetCandidate,
+      ...updates,
+    };
+    const realCompletion = calculateProfileCompletion(mergedCandidate).percentage;
+    const computedUpdated: CandidateProfile = {
+      ...mergedCandidate,
+      completionPercentage:
+        typeof updates.completionPercentage === 'number'
+          ? updates.completionPercentage
+          : realCompletion,
+      lastActive: new Date().toISOString(),
+    };
 
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (c.id === candId) {
-          const updated = { ...c, ...updates };
-          let score = 20;
-          if (updated.headline && updated.headline.length > 5) score += 10;
-          if (updated.about && updated.about.length > 15) score += 10;
-          if (updated.education && updated.education.length > 0) score += 15;
-          if (updated.experienceType === 'fresher' || (updated.experiences && updated.experiences.length > 0)) {
-            score += 15;
-          }
-          if (updated.skills && updated.skills.length >= 3) score += 15;
-          if (updated.desiredRole && updated.desiredRole.length > 3) score += 5;
-          if (updated.resumeName || updated.resumeUrl) score += 10;
-
-          updated.completionPercentage =
-            typeof updates.completionPercentage === 'number'
-              ? updates.completionPercentage
-              : Math.min(100, Math.max(score, c.completionPercentage || 20));
-          computedUpdated = updated;
-          return updated;
-        }
-        return c;
-      })
-    );
+    setCandidates((prev) => {
+      const exists = prev.some((c) => c.id === candId);
+      if (!exists) return [computedUpdated, ...prev];
+      return prev.map((c) => (c.id === candId ? computedUpdated : c));
+    });
 
     const fbUser = firebaseAuth.currentUser;
-    if (fbUser && fbUser.emailVerified && computedUpdated) {
+    if (fbUser && fbUser.emailVerified) {
       saveCandidateProfileToFirestore(fbUser.uid, computedUpdated).catch((err) => {
         console.warn('Firestore candidate profile sync notice:', err);
       });
@@ -1343,6 +1426,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         Math.min(98, 70 + (matchingSkills.length / Math.max(1, (job.preferredSkills || []).length)) * 28)
       );
 
+      const resolvedCandidateCode =
+        currentCandidate.candidateCode || currentUser?.candidateCode;
+
       let newApp: Application = {
         id: 'app_' + Date.now(),
         jobId,
@@ -1350,6 +1436,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         companyName: job.companyName,
         companyLogo: job.companyLogo,
         candidateId: currentUser?.id || currentCandidate.id,
+        candidateCode: resolvedCandidateCode,
         candidateName: currentCandidate.name,
         candidateEmail: currentCandidate.email,
         candidatePhone: currentCandidate.phone,
@@ -1377,8 +1464,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
           newApp = await submitApplicationToFirestore({
             job,
-            employerOwnerUid: employerRecord?.userId || job.employerId || fbUser.uid,
-            candidate: { ...currentCandidate, userId: fbUser.uid },
+            employerOwnerUid: job.employerOwnerUid || employerRecord?.userId || job.employerId || fbUser.uid,
+            candidate: {
+              ...currentCandidate,
+              userId: fbUser.uid,
+              candidateCode: resolvedCandidateCode,
+            },
             resumeName: newApp.resumeName,
             coverNote: newApp.coverNote,
           });
@@ -1394,7 +1485,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           particleCount: 70,
           spread: 65,
           origin: { y: 0.6 },
-          colors: ['#F47A24', '#102B4E', '#004D40'],
+          colors: ['#F47A24', '#102B4E', '#081D36'],
         });
       } catch {}
 

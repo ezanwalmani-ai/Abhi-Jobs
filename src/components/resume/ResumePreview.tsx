@@ -21,7 +21,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
   const getHeaderColor = () => {
     switch (resume.template) {
       case 'modern':
-        return 'text-[#004D40]';
+        return 'text-[#102B4E]';
       case 'minimal':
         return 'text-black';
       case 'professional':
@@ -33,7 +33,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
   const getSectionBorderColor = () => {
     switch (resume.template) {
       case 'modern':
-        return 'border-[#004D40]';
+        return 'border-[#102B4E]';
       case 'minimal':
         return 'border-black';
       case 'professional':
@@ -158,7 +158,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                       href={resume.linkedIn.startsWith('http') ? resume.linkedIn : `https://${resume.linkedIn}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-teal-800 hover:underline"
+                      className="flex items-center gap-1 text-[#102B4E] hover:underline"
                     >
                       <Linkedin className="w-3 h-3" />
                       LinkedIn
@@ -169,7 +169,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                       href={resume.portfolio.startsWith('http') ? resume.portfolio : `https://${resume.portfolio}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-teal-800 hover:underline"
+                      className="flex items-center gap-1 text-[#102B4E] hover:underline"
                     >
                       <Globe className="w-3 h-3" />
                       Portfolio
@@ -340,7 +340,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                         href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-teal-800 hover:underline"
+                        className="inline-flex items-center gap-1 text-[11px] text-[#102B4E] hover:underline"
                       >
                         <ExternalLink className="w-3 h-3" />
                         <span>{proj.url}</span>

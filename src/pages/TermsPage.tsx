@@ -172,10 +172,10 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               aria-expanded={mobileTocOpen}
             >
               <span className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#004D40]" />
+                <FileText className="w-4 h-4 text-[#102B4E]" />
                 <span>Table of Contents ({SECTIONS.length} Sections)</span>
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-[#004D40] font-semibold">
+              <span className="flex items-center gap-1.5 text-xs text-[#102B4E] font-semibold">
                 <span>{mobileTocOpen ? 'Hide' : 'View'}</span>
                 {mobileTocOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </span>
@@ -189,7 +189,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                     onClick={() => scrollToSection(sec.id)}
                     className={`w-full text-left py-2 px-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
                       activeSection === sec.id
-                        ? 'bg-teal-50 text-[#004D40] font-bold'
+                        ? 'bg-[#F1F5FA] text-[#102B4E] font-bold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
@@ -214,10 +214,10 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                  <FileText className="w-4 h-4 text-[#004D40]" />
+                  <FileText className="w-4 h-4 text-[#102B4E]" />
                   <span>Table of Contents</span>
                 </div>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-[#004D40] border border-teal-200">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6]">
                   22 Sections
                 </span>
               </div>
@@ -264,14 +264,14 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#004D40] font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#102B4E] font-semibold cursor-pointer"
                 >
                   <ArrowUp className="w-3.5 h-3.5" />
                   <span>Back to top</span>
                 </button>
                 <button
                   onClick={() => navigate('/privacy')}
-                  className="text-[#004D40] hover:underline font-semibold"
+                  className="text-[#102B4E] hover:underline font-semibold"
                 >
                   Privacy Policy &rarr;
                 </button>
@@ -283,8 +283,8 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
           <main className="lg:col-span-8 xl:col-span-9 max-w-4xl space-y-10">
             {/* Introductory Statement Card */}
             <article className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2.5 text-[#004D40]">
-                <Shield className="w-5 h-5 text-[#004D40] shrink-0" />
+              <div className="flex items-center gap-2.5 text-[#102B4E]">
+                <Shield className="w-5 h-5 text-[#102B4E] shrink-0" />
                 <h2 className="text-lg font-bold text-slate-900">ABHI JOBS &mdash; Terms &amp; Conditions</h2>
               </div>
 
@@ -310,7 +310,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   1
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -339,9 +339,9 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
             {/* Section 2: NO GUARANTEE OF EMPLOYMENT OR PLACEMENT */}
             <section
               id="section-2"
-              className="bg-white rounded-2xl border-2 border-[#004D40]/30 p-5 sm:p-6 shadow-xs space-y-5 scroll-mt-24"
+              className="bg-white rounded-2xl border-2 border-[#102B4E]/30 p-5 sm:p-6 shadow-xs space-y-5 scroll-mt-24"
             >
-              <div className="flex items-center gap-3 pb-3 border-b border-[#E4E7EC]">
+              <div className="flex items-center gap-3 pb-3 border-b border-[#E5EAF0]">
                 <span className="w-8 h-8 rounded-xl bg-[#102B4E] text-white font-extrabold flex items-center justify-center text-sm">
                   2
                 </span>
@@ -350,7 +350,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                 </h2>
               </div>
 
-              <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 text-[#004D40] text-xs sm:text-sm font-bold tracking-wide uppercase leading-relaxed">
+              <div className="p-4 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] text-xs sm:text-sm font-bold tracking-wide uppercase leading-relaxed">
                 ABHI JOBS DOES NOT GUARANTEE, PROMISE, OR WARRANT EMPLOYMENT, INTERVIEWS, SELECTION, SALARY, PROMOTION, OR PLACEMENT TO ANY USER.
               </div>
 
@@ -382,7 +382,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   3
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -418,7 +418,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   4
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -449,7 +449,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   5
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -484,7 +484,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   6
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -515,7 +515,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   7
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -554,7 +554,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   8
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -596,7 +596,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   9
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -627,7 +627,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   10
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -666,7 +666,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   11
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -699,7 +699,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   12
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -738,7 +738,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   13
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -754,7 +754,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
                 Where a paid service is offered, the applicable price, payment terms, duration, cancellation terms, refund policy, and other conditions may be presented separately before purchase.
               </p>
 
-              <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 text-[#004D40] text-xs sm:text-sm font-semibold">
+              <div className="p-4 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] text-xs sm:text-sm font-semibold">
                 Unless expressly stated otherwise, payment for a ABHI JOBS service does not constitute payment for guaranteed employment or placement.
               </div>
             </section>
@@ -765,7 +765,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   14
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -792,7 +792,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   15
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -830,7 +830,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   16
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -861,7 +861,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   17
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -896,7 +896,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   18
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -928,7 +928,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   19
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -951,7 +951,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   20
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -978,7 +978,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4 scroll-mt-24"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <span className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm">
                   21
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -1001,7 +1001,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               className="bg-[#102B4E] text-white rounded-2xl p-5 sm:p-6 shadow-md space-y-6 scroll-mt-24 border border-slate-800"
             >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-                <span className="w-8 h-8 rounded-xl bg-teal-500 text-[#004D40] font-extrabold flex items-center justify-center text-sm">
+                <span className="w-8 h-8 rounded-lg bg-[#F47A24] text-white font-bold flex items-center justify-center text-sm">
                   22
                 </span>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -1034,7 +1034,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ navigate }) => {
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => navigate('/contact')}
-                  className="px-5 py-2.5 rounded-xl bg-white text-[#004D40] text-xs font-bold hover:bg-teal-50 transition-colors cursor-pointer shadow-sm"
+                  className="px-5 py-2.5 rounded-xl bg-white text-[#102B4E] text-xs font-bold hover:bg-[#F1F5FA] transition-colors cursor-pointer shadow-sm"
                 >
                   Contact Support Desk
                 </button>

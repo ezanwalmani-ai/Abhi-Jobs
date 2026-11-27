@@ -21,7 +21,7 @@ export const FacetedGridPatternSVG: React.FC<{
 }> = ({ theme = 'dark-navy', opacity = 0.85 }) => {
   const isDark = theme === 'dark-navy' || theme === 'midnight-teal';
   const strokeColor = isDark ? '#FFFFFF' : '#061226';
-  const nodeTeal = isDark ? '#14B8A6' : '#004D40';
+  const nodeTeal = isDark ? '#14B8A6' : '#102B4E';
   const nodeRed = isDark ? '#FF4D3D' : '#FF2B1A';
 
   return (
@@ -109,7 +109,7 @@ export const RadarConstellationPatternSVG: React.FC<{
   const isDark = theme === 'dark-navy' || theme === 'midnight-teal';
   const strokeColor = isDark ? '#FFFFFF' : '#061226';
   const red = isDark ? '#FF4D3D' : '#FF2B1A';
-  const teal = isDark ? '#14B8A6' : '#004D40';
+  const teal = isDark ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -199,7 +199,7 @@ export const CareerAscentPatternSVG: React.FC<{
   const isDark = theme === 'dark-navy' || theme === 'midnight-teal';
   const strokeColor = isDark ? '#FFFFFF' : '#061226';
   const red = isDark ? '#FF4D3D' : '#FF2B1A';
-  const teal = isDark ? '#14B8A6' : '#004D40';
+  const teal = isDark ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -255,7 +255,7 @@ export const StencilGritTextureSVG: React.FC<{
   const isDark = theme === 'dark-navy' || theme === 'midnight-teal';
   const dotColor = isDark ? '#FFFFFF' : '#061226';
   const red = isDark ? '#FF4D3D' : '#FF2B1A';
-  const teal = isDark ? '#14B8A6' : '#004D40';
+  const teal = isDark ? '#14B8A6' : '#102B4E';
 
   return (
     <svg

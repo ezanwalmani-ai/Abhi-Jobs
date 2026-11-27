@@ -225,6 +225,104 @@ export function buildSafeCsvFilename(dataset: AdminCsvDataset): string {
   return `abhi-jobs-${safeSlug}-${dateStamp}.csv`;
 }
 
+export interface TableCsvSubColumn<T> {
+  header: string;
+  value: (row: T) => unknown;
+}
+
+export interface TableCsvColumn<T> {
+  key: string;
+  header: string;
+  csvValue?: (row: T) => unknown;
+  csvColumns?: TableCsvSubColumn<T>[];
+  excludeFromCsv?: boolean;
+}
+
+const SENSITIVE_CSV_FIELD_PATTERN =
+  /password|secret|token|api[_-]?key|private[_-]?key|passcode|verificationSignature|signature|credential|internal[_-]?note|hash|salt/i;
+
+function isRestrictedCsvField(keyOrHeader: string): boolean {
+  const normalized = keyOrHeader.trim().toLowerCase();
+  if (normalized === 'actions' || normalized === 'action' || normalized === 'inspect' || normalized === 'notes') {
+    return true;
+  }
+  return SENSITIVE_CSV_FIELD_PATTERN.test(keyOrHeader);
+}
+
+function normalizeTableCellValue(raw: unknown): string | number {
+  if (raw === null || raw === undefined) return '';
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : '';
+  if (typeof raw === 'boolean') return raw ? 'Yes' : 'No';
+  if (typeof raw === 'string') return raw.trim();
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((item) => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+      .join('; ');
+  }
+  return '';
+}
+
+/**
+ * Produces a safe, deterministic CSV filename for any table export with UTC ISO date stamp.
+ */
+export function buildSafeTableCsvFilename(prefix: string): string {
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  const safeSlug = prefix
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/_/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `abhi-jobs-${safeSlug || 'export'}-${dateStamp}.csv`;
+}
+
+/**
+ * Safely serializes ONLY allowlisted, non-sensitive visible table columns into RFC 4180 CSV.
+ * Automatically blocks action/note columns, sensitive key patterns, nested objects, and formula injection.
+ */
+export function buildTableCsvDocument<T>(
+  columns: TableCsvColumn<T>[],
+  rows: T[]
+): { headers: string[]; rows: (string | number)[][]; csvContent: string; rowCount: number } {
+  const activeExtractors: TableCsvSubColumn<T>[] = [];
+
+  for (const col of columns) {
+    if (col.excludeFromCsv) continue;
+    if (isRestrictedCsvField(col.key) || isRestrictedCsvField(col.header)) continue;
+
+    if (Array.isArray(col.csvColumns) && col.csvColumns.length > 0) {
+      for (const sub of col.csvColumns) {
+        if (!sub.header || isRestrictedCsvField(sub.header)) continue;
+        activeExtractors.push(sub);
+      }
+    } else if (typeof col.csvValue === 'function') {
+      activeExtractors.push({ header: col.header, value: col.csvValue });
+    }
+  }
+
+  const headers = activeExtractors.map((ext) => ext.header);
+  const csvRows = rows.map((row) =>
+    activeExtractors.map((ext) => {
+      try {
+        return normalizeTableCellValue(ext.value(row));
+      } catch {
+        return '';
+      }
+    })
+  );
+
+  const csvContent = headers.length > 0 ? serializeCsvDocument(headers, csvRows) : '';
+  return {
+    headers,
+    rows: csvRows,
+    csvContent,
+    rowCount: csvRows.length,
+  };
+}
+
 /**
  * Triggers a clean browser file download using a Blob URL (no window.open or data URI limits).
  */
@@ -247,6 +345,23 @@ export function triggerCsvBlobDownload(csvBlobOrContent: Blob | string, filename
   window.setTimeout(() => {
     URL.revokeObjectURL(objectUrl);
   }, 1500);
+}
+
+/**
+ * Builds and downloads a sanitized CSV file for any admin data table.
+ */
+export function exportTableToCsv<T>(params: {
+  columns: TableCsvColumn<T>[];
+  rows: T[];
+  filenamePrefix: string;
+}): { exported: boolean; rowCount: number; filename: string } {
+  const { headers, csvContent, rowCount } = buildTableCsvDocument(params.columns, params.rows);
+  if (headers.length === 0) {
+    return { exported: false, rowCount: 0, filename: '' };
+  }
+  const filename = buildSafeTableCsvFilename(params.filenamePrefix);
+  triggerCsvBlobDownload(csvContent, filename);
+  return { exported: true, rowCount, filename };
 }
 
 /**

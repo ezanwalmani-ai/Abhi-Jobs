@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { JobCard } from '../components/JobCard';
 import { ApplyModal } from '../components/ApplyModal';
-import { Job } from '../types';
+import { JobSearchAlertsManager } from '../components/JobSearchAlertsManager';
+import { consumeStashedAlertCriteria } from '../services/jobAlertService';
+import { Job, JobSearchAlertCriteria } from '../types';
 import { ScrollReveal, StaggerGroup, StaggerItem, EASE_PREMIUM, TextMaskReveal, ScrollProgress, HeroTextReveal } from '../lib/motion';
 import {
   Search,
@@ -81,7 +83,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   initialQuery = '',
   initialLocation = '',
 }) => {
-  const { jobs, currentCandidate, currentRole, savedJobIds, saveJob, unsaveJob } = useApp();
+  const { jobs, currentUser, currentCandidate, currentRole, savedJobIds, saveJob, unsaveJob, showToast } = useApp();
 
   // Loading & Error States
   const [isLoading, setIsLoading] = useState(true);
@@ -198,6 +200,31 @@ export const JobsPage: React.FC<JobsPageProps> = ({
       setLocation(initialLocation);
     }
   }, [initialLocation]);
+
+  // Apply a saved Email Alert's search criteria directly to the Jobs page filters
+  const handleApplyAlertCriteria = (criteria: JobSearchAlertCriteria) => {
+    setSearch(criteria.search || '');
+    setLocation(criteria.location || '');
+    setWorkMode(criteria.workMode || 'All');
+    setEmploymentType(criteria.employmentType || 'All');
+    setExperienceLevel(criteria.experienceLevel || 'All');
+    setSalaryRange(criteria.salaryRange || 'All');
+    setDepartment(criteria.department || 'All');
+    setIndustry(criteria.industry || 'All');
+    setSelectedSkill(criteria.selectedSkill || 'All');
+    setQuickMinSalary(Boolean(criteria.quickMinSalary));
+    if (criteria.search && criteria.search.trim().length >= 2) {
+      addRecentSearch(criteria.search);
+    }
+  };
+
+  // Restore saved alert filters when navigating from Notification Settings ("View Jobs")
+  useEffect(() => {
+    const stashed = consumeStashedAlertCriteria();
+    if (stashed) {
+      handleApplyAlertCriteria(stashed);
+    }
+  }, []);
 
   // Debounced auto-save of typed search queries
   useEffect(() => {
@@ -802,8 +829,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({
             {/* 1. Search & 2. Location Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               {/* 1. Search */}
-              <div className="abhi-search-shell md:col-span-7 flex items-center gap-2 px-3 sm:px-3.5 py-2.5 rounded-lg border border-[#D4DCE6] bg-[#F6F8FB] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
-                <Search className="w-4 h-4 text-[#667085] shrink-0" />
+              <div className="abhi-search-shell md:col-span-7 flex items-center gap-2.5 px-3.5 py-2 min-h-[44px] rounded-lg border border-[#D4DCE6] bg-[#FAFBFD] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
+                <Search className="w-4 h-4 text-[#64748B] shrink-0" />
                 <input
                   type="text"
                   value={search}
@@ -819,13 +846,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     }
                   }}
                   placeholder="Search jobs by title, company or keyword"
-                  className="w-full text-xs sm:text-sm text-[#101828] bg-transparent focus:outline-hidden placeholder:text-[#667085]"
+                  className="w-full text-xs sm:text-sm text-[#081D36] bg-transparent focus:outline-hidden placeholder:text-[#64748B]"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="p-1 text-[#667085] hover:text-[#101828] cursor-pointer rounded-full shrink-0"
+                    className="p-1 text-[#64748B] hover:text-[#102B4E] cursor-pointer rounded-md shrink-0"
                     title="Clear search"
                   >
                     <X className="w-4 h-4" />
@@ -834,7 +861,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 <button
                   type="button"
                   onClick={() => addRecentSearch(search)}
-                  className="hidden sm:inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-[#102B4E] text-white text-xs font-semibold hover:bg-[#081D36] active:scale-[0.98] transition-all cursor-pointer shrink-0"
+                  className="hidden sm:inline-flex items-center gap-1 px-3.5 py-1.5 min-h-[34px] rounded-lg bg-[#102B4E] text-white text-xs font-semibold hover:bg-[#081D36] active:scale-[0.98] transition-all cursor-pointer shrink-0"
                   title="Search jobs"
                 >
                   <span>Search</span>
@@ -842,8 +869,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({
               </div>
 
               {/* 2. Location */}
-              <div className="abhi-search-shell md:col-span-5 flex items-center gap-2.5 px-4 py-2.5 sm:py-3 rounded-2xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
-                <MapPin className="w-4 h-4 text-[#667085] shrink-0" />
+              <div className="abhi-search-shell md:col-span-5 flex items-center gap-2.5 px-3.5 py-2 min-h-[44px] rounded-lg border border-[#D4DCE6] bg-[#FAFBFD] focus-within:border-[#102B4E] focus-within:bg-white transition-all">
+                <MapPin className="w-4 h-4 text-[#64748B] shrink-0" />
                 <input
                   type="text"
                   value={location}
@@ -854,13 +881,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     }
                   }}
                   placeholder="Where do you want to work?"
-                  className="w-full text-xs sm:text-sm text-[#101828] bg-transparent focus:outline-hidden placeholder:text-[#667085]"
+                  className="w-full text-xs sm:text-sm text-[#081D36] bg-transparent focus:outline-hidden placeholder:text-[#64748B]"
                 />
                 {location && (
                   <button
                     type="button"
                     onClick={() => setLocation('')}
-                    className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer rounded-full shrink-0"
+                    className="p-1 text-[#64748B] hover:text-[#102B4E] cursor-pointer rounded-md shrink-0"
                     title="Clear location"
                   >
                     <X className="w-4 h-4" />
@@ -884,7 +911,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setOpenDropdown(openDropdown === 'location' ? null : 'location')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       location
-                        ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs font-bold'
+                        ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs font-bold'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -898,7 +925,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
 
                   {openDropdown === 'location' && (
-                    <div className="absolute left-0 top-full mt-1.5 z-40 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl p-2 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 w-60 bg-white rounded-xl border border-slate-200 shadow-xl p-2 animate-in fade-in zoom-in-95 duration-150">
                       <div className="p-1 pb-2 border-b border-slate-100">
                         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
                           <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -930,11 +957,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             setOpenDropdown(null);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                            !location ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                            !location ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                           }`}
                         >
                           <span>Any location</span>
-                          {!location && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                          {!location && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                         </button>
 
                         {POPULAR_LOCATIONS.map((loc) => {
@@ -948,11 +975,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                                 setOpenDropdown(null);
                               }}
                               className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                                isSelected ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                                isSelected ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                               }`}
                             >
                               <span>{loc}</span>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                             </button>
                           );
                         })}
@@ -968,7 +995,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setOpenDropdown(openDropdown === 'jobType' ? null : 'jobType')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       employmentType !== 'All'
-                        ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs font-bold'
+                        ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs font-bold'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -981,7 +1008,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
 
                   {openDropdown === 'jobType' && (
-                    <div className="absolute left-0 top-full mt-1.5 z-40 w-52 bg-white rounded-2xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 w-52 bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       {JOB_TYPE_OPTIONS.map((opt) => {
                         const isSelected = employmentType === opt.value;
                         return (
@@ -993,11 +1020,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                               setOpenDropdown(null);
                             }}
                             className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                              isSelected ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                              isSelected ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                             }`}
                           >
                             <span>{opt.label}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                           </button>
                         );
                       })}
@@ -1012,7 +1039,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setOpenDropdown(openDropdown === 'workMode' ? null : 'workMode')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       workMode !== 'All'
-                        ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs font-bold'
+                        ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs font-bold'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -1025,7 +1052,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
 
                   {openDropdown === 'workMode' && (
-                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-2xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       {WORK_MODE_OPTIONS.map((opt) => {
                         const isSelected = workMode === opt.value;
                         return (
@@ -1037,11 +1064,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                               setOpenDropdown(null);
                             }}
                             className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                              isSelected ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                              isSelected ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                             }`}
                           >
                             <span>{opt.label}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                           </button>
                         );
                       })}
@@ -1056,7 +1083,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       experienceLevel !== 'All'
-                        ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs font-bold'
+                        ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs font-bold'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -1069,7 +1096,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
 
                   {openDropdown === 'experience' && (
-                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-2xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       {EXPERIENCE_OPTIONS.map((opt) => {
                         const isSelected = experienceLevel === opt.value;
                         return (
@@ -1081,11 +1108,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                               setOpenDropdown(null);
                             }}
                             className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                              isSelected ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                              isSelected ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                             }`}
                           >
                             <span>{opt.label}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                           </button>
                         );
                       })}
@@ -1100,7 +1127,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       salaryRange !== 'All'
-                        ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs font-bold'
+                        ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs font-bold'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -1113,7 +1140,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
 
                   {openDropdown === 'salary' && (
-                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-2xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       {SALARY_OPTIONS.map((opt) => {
                         const isSelected = salaryRange === opt.value;
                         return (
@@ -1125,11 +1152,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                               setOpenDropdown(null);
                             }}
                             className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${
-                              isSelected ? 'font-bold text-[#004D40] bg-teal-50/60' : 'text-slate-700'
+                              isSelected ? 'font-bold text-[#102B4E] bg-[#F1F5FA]' : 'text-slate-700'
                             }`}
                           >
                             <span>{opt.label}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                           </button>
                         );
                       })}
@@ -1144,7 +1171,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[40px] select-none ${
                       moreFiltersActiveCount > 0
-                        ? 'bg-teal-50 text-[#004D40] border-teal-300 font-bold'
+                        ? 'bg-[#F1F5FA] text-[#102B4E] border-[#102B4E]/35 font-bold'
                         : isMoreFiltersOpen
                         ? 'bg-slate-100 text-slate-900 border-slate-300 font-semibold'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900'
@@ -1153,7 +1180,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     <span>More Filters</span>
                     {moreFiltersActiveCount > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-[#004D40] text-white text-[10px] flex items-center justify-center font-bold">
+                      <span className="w-4 h-4 rounded-full bg-[#102B4E] text-white text-[10px] flex items-center justify-center font-bold">
                         {moreFiltersActiveCount}
                       </span>
                     )}
@@ -1186,11 +1213,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   aria-label="Filters"
                 >
                   <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-[#004D40]" />
+                    <Filter className="w-4 h-4 text-[#102B4E]" />
                     <span className="text-xs font-bold text-slate-800">Filters</span>
                   </div>
                   {activeFilterCount > 0 ? (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#004D40] text-white ring-2 ring-white">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#102B4E] text-white ring-2 ring-white">
                       {activeFilterCount} active
                     </span>
                   ) : (
@@ -1260,7 +1287,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                         key={item}
                         className={`inline-flex items-center rounded-full text-xs font-medium transition-all border ${
                           isSelected
-                            ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                            ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                             : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/90 hover:text-slate-900 hover:border-slate-300'
                         }`}
                       >
@@ -1309,7 +1336,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
               <div className="pt-3 border-t border-slate-100 space-y-3 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#004D40]" />
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#102B4E]" />
                     <span>Additional Filters</span>
                   </span>
                   <button
@@ -1416,13 +1443,36 @@ export const JobsPage: React.FC<JobsPageProps> = ({
           </div>
         </ScrollReveal>
 
+        {/* Job Search Email Alerts Bar (Firestore-persisted per-query preferences) */}
+        <ScrollReveal direction="up" delay={0.07}>
+          <JobSearchAlertsManager
+            mode="jobs-bar"
+            navigate={navigate}
+            currentCriteria={{
+              search,
+              location,
+              workMode,
+              employmentType,
+              experienceLevel,
+              salaryRange,
+              department,
+              industry,
+              selectedSkill,
+              quickMinSalary,
+            }}
+            onApplyCriteria={handleApplyAlertCriteria}
+            onNotify={showToast}
+            fallbackEmail={currentUser?.email || currentCandidate?.email}
+          />
+        </ScrollReveal>
+
         {/* Real Profile Recommendations: only if published jobs exist and profile matches */}
         {!hasActiveFilters && recommendedJobs.length > 0 && (
           <ScrollReveal direction="up" delay={0.08}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#004D40] text-white flex items-center justify-center shadow-2xs">
+                  <div className="w-7 h-7 rounded-xl bg-[#102B4E] text-white flex items-center justify-center shadow-2xs">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
@@ -1440,7 +1490,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 {recommendedJobs.map(({ job, score }) => (
                   <StaggerItem key={`rec-${job.id}`}>
                     <div className="relative h-full">
-                      <div className="absolute -top-2.5 right-4 z-10 px-2.5 py-0.5 rounded-full bg-[#004D40] text-white text-[10px] font-extrabold shadow-xs flex items-center gap-1">
+                      <div className="absolute -top-2.5 right-4 z-10 px-2.5 py-0.5 rounded-full bg-[#102B4E] text-white text-[10px] font-extrabold shadow-xs flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         <span>{score}% Profile Match</span>
                       </div>
@@ -1484,7 +1534,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
                 {[1, 2, 3, 4, 5, 6].map((idx) => (
-                  <div key={idx} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+                  <div key={idx} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-slate-200 shrink-0" />
@@ -1526,7 +1576,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 transition={{ duration: 0.25 }}
                 className="p-6 text-center bg-white rounded-xl border border-rose-200 shadow-xs space-y-4 max-w-lg mx-auto"
               >
-                <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
                   <AlertCircle className="w-7 h-7" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900">We couldn&apos;t load jobs right now.</h3>
@@ -1549,10 +1599,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E4E7EC] shadow-xs space-y-5 max-w-xl mx-auto"
+                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E5EAF0] shadow-xs space-y-5 max-w-xl mx-auto"
               >
-                <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#004D40] flex items-center justify-center mx-auto border border-teal-100">
-                  <Briefcase className="w-8 h-8 text-[#004D40]" />
+                <div className="w-16 h-16 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mx-auto border border-[#E5EAF0]">
+                  <Briefcase className="w-8 h-8 text-[#102B4E]" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-extrabold text-[#101828]">
@@ -1574,9 +1624,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   </button>
                   <button
                     onClick={() => navigate('/job-seeker/upskill')}
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-[#D0D5DD] hover:bg-[#F7F8FA] text-[#101828] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-[#D4DCE6] hover:bg-[#F7F8FA] text-[#101828] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                   >
-                    <BookOpen className="w-4 h-4 text-[#004D40]" />
+                    <BookOpen className="w-4 h-4 text-[#102B4E]" />
                     <span>Explore Learning</span>
                   </button>
                 </div>
@@ -1587,9 +1637,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E4E7EC] shadow-xs space-y-4 max-w-lg mx-auto"
+                className="p-5 sm:p-6 text-center bg-white rounded-xl border border-[#E5EAF0] shadow-xs space-y-4 max-w-lg mx-auto"
               >
-                <div className="w-14 h-14 rounded-2xl bg-[#F7F8FA] text-[#667085] flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-xl bg-[#F7F8FA] text-[#667085] flex items-center justify-center mx-auto">
                   <Search className="w-7 h-7" />
                 </div>
                 <div className="space-y-1.5">
@@ -1656,12 +1706,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 className="filter-panel w-screen max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-white shadow-2xl flex flex-col h-full overflow-hidden pointer-events-auto"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[#E4E7EC] bg-white shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5EAF0] bg-white shrink-0">
                   <div className="flex items-center gap-2 font-bold text-[#101828] text-base min-w-0">
-                    <Filter className="w-4 h-4 text-[#004D40] shrink-0" />
+                    <Filter className="w-4 h-4 text-[#102B4E] shrink-0" />
                     <h2 className="font-bold text-slate-900 text-base">Filters</h2>
                     {activeFilterCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#004D40] text-white shrink-0">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#102B4E] text-white shrink-0">
                         {activeFilterCount} active
                       </span>
                     )}
@@ -1682,7 +1732,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 text-xs flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-[#004D40]" />
+                        <MapPin className="w-3.5 h-3.5 text-[#102B4E]" />
                         <span>Location</span>
                       </span>
                       {location && (
@@ -1722,7 +1772,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                         onClick={() => setLocation('')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                           !location
-                            ? 'bg-[#004D40] text-white shadow-2xs'
+                            ? 'bg-[#102B4E] text-white shadow-2xs'
                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                         }`}
                       >
@@ -1737,7 +1787,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             onClick={() => setLocation(loc)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-[#004D40] text-white shadow-2xs'
+                                ? 'bg-[#102B4E] text-white shadow-2xs'
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
                           >
@@ -1751,7 +1801,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   {/* 2. Job Type */}
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-[#004D40]" />
+                      <Briefcase className="w-3.5 h-3.5 text-[#102B4E]" />
                       <span>Job Type</span>
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1764,7 +1814,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             onClick={() => setEmploymentType(opt.value)}
                             className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between border cursor-pointer min-h-[40px] ${
                               isSelected
-                                ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                                ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
@@ -1779,7 +1829,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   {/* 3. Work Mode */}
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-[#004D40]" />
+                      <Building2 className="w-3.5 h-3.5 text-[#102B4E]" />
                       <span>Work Mode</span>
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1792,7 +1842,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             onClick={() => setWorkMode(opt.value)}
                             className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between border cursor-pointer min-h-[40px] ${
                               isSelected
-                                ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                                ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
@@ -1807,7 +1857,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   {/* 4. Experience */}
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#004D40]" />
+                      <Clock className="w-3.5 h-3.5 text-[#102B4E]" />
                       <span>Experience</span>
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1820,7 +1870,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             onClick={() => setExperienceLevel(opt.value)}
                             className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between border cursor-pointer min-h-[40px] ${
                               isSelected
-                                ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                                ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
@@ -1835,7 +1885,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                   {/* 5. Salary */}
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5 text-[#004D40]" />
+                      <DollarSign className="w-3.5 h-3.5 text-[#102B4E]" />
                       <span>Salary</span>
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1848,7 +1898,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                             onClick={() => setSalaryRange(opt.value)}
                             className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between border cursor-pointer min-h-[40px] ${
                               isSelected
-                                ? 'bg-[#004D40] text-white border-[#004D40] shadow-2xs'
+                                ? 'bg-[#102B4E] text-white border-[#102B4E] shadow-2xs'
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
@@ -1940,18 +1990,18 @@ export const JobsPage: React.FC<JobsPageProps> = ({
                 </div>
 
                 {/* Sticky Bottom Actions Bar */}
-                <div className="p-4 sm:p-5 border-t border-[#E4E7EC] bg-white flex items-center justify-between gap-3 shrink-0">
+                <div className="p-4 sm:p-5 border-t border-[#E5EAF0] bg-white flex items-center justify-between gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="px-5 py-3 rounded-xl border border-[#D0D5DD] bg-white text-[#101828] text-xs font-bold hover:bg-slate-100 cursor-pointer min-h-[44px] transition-colors"
+                    className="px-5 py-3 rounded-xl border border-[#D4DCE6] bg-white text-[#101828] text-xs font-bold hover:bg-slate-100 cursor-pointer min-h-[44px] transition-colors"
                   >
                     Clear All
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsMobileFiltersOpen(false)}
-                    className="flex-1 px-5 py-3 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold shadow-xs cursor-pointer min-h-[44px] transition-all text-center flex items-center justify-center gap-1.5"
+                    className="flex-1 px-5 py-3 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-bold shadow-xs cursor-pointer min-h-[44px] transition-all text-center flex items-center justify-center gap-1.5"
                   >
                     <span>Apply Filters</span>
                     <span className="text-white/80 font-normal">({filteredJobs.length})</span>

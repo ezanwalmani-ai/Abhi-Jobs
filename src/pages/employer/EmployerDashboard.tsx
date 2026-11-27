@@ -109,12 +109,12 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Active Job Listings</span>
-                <Briefcase className="w-4 h-4 text-[#004D40]" />
+                <Briefcase className="w-4 h-4 text-[#102B4E]" />
               </div>
               <div className="text-2xl font-extrabold text-slate-900 mt-2 font-mono">
                 <CountUpNumber target={employerJobs.filter((j) => j.status === 'published').length} duration={800} />
               </div>
-              <div className="text-[11px] text-[#004D40] mt-1 font-medium">Published &amp; hiring</div>
+              <div className="text-[11px] text-[#102B4E] mt-1 font-medium">Published &amp; hiring</div>
             </motion.div>
           </StaggerItem>
 
@@ -141,12 +141,12 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Scheduled Interviews</span>
-                <Calendar className="w-4 h-4 text-purple-700" />
+                <Calendar className="w-4 h-4 text-[#F47A24]" />
               </div>
               <div className="text-2xl font-extrabold text-slate-900 mt-2 font-mono">
                 <CountUpNumber target={interviews.length} duration={800} />
               </div>
-              <div className="text-[11px] text-purple-700 mt-1 font-medium">Synced with Google Meet</div>
+              <div className="text-[11px] text-[#F47A24] mt-1 font-medium">Synced with Google Meet</div>
             </motion.div>
           </StaggerItem>
 
@@ -264,12 +264,12 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                         <div className="flex items-center gap-3">
                           <h3
                             onClick={() => candidate && setSelectedCandidateForProfile(candidate)}
-                            className="text-base font-bold text-slate-900 hover:text-[#004D40] transition-colors cursor-pointer"
+                            className="text-base font-bold text-slate-900 hover:text-[#102B4E] transition-colors cursor-pointer"
                           >
                             {app.candidateName}
                           </h3>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-[#004D40] text-[11px] font-bold border border-teal-200">
-                            <Sparkles className="w-3 h-3 text-[#004D40]" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] text-[11px] font-bold border border-[#D4DCE6]">
+                            <Sparkles className="w-3 h-3 text-[#102B4E]" />
                             {app.matchScore}% Match
                           </span>
                         </div>
@@ -305,9 +305,9 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
 
                         <button
                           onClick={() => setSelectedAppForSchedule(app)}
-                          className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-[#FFF4EC] hover:bg-[#FDE8D7] text-[#102B4E] border border-[#F47A24]/30 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <Video className="w-3.5 h-3.5 text-purple-700" />
+                          <Video className="w-3.5 h-3.5 text-[#F47A24]" />
                           <span>Schedule Interview</span>
                         </button>
 
@@ -342,14 +342,14 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                   <div key={job.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-xs font-bold text-[#004D40] uppercase tracking-wider">{job.department}</span>
+                        <span className="text-xs font-bold text-[#102B4E] uppercase tracking-wider">{job.department}</span>
                         <h3 className="text-base font-bold text-slate-900 mt-1">{job.title}</h3>
                         <p className="text-xs text-slate-500 mt-0.5">{job.location} &bull; {job.workMode}</p>
                       </div>
                       <span
                         className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                           job.status === 'published'
-                            ? 'bg-teal-50 text-[#004D40] border border-teal-200'
+                            ? 'bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6]'
                             : 'bg-slate-100 text-slate-600'
                         }`}
                       >
@@ -398,17 +398,17 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                 {interviews.map((iv) => (
                   <div
                     key={iv.id}
-                    className="p-4 rounded-2xl border border-purple-200 bg-purple-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="p-4 rounded-2xl border border-[#F47A24]/30 bg-[#FFF4EC]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-bold text-slate-900">{iv.candidateName}</h4>
-                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-800">
+                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-[#FFF4EC] text-[#102B4E]">
                           {iv.type}
                         </span>
                       </div>
                       <div className="text-xs text-slate-600 mt-0.5">{iv.jobTitle}</div>
-                      <div className="text-xs text-purple-900 font-semibold mt-1">
+                      <div className="text-xs text-[#102B4E] font-semibold mt-1">
                         {iv.scheduledDate} at {iv.scheduledTime}
                       </div>
                     </div>
@@ -419,7 +419,7 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ navigate }
                           href={iv.meetingLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
                         >
                           <Video className="w-3.5 h-3.5" />
                           <span>Join Meeting</span>

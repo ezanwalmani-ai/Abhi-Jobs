@@ -232,16 +232,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </ScrollReveal>
 
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E5EAF0] shadow-sm space-y-6">
+          <div className="bg-white rounded-xl p-6 sm:p-7 border border-[#E5EAF0] shadow-xs space-y-6">
             {successMessage && (
-              <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-[#004D40] font-semibold flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-lg bg-[#F1F5FA] border border-[#D4DCE6] text-xs text-[#102B4E] font-semibold flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0 mt-0.5" />
                 <span className="leading-relaxed">{successMessage}</span>
               </div>
             )}
 
             {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2.5">
+              <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
@@ -249,7 +249,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Dedicated Firebase Authorized Domain Notice Banner */}
             {unauthorizedDomainInfo?.show && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-200 text-slate-800 space-y-3.5 shadow-sm">
+              <div className="p-4 sm:p-5 rounded-xl bg-amber-50/90 border border-amber-200 text-slate-800 space-y-3.5 shadow-2xs">
                 <div className="flex items-start gap-2.5">
                   <div className="p-1.5 rounded-lg bg-amber-100 text-amber-800 shrink-0 mt-0.5">
                     <ShieldAlert className="w-4 h-4" />
@@ -264,16 +264,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-white/95 p-3 rounded-xl border border-amber-200 space-y-2">
+                <div className="bg-white/95 p-3 rounded-lg border border-amber-200 space-y-2">
                   <div className="text-[11px] font-semibold text-slate-600">Domain to authorize:</div>
-                  <div className="flex items-center justify-between gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 min-w-0">
+                  <div className="flex items-center justify-between gap-2 bg-[#FAFBFD] px-3 py-2 rounded-lg border border-[#E5EAF0] min-w-0">
                     <code className="text-xs font-mono text-slate-900 truncate select-all">
                       {unauthorizedDomainInfo.domain}
                     </code>
                     <button
                       type="button"
                       onClick={handleCopyDomain}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 shadow-2xs shrink-0 cursor-pointer min-h-[32px] transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-white border border-[#D4DCE6] hover:bg-[#FAFBFD] text-slate-700 shadow-2xs shrink-0 cursor-pointer min-h-[32px] transition-colors"
                       title="Copy domain to clipboard"
                     >
                       {copiedDomain ? (
@@ -296,7 +296,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     href="https://console.firebase.google.com/project/geometric-centaur-c6pck/authentication/settings"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors shadow-2xs min-h-[44px]"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors shadow-2xs min-h-[44px]"
                   >
                     <span>Firebase Console Settings</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -308,7 +308,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                       setUnauthorizedDomainInfo(null);
                       setIsGoogleModalOpen(true);
                     }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-amber-300 hover:bg-amber-50/60 text-amber-950 font-semibold text-xs transition-colors shadow-2xs min-h-[44px] cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-white border border-amber-300 hover:bg-amber-50/60 text-amber-950 font-semibold text-xs transition-colors shadow-2xs min-h-[44px] cursor-pointer"
                   >
                     <span>Continue with Google</span>
                     <ArrowRight className="w-3.5 h-3.5 text-amber-800" />
@@ -328,11 +328,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Google Sign In Button */}
             <motion.button
-              whileHover={{ scale: 1.01 }}
+              whileHover={{ scale: 1.005 }}
               whileTap={{ scale: 0.99 }}
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full py-3.5 px-4 min-h-[44px] rounded-xl border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
+              className="w-full py-3 px-4 min-h-[44px] rounded-lg border border-[#D4DCE6] hover:border-[#102B4E]/40 hover:bg-[#FAFBFD] text-slate-700 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-2xs cursor-pointer"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -356,15 +356,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </motion.button>
 
             <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-200 w-full"></div>
-              <div className="bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-widest absolute">
-                OR SIGN IN WITH EMAIL
+              <div className="border-t border-[#E5EAF0] w-full"></div>
+              <div className="bg-white px-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider absolute">
+                Or sign in with email
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
+                <label className="block text-xs font-semibold text-slate-700">
                   Email Address
                 </label>
                 <input
@@ -372,19 +372,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#102B4E]"
+                  className="w-full px-3.5 py-2.5 min-h-[44px] rounded-lg border border-[#D4DCE6] text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-[#102B4E] focus:ring-2 focus:ring-[#102B4E]/15 transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
+                  <label className="block text-xs font-semibold text-slate-700">
                     Password
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-xs text-[#004D40] hover:text-[#102B4E] font-semibold flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[#102B4E] hover:text-[#F47A24] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     <span>{showPassword ? 'Hide' : 'Show'}</span>
@@ -395,17 +395,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Your password"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#102B4E]"
+                  className="w-full px-3.5 py-2.5 min-h-[44px] rounded-lg border border-[#D4DCE6] text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-[#102B4E] focus:ring-2 focus:ring-[#102B4E]/15 transition-colors"
                 />
               </div>
 
               <div className="pt-2">
                 <motion.button
-                  whileHover={{ scale: 1.01 }}
+                  whileHover={{ scale: 1.005 }}
                   whileTap={{ scale: 0.99 }}
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-6 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] text-white font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 px-6 min-h-[44px] rounded-lg bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white font-semibold text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

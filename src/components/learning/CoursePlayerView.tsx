@@ -14,7 +14,6 @@ import {
   Clock,
   Download,
   Eye,
-  FileSpreadsheet,
   FileText,
   List,
   Loader2,
@@ -51,6 +50,12 @@ import {
   VideoProgressUpdatePayload,
 } from './YouTubeTrackedPlayer';
 import { resolveResumeLessonId } from '../../utils/courseCatalogueState';
+import {
+  formatModuleDisplayTitle,
+  resolveModuleProgressSummary,
+  resolveModuleQuizSidebarState,
+  toggleAccordionModule,
+} from '../../utils/courseSidebarNavigation';
 import { EASE_PREMIUM } from '../../lib/motion';
 
 interface CoursePlayerViewProps {
@@ -131,16 +136,18 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     return INTRO_VIEW_ID;
   });
 
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    course.modules.forEach((m) => {
-      initial[m.id] = true;
-    });
-    return initial;
+  // Single-module accordion: expand only the active module by default, keeping all other modules collapsed
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(() => {
+    const resumeLessonId = resolveResumeLessonId(course, enrolment);
+    if (resumeLessonId) {
+      const match = flatLessons.find((item) => item.lesson.id === resumeLessonId);
+      if (match) return match.module.id;
+    }
+    const firstActiveMod = sortedModules.find((m) => !m.isUpcomingPlaceholder);
+    return firstActiveMod?.id ?? null;
   });
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>({});
   const [lockNotice, setLockNotice] = useState<string | null>(null);
   const [videoProgressById, setVideoProgressById] = useState<Record<string, VideoProgressRecord>>({});
   const [isSavingVideo, setIsSavingVideo] = useState(false);
@@ -356,6 +363,10 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
     setLockNotice(null);
     setActiveId(lessonId);
+    const selectedEntry = flatLessons[globalIndex];
+    if (selectedEntry) {
+      setExpandedModuleId(selectedEntry.module.id);
+    }
     setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -393,6 +404,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       return;
     }
     setLockNotice(null);
+    setExpandedModuleId(moduleId);
     setActiveId(`${MODULE_QUIZ_PREFIX}${moduleId}`);
     setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -586,7 +598,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
     !isLessonUnlocked(activeGlobalIndex + 1);
 
   const toggleModuleExpand = (moduleId: string) => {
-    setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
+    setExpandedModuleId((prev) => toggleAccordionModule(prev, moduleId));
   };
 
   const getBestScoreForModuleQuiz = (moduleId: string): number | null => {
@@ -595,6 +607,11 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       .map((a) => a.scorePercent);
     return scores.length > 0 ? Math.max(...scores) : null;
   };
+
+  const getAttemptCountForModuleQuiz = (moduleId: string): number =>
+    courseAttempts.filter(
+      (a) => a.assessmentType === 'module_quiz' && a.moduleId === moduleId
+    ).length;
 
   const renderWrittenParagraphs = (content: string) => {
     const blocks = content
@@ -797,9 +814,9 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   const renderSidebarContent = (isMobileDrawer: boolean) => (
     <div className="flex flex-col flex-auto min-h-0 overflow-hidden">
-      {/* Sticky Course Sidebar Header — Keeps Back to Dashboard, Course Title & Progress visible while scrolling */}
+      {/* Fixed Non-Overlapping Course Sidebar Header */}
       <div
-        className={`sticky top-0 z-20 shrink-0 bg-white border-b border-[#E5EAF0] ${
+        className={`shrink-0 bg-white border-b border-[#E5EAF0] ${
           isMobileDrawer ? 'px-4 py-3 space-y-2.5' : 'px-4 py-3.5 sm:px-5 sm:py-4 space-y-3'
         }`}
       >
@@ -813,16 +830,32 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
             <span>Back to Dashboard</span>
           </button>
 
-          {isMobileDrawer && (
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
-              onClick={() => setMobileDrawerOpen(false)}
-              aria-label="Close course outline"
-              className="min-w-[40px] min-h-[40px] -mr-1.5 rounded-lg flex items-center justify-center text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] cursor-pointer transition-colors shrink-0"
+              onClick={selectIntro}
+              className={`min-h-[36px] px-2 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                activeId === INTRO_VIEW_ID
+                  ? 'bg-[#102B4E] text-white'
+                  : 'text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB]'
+              }`}
+              title="Course Introduction"
             >
-              <X className="w-5 h-5" />
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>Intro</span>
             </button>
-          )}
+
+            {isMobileDrawer && (
+              <button
+                type="button"
+                onClick={() => setMobileDrawerOpen(false)}
+                aria-label="Close course outline"
+                className="min-w-[40px] min-h-[40px] -mr-1.5 rounded-lg flex items-center justify-center text-[#566479] hover:text-[#102B4E] hover:bg-[#F6F8FB] cursor-pointer transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -915,302 +948,383 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Module, Lesson, Quiz & Final Assessment List */}
-      <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain course-sidebar-scroll divide-y divide-[#E5EAF0] pb-3">
-        {/* Course Introduction Link */}
-        <div className="p-3">
-          <button
-            type="button"
-            onClick={selectIntro}
-            className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-              activeId === INTRO_VIEW_ID
-                ? 'bg-[#102B4E] text-white'
-                : 'text-[#253449] hover:bg-[#F6F8FB]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <BookOpen
-                className={`w-4 h-4 shrink-0 ${
-                  activeId === INTRO_VIEW_ID ? 'text-[#F47A24]' : 'text-[#566479]'
-                }`}
-              />
-              <span className="text-sm font-semibold truncate">Course Introduction</span>
-            </div>
-            {activeId === INTRO_VIEW_ID && (
-              <span className="text-[11px] font-semibold text-slate-200 shrink-0">Current</span>
-            )}
-          </button>
-        </div>
-
-        {/* Modules */}
+      {/* Scrollable Modules-Only Accordion Navigation */}
+      <nav
+        aria-label="Course modules"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain course-sidebar-scroll p-2.5 sm:p-3 space-y-1.5"
+      >
         {sortedModules.map((mod) => {
           if (mod.isUpcomingPlaceholder) {
             const isPlaceholderUnlocked = effectiveUnlockedModuleOrder >= mod.order;
             const prevModOrder = Math.max(1, mod.order - 1);
             return (
-              <div key={mod.id} className="p-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLockNotice(
-                      isPlaceholderUnlocked
-                        ? `Module ${fmtMod(mod.order)} is unlocked! Module ${fmtMod(prevModOrder)} has been completed and passed.`
-                        : `Module ${fmtMod(mod.order)} is locked. Watch the Module ${fmtMod(prevModOrder)} video (90%+) and score at least 70% on the Module ${fmtMod(prevModOrder)} Quiz to unlock it.`
-                    );
-                    setMobileDrawerOpen(false);
-                  }}
-                  className={`w-full min-h-[48px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer border ${
+              <button
+                key={mod.id}
+                type="button"
+                onClick={() => {
+                  setLockNotice(
                     isPlaceholderUnlocked
-                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                      : 'bg-[#FAFBFD] border-[#E5EAF0] text-[#778397]'
-                  }`}
-                >
-                  <span className="mt-0.5 shrink-0" aria-hidden="true">
-                    {isPlaceholderUnlocked ? (
-                      <Unlock className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Lock className="w-4 h-4 text-[#9AA6B8]" />
+                      ? `Module ${fmtMod(mod.order)} is unlocked! Module ${fmtMod(prevModOrder)} has been completed and passed.`
+                      : `Module ${fmtMod(mod.order)} is locked. Watch the Module ${fmtMod(prevModOrder)} video (90%+) and score at least 70% on the Module ${fmtMod(prevModOrder)} Quiz to unlock it.`
+                  );
+                  setMobileDrawerOpen(false);
+                }}
+                className={`w-full min-h-[48px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer border ${
+                  isPlaceholderUnlocked
+                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                    : 'bg-[#FAFBFD] border-[#E5EAF0] text-[#778397]'
+                }`}
+              >
+                <span className="mt-0.5 shrink-0" aria-hidden="true">
+                  {isPlaceholderUnlocked ? (
+                    <Unlock className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-[#9AA6B8]" />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="text-[13px] font-bold leading-snug text-[#102B4E]">
+                    {formatModuleDisplayTitle(
+                      mod.order,
+                      mod.title || (isPlaceholderUnlocked ? 'Ready Next' : 'Upcoming Module')
                     )}
-                  </span>
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide">
-                      Module {fmtMod(mod.order)}
-                    </p>
-                    <p className="text-xs font-bold leading-snug text-[#102B4E]">
-                      {isPlaceholderUnlocked ? 'Unlocked — Ready Next' : 'Next Module (Locked)'}
-                    </p>
-                    <p className="text-[11px]">
-                      {isPlaceholderUnlocked
-                        ? `Module ${fmtMod(prevModOrder)} passed (70%+)`
-                        : `Pass Module ${fmtMod(prevModOrder)} Quiz (70%+) to unlock`}
-                    </p>
-                  </div>
-                </button>
-              </div>
+                  </p>
+                  <p className="text-[11px]">
+                    {isPlaceholderUnlocked
+                      ? `Unlocked · M${fmtMod(prevModOrder)} passed`
+                      : `Locked · Pass M${fmtMod(prevModOrder)} Quiz (70%+)`}
+                  </p>
+                </div>
+              </button>
             );
           }
 
-          const isExpanded = expandedModules[mod.id] !== false;
-          const modCompletedCount = mod.lessons.filter((l) =>
+          const isExpanded = expandedModuleId === mod.id;
+          const isActiveModule =
+            activeModule?.id === mod.id || activeModuleQuizId === mod.id;
+          const isModuleLocked =
+            Boolean(course.sequentialUnlock) && mod.order > effectiveUnlockedModuleOrder;
+
+          const orderedLessons = mod.lessons.slice().sort((a, b) => a.order - b.order);
+          const modCompletedCount = orderedLessons.filter((l) =>
             validCompletedSet.has(l.id)
           ).length;
+
           const modQuiz = moduleQuizByModuleId.get(mod.id);
           const quizPassed = passedModuleQuizSet.has(mod.id);
           const quizUnlocked = isModuleQuizUnlocked(mod.id);
           const quizBestScore = getBestScoreForModuleQuiz(mod.id);
+          const quizAttemptCount = getAttemptCountForModuleQuiz(mod.id);
           const isCurrentQuiz = activeId === `${MODULE_QUIZ_PREFIX}${mod.id}`;
 
+          const hasVideoLessons = orderedLessons.some(
+            (lesson) =>
+              (lesson.videos && lesson.videos.length > 0) ||
+              Boolean(
+                lesson.videoUrl && parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid'
+              )
+          );
+
+          const progressSummary = resolveModuleProgressSummary({
+            completedLessons: modCompletedCount,
+            totalLessons: orderedLessons.length,
+            hasQuiz: Boolean(modQuiz),
+            quizPassed,
+          });
+
+          const quizSidebarState = modQuiz
+            ? resolveModuleQuizSidebarState({
+                moduleOrder: mod.order,
+                isModuleLocked,
+                isQuizUnlocked: quizUnlocked,
+                isQuizPassed: quizPassed,
+                bestScorePercent: quizBestScore,
+                attemptCount: quizAttemptCount,
+                questionCount: modQuiz.questionCount,
+                requiresVideoWatch: hasVideoLessons,
+              })
+            : null;
+
+          const moduleHeading = formatModuleDisplayTitle(mod.order, mod.title);
+
           return (
-            <div key={mod.id} className="p-3 space-y-1.5">
+            <div
+              key={mod.id}
+              className={`rounded-xl border transition-colors ${
+                isActiveModule
+                  ? 'border-[#102B4E]/25 bg-[#F4F7FC]'
+                  : isExpanded
+                  ? 'border-[#D4DCE6] bg-[#FAFBFD]'
+                  : 'border-transparent bg-white hover:border-[#E5EAF0] hover:bg-[#FAFBFD]'
+              }`}
+            >
+              {/* Module Header (Click expands this module and collapses others) */}
               <button
                 type="button"
                 onClick={() => toggleModuleExpand(mod.id)}
-                className="w-full min-h-[40px] px-2.5 py-2 rounded-lg flex items-start justify-between gap-2 text-left hover:bg-[#F6F8FB] transition-colors cursor-pointer"
+                aria-expanded={isExpanded}
+                className="w-full min-h-[48px] px-3 py-2.5 rounded-xl flex items-start justify-between gap-2.5 text-left transition-colors cursor-pointer"
               >
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex items-center gap-2 text-[11px] font-semibold text-[#778397] tabular-nums">
-                    <span>Module {fmtMod(mod.order)}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>
-                      {modCompletedCount}/{mod.lessons.length} done
-                    </span>
-                    {quizPassed && (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <span className="text-emerald-700">Quiz passed</span>
-                      </>
+                <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                  <span className="mt-0.5 shrink-0" aria-hidden="true">
+                    {progressSummary.isModuleCompleted ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : isActiveModule ? (
+                      <PlayCircle className="w-4 h-4 text-[#F47A24]" />
+                    ) : isModuleLocked ? (
+                      <Lock className="w-3.5 h-3.5 text-[#9AA6B8] mt-0.5" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-[#9AA6B8]" />
                     )}
+                  </span>
+
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p
+                      className={`text-[13px] font-bold leading-snug break-words ${
+                        isActiveModule || !isModuleLocked
+                          ? 'text-[#102B4E]'
+                          : 'text-[#566479]'
+                      }`}
+                    >
+                      {moduleHeading}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-[#778397] tabular-nums">
+                      {progressSummary.isModuleCompleted ? (
+                        <span className="font-semibold text-emerald-700">Completed</span>
+                      ) : isModuleLocked ? (
+                        <span>Locked</span>
+                      ) : (
+                        <span>{progressSummary.progressText}</span>
+                      )}
+
+                      {quizSidebarState && !progressSummary.isModuleCompleted && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span
+                            className={
+                              quizSidebarState.status === 'passed'
+                                ? 'font-semibold text-emerald-700'
+                                : quizSidebarState.status === 'failed'
+                                ? 'font-semibold text-amber-700'
+                                : quizSidebarState.status === 'available'
+                                ? 'font-semibold text-[#F47A24]'
+                                : 'text-[#778397]'
+                            }
+                          >
+                            Quiz {quizSidebarState.statusLabel}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm font-bold text-[#102B4E] leading-snug">
-                    {mod.title}
-                  </p>
                 </div>
-                {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-[#778397] shrink-0 mt-1" />
-                )}
+
+                <span className="mt-0.5 shrink-0 text-[#778397]" aria-hidden="true">
+                  {isExpanded ? (
+                    <ChevronUp className="w-4 h-4 text-[#102B4E]" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </span>
               </button>
 
+              {/* Expanded Module Content: Lessons followed by Associated Module Quiz */}
               {isExpanded && (
-                <div className="space-y-1 pl-1">
-                  {mod.lessons
-                    .slice()
-                    .sort((a, b) => a.order - b.order)
-                    .map((lesson) => {
-                      const flatMatch = flatLessons.find(
-                        (f) => f.lesson.id === lesson.id
-                      );
-                      const gIndex = flatMatch ? flatMatch.globalIndex : 0;
-                      const unlocked = isLessonUnlocked(gIndex);
-                      const completed = validCompletedSet.has(lesson.id);
-                      const isCurrent = activeId === lesson.id;
-                      const hasVideo = Boolean(
-                        (lesson.videos && lesson.videos.length > 0) ||
-                          (lesson.videoUrl &&
-                            parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid')
-                      );
+                <div className="px-2 pb-2.5 pt-1.5 mx-1 border-t border-[#E5EAF0]/90 space-y-1">
+                  {orderedLessons.map((lesson) => {
+                    const flatMatch = flatLessons.find(
+                      (f) => f.lesson.id === lesson.id
+                    );
+                    const gIndex = flatMatch ? flatMatch.globalIndex : 0;
+                    const unlocked = isLessonUnlocked(gIndex);
+                    const completed = validCompletedSet.has(lesson.id);
+                    const isCurrent = activeId === lesson.id;
+                    const hasVideo = Boolean(
+                      (lesson.videos && lesson.videos.length > 0) ||
+                        (lesson.videoUrl &&
+                          parseSafeVideoEmbed(lesson.videoUrl)?.kind !== 'invalid')
+                    );
 
-                      return (
-                        <button
-                          key={lesson.id}
-                          type="button"
-                          onClick={() => void selectLesson(lesson.id, gIndex)}
-                          aria-current={isCurrent ? 'step' : undefined}
-                          className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
-                            isCurrent
-                              ? 'bg-[#102B4E] text-white'
-                              : unlocked
-                              ? 'text-[#253449] hover:bg-[#F6F8FB]'
-                              : 'text-[#8B97A8] hover:bg-[#FAFBFD]'
-                          }`}
-                        >
-                          <span className="mt-0.5 shrink-0" aria-hidden="true">
-                            {completed ? (
-                              <CheckCircle2
-                                className={`w-4 h-4 ${
-                                  isCurrent ? 'text-emerald-300' : 'text-emerald-600'
-                                }`}
-                              />
-                            ) : !unlocked ? (
-                              <Lock className="w-4 h-4 text-[#9AA6B8]" />
-                            ) : hasVideo ? (
-                              <PlayCircle
-                                className={`w-4 h-4 ${
-                                  isCurrent ? 'text-[#F47A24]' : 'text-[#566479]'
-                                }`}
-                              />
-                            ) : (
-                              <Circle
-                                className={`w-4 h-4 ${
-                                  isCurrent ? 'text-[#F47A24]' : 'text-[#9AA6B8]'
-                                }`}
-                              />
+                    return (
+                      <button
+                        key={lesson.id}
+                        type="button"
+                        onClick={() => void selectLesson(lesson.id, gIndex)}
+                        aria-current={isCurrent ? 'step' : undefined}
+                        className={`w-full min-h-[44px] px-2.5 py-2 rounded-lg text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#102B4E] text-white'
+                            : unlocked
+                            ? 'text-[#253449] hover:bg-white'
+                            : 'text-[#8B97A8] hover:bg-white/70'
+                        }`}
+                      >
+                        <span className="mt-0.5 shrink-0" aria-hidden="true">
+                          {completed ? (
+                            <CheckCircle2
+                              className={`w-4 h-4 ${
+                                isCurrent ? 'text-emerald-300' : 'text-emerald-600'
+                              }`}
+                            />
+                          ) : !unlocked ? (
+                            <Lock className="w-3.5 h-3.5 text-[#9AA6B8] mt-0.5" />
+                          ) : hasVideo ? (
+                            <PlayCircle
+                              className={`w-4 h-4 ${
+                                isCurrent ? 'text-[#F47A24]' : 'text-[#566479]'
+                              }`}
+                            />
+                          ) : (
+                            <Circle
+                              className={`w-4 h-4 ${
+                                isCurrent ? 'text-[#F47A24]' : 'text-[#9AA6B8]'
+                              }`}
+                            />
+                          )}
+                        </span>
+
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <p
+                            className={`text-xs font-semibold leading-snug break-words ${
+                              isCurrent
+                                ? 'text-white'
+                                : unlocked
+                                ? 'text-[#102B4E]'
+                                : 'text-[#778397]'
+                            }`}
+                          >
+                            {lesson.title}
+                          </p>
+                          <div
+                            className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                              isCurrent ? 'text-slate-300' : 'text-[#778397]'
+                            }`}
+                          >
+                            <span>{lesson.estimatedMinutes} min</span>
+                            {isCurrent && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="font-semibold text-[#F47A24]">Current</span>
+                              </>
                             )}
-                          </span>
+                            {!isCurrent && completed && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="font-semibold text-emerald-700">Done</span>
+                              </>
+                            )}
+                            {!unlocked && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span>Locked</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
 
-                          <div className="min-w-0 flex-1 space-y-0.5">
+                  {/* Associated Module Quiz (belongs visually & functionally inside its module) */}
+                  {modQuiz && quizSidebarState && (
+                    <div className="pt-1.5 mt-1.5 border-t border-[#E5EAF0]">
+                      <button
+                        type="button"
+                        onClick={() => selectModuleQuiz(mod.id, mod.title)}
+                        aria-current={isCurrentQuiz ? 'step' : undefined}
+                        className={`w-full min-h-[44px] px-2.5 py-2 rounded-lg text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+                          isCurrentQuiz
+                            ? 'bg-[#102B4E] text-white'
+                            : quizSidebarState.status === 'available'
+                            ? 'bg-white border border-[#F47A24]/40 hover:border-[#F47A24] text-[#102B4E]'
+                            : quizSidebarState.status === 'passed'
+                            ? 'bg-emerald-50/70 border border-emerald-200/80 hover:border-emerald-300 text-[#102B4E]'
+                            : quizSidebarState.status === 'failed'
+                            ? 'bg-amber-50/70 border border-amber-200/80 hover:border-amber-300 text-[#102B4E]'
+                            : 'text-[#8B97A8] hover:bg-white/70'
+                        }`}
+                      >
+                        <span className="mt-0.5 shrink-0" aria-hidden="true">
+                          {quizSidebarState.status === 'passed' ? (
+                            <CheckCircle2
+                              className={`w-4 h-4 ${
+                                isCurrentQuiz ? 'text-emerald-300' : 'text-emerald-600'
+                              }`}
+                            />
+                          ) : quizSidebarState.status === 'failed' ? (
+                            <AlertCircle
+                              className={`w-4 h-4 ${
+                                isCurrentQuiz ? 'text-amber-300' : 'text-amber-600'
+                              }`}
+                            />
+                          ) : quizSidebarState.status === 'available' ? (
+                            <ClipboardCheck className="w-4 h-4 text-[#F47A24]" />
+                          ) : (
+                            <Lock className="w-3.5 h-3.5 text-[#9AA6B8] mt-0.5" />
+                          )}
+                        </span>
+
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center justify-between gap-2">
                             <p
-                              className={`text-xs sm:text-[13px] font-semibold leading-snug ${
-                                isCurrent
+                              className={`text-xs font-bold leading-snug ${
+                                isCurrentQuiz
                                   ? 'text-white'
-                                  : unlocked
+                                  : quizSidebarState.status !== 'locked'
                                   ? 'text-[#102B4E]'
                                   : 'text-[#778397]'
                               }`}
                             >
-                              {lesson.title}
+                              Module {fmtMod(mod.order)} Quiz
                             </p>
-                            <div
-                              className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
-                                isCurrent ? 'text-slate-300' : 'text-[#778397]'
+                            <span
+                              className={`text-[11px] font-semibold shrink-0 ${
+                                isCurrentQuiz
+                                  ? quizSidebarState.status === 'passed'
+                                    ? 'text-emerald-300'
+                                    : quizSidebarState.status === 'failed'
+                                    ? 'text-amber-300'
+                                    : 'text-[#F47A24]'
+                                  : quizSidebarState.status === 'passed'
+                                  ? 'text-emerald-700'
+                                  : quizSidebarState.status === 'failed'
+                                  ? 'text-amber-700'
+                                  : quizSidebarState.status === 'available'
+                                  ? 'text-[#F47A24]'
+                                  : 'text-[#778397]'
                               }`}
                             >
-                              <span>{hasVideo ? 'Video & Guide' : 'Written'}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>{lesson.estimatedMinutes} min</span>
-                              {isCurrent && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span className="font-semibold text-[#F47A24]">Current</span>
-                                </>
-                              )}
-                              {!isCurrent && completed && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span className="font-semibold text-emerald-700">Done</span>
-                                </>
-                              )}
-                              {!unlocked && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span>Locked</span>
-                                </>
-                              )}
-                            </div>
+                              {quizSidebarState.statusLabel}
+                            </span>
                           </div>
-                        </button>
-                      );
-                    })}
 
-                  {/* Interactive Module Quiz Button */}
-                  {modQuiz && (
-                    <button
-                      type="button"
-                      onClick={() => selectModuleQuiz(mod.id, mod.title)}
-                      aria-current={isCurrentQuiz ? 'step' : undefined}
-                      className={`w-full min-h-[44px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
-                        isCurrentQuiz
-                          ? 'bg-[#102B4E] text-white'
-                          : quizUnlocked
-                          ? 'bg-[#FAFBFD] hover:bg-[#F1F5FA] text-[#102B4E] border border-[#E5EAF0]'
-                          : 'text-[#8B97A8] hover:bg-[#FAFBFD]'
-                      }`}
-                    >
-                      <span className="mt-0.5 shrink-0" aria-hidden="true">
-                        {quizPassed ? (
-                          <CheckCircle2
-                            className={`w-4 h-4 ${
-                              isCurrentQuiz ? 'text-emerald-300' : 'text-emerald-600'
+                          <div
+                            className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
+                              isCurrentQuiz ? 'text-slate-300' : 'text-[#778397]'
                             }`}
-                          />
-                        ) : !quizUnlocked ? (
-                          <Lock className="w-4 h-4 text-[#9AA6B8]" />
-                        ) : (
-                          <ClipboardCheck
-                            className={`w-4 h-4 ${
-                              isCurrentQuiz ? 'text-[#F47A24]' : 'text-[#F47A24]'
-                            }`}
-                          />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p
-                          className={`text-xs font-bold leading-snug ${
-                            isCurrentQuiz
-                              ? 'text-white'
-                              : quizUnlocked
-                              ? 'text-[#102B4E]'
-                              : 'text-[#778397]'
-                          }`}
-                        >
-                          Module {fmtMod(mod.order)} Quiz
-                        </p>
-                        <div
-                          className={`flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums ${
-                            isCurrentQuiz ? 'text-slate-300' : 'text-[#778397]'
-                          }`}
-                        >
-                          <span>{modQuiz.questionCount} questions</span>
-                          <span aria-hidden="true">·</span>
-                          {quizPassed ? (
-                            <span
-                              className={
-                                isCurrentQuiz
-                                  ? 'font-semibold text-emerald-300'
-                                  : 'font-semibold text-emerald-700'
-                              }
-                            >
-                              Passed{quizBestScore !== null ? ` (${quizBestScore}%)` : ''}
-                            </span>
-                          ) : quizBestScore !== null ? (
-                            <span
-                              className={
-                                isCurrentQuiz
-                                  ? 'font-semibold text-amber-300'
-                                  : 'font-semibold text-amber-700'
-                              }
-                            >
-                              Best {quizBestScore}% · Retake
-                            </span>
-                          ) : quizUnlocked ? (
-                            <span className="font-semibold text-[#F47A24]">Unlocked · Start</span>
-                          ) : (
-                            <span>Watch video (90%) to unlock</span>
-                          )}
+                          >
+                            <span>{quizSidebarState.detailLabel}</span>
+                            {quizSidebarState.actionLabel && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span
+                                  className={`font-semibold ${
+                                    isCurrentQuiz
+                                      ? 'text-[#F47A24]'
+                                      : quizSidebarState.status === 'available'
+                                      ? 'text-[#F47A24]'
+                                      : 'text-[#102B4E]'
+                                  }`}
+                                >
+                                  {quizSidebarState.actionLabel}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -1220,12 +1334,12 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
         {/* Final Course Assessment Entry (shown only when configured) */}
         {assessmentOverview?.finalAssessment && (
-          <div className="p-3">
+          <div className="pt-2 mt-2 border-t border-[#E5EAF0]">
             <button
               type="button"
               onClick={selectFinalAssessment}
               aria-current={isViewingFinalAssessment ? 'step' : undefined}
-              className={`w-full min-h-[50px] px-3.5 py-3 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
+              className={`w-full min-h-[50px] px-3 py-2.5 rounded-xl text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
                 isViewingFinalAssessment
                   ? 'bg-[#102B4E] text-white'
                   : isFinalAssessmentUnlocked
@@ -1279,17 +1393,17 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                     </span>
                   ) : isFinalAssessmentUnlocked ? (
                     <span className="font-semibold text-[#F47A24]">
-                      Pass {assessmentOverview.finalAssessment.passPercentage}%+
+                      Available · Start
                     </span>
                   ) : (
-                    <span>Locked until prerequisites done</span>
+                    <span>Locked</span>
                   )}
                 </div>
               </div>
             </button>
           </div>
         )}
-      </div>
+      </nav>
     </div>
   );
 
@@ -1359,10 +1473,10 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       {/* Main Split Learning Workspace */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-          {/* Desktop Sidebar (290px fixed width, sticky header inside) */}
+          {/* Desktop Sidebar (310px fixed width, clean header + scrollable modules accordion) */}
           <aside
             aria-label="Course curriculum"
-            className="hidden lg:flex lg:flex-col lg:w-[290px] lg:shrink-0 bg-white rounded-xl border border-[#E5EAF0] overflow-hidden lg:sticky lg:top-[84px] lg:max-h-[calc(100vh-6rem)]"
+            className="hidden lg:flex lg:flex-col lg:w-[310px] lg:shrink-0 bg-white rounded-xl border border-[#E5EAF0] overflow-hidden lg:sticky lg:top-[84px] lg:max-h-[calc(100vh-6rem)]"
           >
             {renderSidebarContent(false)}
           </aside>
@@ -1902,97 +2016,6 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Practical Activity */}
-                {activeLesson.exercise && (
-                  <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-[#F47A24] inline-flex items-center gap-1.5">
-                          <ClipboardCheck className="w-3.5 h-3.5" />
-                          <span>Practical Activity</span>
-                        </p>
-                        <h2 className="font-display text-lg sm:text-xl font-bold text-[#102B4E]">
-                          {activeLesson.exercise.title}
-                        </h2>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCheckedExercises((prev) => ({
-                            ...prev,
-                            [activeLesson.id]: !prev[activeLesson.id],
-                          }))
-                        }
-                        className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors border ${
-                          checkedExercises[activeLesson.id]
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                            : 'bg-[#FAFBFD] border-[#E5EAF0] text-[#566479] hover:border-[#102B4E] hover:text-[#102B4E]'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>
-                          {checkedExercises[activeLesson.id]
-                            ? 'Activity Practiced'
-                            : 'Mark Activity Practiced'}
-                        </span>
-                      </button>
-                    </div>
-
-                    <p className="text-sm sm:text-[15px] text-[#253449] leading-[1.7] max-w-[68ch] whitespace-pre-line">
-                      {activeLesson.exercise.instructions}
-                    </p>
-
-                    {activeLesson.exercise.deliverable && (
-                      <div className="pt-3 border-t border-[#E5EAF0] text-xs sm:text-sm text-[#566479]">
-                        <span className="font-semibold text-[#102B4E]">Target Output: </span>
-                        <span>{activeLesson.exercise.deliverable}</span>
-                      </div>
-                    )}
-
-                    {/* Quick Practice Workbook / Instruction Sheet Downloads inside Practical Activity */}
-                    {activeLesson.attachments && activeLesson.attachments.length > 0 && (
-                      <div className="pt-4 border-t border-[#E5EAF0] space-y-3">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {activeLesson.attachments.map((att) => {
-                            const isWorkbook =
-                              att.fileType.toLowerCase().includes('xlsx') ||
-                              Boolean(att.url?.toLowerCase().endsWith('.xlsx'));
-                            return (
-                              <button
-                                key={att.id}
-                                type="button"
-                                onClick={() =>
-                                  downloadLessonResource(course.title, activeLesson.title, att)
-                                }
-                                className={`min-h-[44px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors ${
-                                  isWorkbook
-                                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                                    : 'bg-[#FAFBFD] hover:bg-[#102B4E] text-[#102B4E] hover:text-white border border-[#D4DCE6]'
-                                }`}
-                              >
-                                {isWorkbook ? (
-                                  <FileSpreadsheet className="w-4 h-4 shrink-0" />
-                                ) : (
-                                  <Download className="w-4 h-4 shrink-0" />
-                                )}
-                                <span>
-                                  {isWorkbook
-                                    ? 'Download Practice Workbook (.xlsx)'
-                                    : `Download ${att.title}`}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <p className="text-xs text-[#566479]">
-                          No paid software required — open and practice free in Microsoft Excel, Excel for the Web, Google Sheets, or LibreOffice Calc.
-                        </p>
-                      </div>
-                    )}
-                  </section>
-                )}
-
                 {/* Downloadable Resources */}
                 {activeLesson.attachments && activeLesson.attachments.length > 0 && (
                   <section className="bg-white rounded-xl border border-[#E5EAF0] p-5 sm:p-6 space-y-4">
@@ -2029,7 +2052,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                             onClick={() =>
                               downloadLessonResource(course.title, activeLesson.title, att)
                             }
-                            className="min-h-[40px] px-4 py-2 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                            className="min-h-[44px] px-4 py-2 rounded-lg border border-[#D4DCE6] bg-white hover:border-[#102B4E] hover:bg-[#102B4E] text-[#102B4E] hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Download {att.url ? att.fileType : 'PDF'}</span>
@@ -2040,7 +2063,7 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   </section>
                 )}
 
-                {/* Module Quiz Card (below Study Guide, Practical Activity & Downloadable Resources) */}
+                {/* Module Quiz Card (below Study Guide & Downloadable Resources) */}
                 {activeModule && renderActiveModuleQuizCard()}
 
                 {/* Lesson Completion Status & Navigation Controls */}

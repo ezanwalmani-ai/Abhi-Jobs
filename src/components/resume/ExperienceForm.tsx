@@ -111,7 +111,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-[#004D40]" />
+            <Briefcase className="w-4 h-4 text-[#102B4E]" />
             Work Experience
           </h3>
           <p className="text-xs text-slate-500">
@@ -122,7 +122,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
         <button
           type="button"
           onClick={handleAddExperience}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Add Experience</span>
@@ -139,7 +139,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
           <button
             type="button"
             onClick={handleAddExperience}
-            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#004D40] text-xs font-semibold border border-teal-200 cursor-pointer"
+            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#F1F5FA] hover:bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold border border-[#D4DCE6] cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Experience</span>
@@ -165,7 +165,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                   >
                     <ChevronRight
                       className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
-                        isExpanded ? 'rotate-90 text-[#004D40]' : ''
+                        isExpanded ? 'rotate-90 text-[#102B4E]' : ''
                       }`}
                     />
                     <div className="min-w-0 truncate">
@@ -222,7 +222,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                           value={exp.jobTitle}
                           onChange={(e) => handleUpdateEntry(exp.id, { jobTitle: e.target.value })}
                           placeholder="e.g. Operations Coordinator"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -235,7 +235,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                           value={exp.companyName}
                           onChange={(e) => handleUpdateEntry(exp.id, { companyName: e.target.value })}
                           placeholder="e.g. Acme Logistics"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -250,7 +250,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                               employmentType: e.target.value as ResumeEmploymentType,
                             })
                           }
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20 bg-white"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20 bg-white"
                         >
                           {EMPLOYMENT_TYPES.map((type) => (
                             <option key={type} value={type}>
@@ -269,7 +269,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                           value={exp.location}
                           onChange={(e) => handleUpdateEntry(exp.id, { location: e.target.value })}
                           placeholder="e.g. Bengaluru, India / Remote"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                             onChange={(e) =>
                               handleUpdateEntry(exp.id, { currentlyWorking: e.target.checked })
                             }
-                            className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                            className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
                           />
                           <span>Currently Working Here</span>
                         </label>
@@ -365,7 +365,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                         <button
                           type="button"
                           onClick={() => handleAddBullet(exp.id)}
-                          className="text-xs font-semibold text-[#004D40] hover:underline flex items-center gap-1 cursor-pointer"
+                          className="text-xs font-semibold text-[#102B4E] hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <PlusCircle className="w-3.5 h-3.5" />
                           <span>Add Bullet</span>
@@ -380,7 +380,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ experiences, onC
                             value={bullet}
                             onChange={(e) => handleUpdateBullet(exp.id, bIdx, e.target.value)}
                             placeholder="e.g. Managed daily operations for a logistics team across 3 distribution hubs"
-                            className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                            className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                           />
                           <button
                             type="button"

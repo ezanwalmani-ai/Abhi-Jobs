@@ -43,18 +43,18 @@ export const Button: React.FC<ButtonProps> = ({
     primary:
       'bg-[#F47A24] hover:bg-[#DE6816] active:bg-[#C75A10] text-white border border-[#F47A24] hover:border-[#DE6816] shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2',
     secondary:
-      'bg-white hover:bg-[#F6F8FB] active:bg-[#EDF1F7] text-[#102B4E] border border-[#D4DCE6] hover:border-[#102B4E]/40 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
+      'bg-white hover:bg-[#F6F8FB] active:bg-[#EDF1F7] text-[#102B4E] border border-[#D4DCE6] hover:border-[#102B4E]/45 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
     ghost:
-      'bg-transparent hover:bg-[#F6F8FB] active:bg-[#E5EAF0] text-[#253449] hover:text-[#102B4E] border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/30 focus-visible:ring-offset-2',
+      'bg-transparent hover:bg-[#F6F8FB] active:bg-[#E5EAF0] text-[#475569] hover:text-[#102B4E] border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E]/30 focus-visible:ring-offset-2',
     dark:
       'bg-[#102B4E] hover:bg-[#081D36] active:bg-[#051427] text-white border border-[#102B4E] shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2',
   };
 
-  // Classic medium-sized button dimensions (14-15px primary text, comfortable touch targets)
+  // Consistent corporate button dimensions (8px radius, comfortable touch targets)
   const sizeStyles: Record<ButtonSize, string> = {
     sm: 'px-3.5 py-2 text-[13px] rounded-lg min-h-[38px] gap-1.5',
     md: 'px-4 py-2 text-[14px] rounded-lg min-h-[42px] gap-2',
-    lg: 'px-5 py-2.5 text-[15px] rounded-xl min-h-[44px] gap-2',
+    lg: 'px-5 py-2.5 text-[14px] rounded-lg min-h-[44px] gap-2',
   };
 
   const widthStyle = fullWidth ? 'w-full' : '';

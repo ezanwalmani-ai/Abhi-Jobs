@@ -40,7 +40,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <User className="w-4 h-4 text-[#004D40]" />
+            <User className="w-4 h-4 text-[#102B4E]" />
             Personal Information
           </h3>
           <p className="text-xs text-slate-500">
@@ -108,7 +108,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               type="checkbox"
               checked={resume.showPhoto}
               onChange={(e) => onChange({ showPhoto: e.target.checked })}
-              className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+              className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
             />
             <div className="text-xs text-slate-700">
               <span className="font-semibold block">Show on Resume</span>
@@ -130,7 +130,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             value={resume.fullName}
             onChange={(e) => onChange({ fullName: e.target.value })}
             placeholder="e.g. Aarav Sharma"
-            className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20 ${
+            className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20 ${
               errors.fullName ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
             }`}
           />
@@ -149,7 +149,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             value={resume.professionalTitle}
             onChange={(e) => onChange({ professionalTitle: e.target.value })}
             placeholder="Operations Specialist"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
           />
         </div>
 
@@ -165,7 +165,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={resume.email}
               onChange={(e) => onChange({ email: e.target.value })}
               placeholder="aarav@example.com"
-              className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20 ${
+              className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20 ${
                 errors.email ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
               }`}
             />
@@ -187,7 +187,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={resume.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
               placeholder="+91 98765 43210"
-              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
             />
           </div>
         </div>
@@ -204,7 +204,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={resume.city}
               onChange={(e) => onChange({ city: e.target.value })}
               placeholder="e.g. Bengaluru"
-              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
             />
           </div>
         </div>
@@ -219,7 +219,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             value={resume.state}
             onChange={(e) => onChange({ state: e.target.value })}
             placeholder="e.g. Karnataka"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
           />
         </div>
 
@@ -235,7 +235,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={resume.linkedIn}
               onChange={(e) => onChange({ linkedIn: e.target.value })}
               placeholder="https://linkedin.com/in/username"
-              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
             />
           </div>
         </div>
@@ -252,7 +252,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={resume.portfolio}
               onChange={(e) => onChange({ portfolio: e.target.value })}
               placeholder="https://myportfolio.dev"
-              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
             />
           </div>
         </div>

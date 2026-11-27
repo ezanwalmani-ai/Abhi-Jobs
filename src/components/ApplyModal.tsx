@@ -118,13 +118,13 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
             className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200"
           >
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#E4E7EC] flex items-center justify-between bg-[#F7F8FA]">
+            <div className="px-6 py-4 border-b border-[#E5EAF0] flex items-center justify-between bg-[#F7F8FA]">
               <div className="flex items-center gap-3">
                 {activeJob.companyLogo ? (
                   <img
                     src={activeJob.companyLogo}
                     alt={activeJob.companyName}
-                    className="w-10 h-10 rounded-xl object-cover border border-[#E4E7EC] shrink-0"
+                    className="w-10 h-10 rounded-xl object-cover border border-[#E5EAF0] shrink-0"
                   />
                 ) : null}
                 <div>
@@ -197,7 +197,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
           </motion.div>
         ) : alreadyApplied ? (
           <div className="p-5 sm:p-6 text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 mx-auto flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] mx-auto flex items-center justify-center">
               <Check className="w-7 h-7" />
             </div>
             <div>
@@ -215,7 +215,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
               </button>
               <button
                 onClick={handleClose}
-                className="px-4 py-2.5 rounded-xl border border-[#E4E7EC] text-[#101828] text-xs font-semibold hover:bg-[#F7F8FA] transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#E5EAF0] text-[#101828] text-xs font-semibold hover:bg-[#F7F8FA] transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -248,7 +248,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                 </div>
               </div>
             ) : !currentUser ? (
-              <div className="p-5 rounded-2xl bg-[#F7F8FA] border border-[#E4E7EC] text-xs text-[#101828] space-y-3">
+              <div className="p-5 rounded-2xl bg-[#F7F8FA] border border-[#E5EAF0] text-xs text-[#101828] space-y-3">
                 <div className="font-bold text-sm text-[#101828]">Sign In to Apply</div>
                 <p className="leading-relaxed text-[#667085]">
                   You must be registered as a Job Seeker to apply for this opening with your verified credentials and resume.
@@ -264,7 +264,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                   <button
                     type="button"
                     onClick={() => handleNavigateTo('/register/job-seeker')}
-                    className="px-4 py-2 rounded-xl bg-white border border-[#E4E7EC] text-[#101828] font-bold hover:bg-[#F7F8FA] cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-white border border-[#E5EAF0] text-[#101828] font-bold hover:bg-[#F7F8FA] cursor-pointer"
                   >
                     Register as Job Seeker
                   </button>
@@ -273,22 +273,22 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
             ) : (
               <>
                 {/* Step 1: Pre-filled Profile Card */}
-                <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-200/70 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-teal-100 text-[#004D40] flex items-center justify-center font-bold text-sm shrink-0">
+                <div className="p-3.5 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6]/70 flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#E5EAF0] text-[#102B4E] flex items-center justify-center font-bold text-sm shrink-0">
                     <User className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#101828]">{candidateName}</span>
-                      <span className="text-[11px] font-semibold text-[#004D40] flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" /> Verified Profile
+                      <span className="text-[11px] font-semibold text-[#102B4E] flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#102B4E]" /> Verified Profile
                       </span>
                     </div>
                     <p className="text-xs text-[#667085] truncate mt-0.5">{candidateHeadline}</p>
                     {candidateSkills.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {candidateSkills.slice(0, 5).map((s) => (
-                          <span key={s} className="px-2 py-0.5 rounded-md bg-white border border-teal-200 text-[10px] text-[#004D40] font-medium">
+                          <span key={s} className="px-2 py-0.5 rounded-md bg-white border border-[#D4DCE6] text-[10px] text-[#102B4E] font-medium">
                             {s}
                           </span>
                         ))}
@@ -300,15 +300,15 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                 {/* Step 2: Resume Selector */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#101828]">Resume Selection</label>
-                  <div className="p-3 rounded-xl border border-[#E4E7EC] bg-[#F7F8FA] flex items-center justify-between">
+                  <div className="p-3 rounded-xl border border-[#E5EAF0] bg-[#F7F8FA] flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <FileText className="w-5 h-5 text-[#004D40] shrink-0" />
+                      <FileText className="w-5 h-5 text-[#102B4E] shrink-0" />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-[#101828] truncate">{selectedResume}</div>
                         <div className="text-[10px] text-[#667085]">ABHI JOBS Profile Resume &bull; Ready to submit</div>
                       </div>
                     </div>
-                    <label className="text-xs font-semibold text-[#004D40] hover:underline cursor-pointer flex items-center gap-1 shrink-0">
+                    <label className="text-xs font-semibold text-[#102B4E] hover:underline cursor-pointer flex items-center gap-1 shrink-0">
                       <Upload className="w-3.5 h-3.5" />
                       <span>Change</span>
                       <input
@@ -337,7 +337,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ job, isOpen, onClose, na
                     placeholder="Briefly state why you are an ideal fit for this role and your availability..."
                     rows={3}
                     maxLength={250}
-                    className="w-full text-xs p-3 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#102B4E]"
+                    className="w-full text-xs p-3 rounded-xl border border-[#D4DCE6] bg-white focus:outline-hidden focus:border-[#102B4E]"
                   />
                 </div>
 

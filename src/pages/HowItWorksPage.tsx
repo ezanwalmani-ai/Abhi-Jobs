@@ -206,26 +206,26 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
             <StaggerItem key={item.step}>
               <motion.div
                 whileHover={{ y: -3, transition: { duration: 0.2, ease: EASE_PREMIUM } }}
-                className="bg-white rounded-2xl p-6 border border-[#E4E7EC] shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full"
+                className="bg-white rounded-2xl p-6 border border-[#E5EAF0] shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="w-10 h-10 rounded-xl bg-[#102B4E] text-white font-extrabold flex items-center justify-center text-sm">
                       {item.step}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-md bg-[#F7F8FA] text-[#101828] text-[10px] font-bold border border-[#E4E7EC]">
+                    <span className="px-2.5 py-0.5 rounded-md bg-[#F7F8FA] text-[#101828] text-[10px] font-bold border border-[#E5EAF0]">
                       {item.badge}
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-[#101828]">{item.title}</h3>
                   <p className="text-xs text-[#667085] leading-relaxed">{item.desc}</p>
-                  <p className="text-[11px] text-[#667085] leading-normal pt-1 border-t border-[#E4E7EC]">
+                  <p className="text-[11px] text-[#667085] leading-normal pt-1 border-t border-[#E5EAF0]">
                     {item.detail}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-3 flex items-center gap-1.5 text-xs font-semibold text-[#004D40]">
-                  <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0" />
+                <div className="mt-6 pt-3 flex items-center gap-1.5 text-xs font-semibold text-[#102B4E]">
+                  <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0" />
                   <span>Step {item.step} Complete</span>
                 </div>
               </motion.div>
@@ -235,7 +235,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
 
         {/* Action Bar based on Active Tab */}
         <ScrollReveal direction="up" delay={0.1} distance={18}>
-          <div className="mt-12 p-5 sm:p-6 rounded-xl bg-[#F7F8FA] border border-[#E4E7EC] flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="mt-12 p-5 sm:p-6 rounded-xl bg-[#F7F8FA] border border-[#E5EAF0] flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-lg font-bold text-[#101828]">
                 {activeTab === 'job_seeker'
@@ -263,7 +263,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   <button
                     type="button"
                     onClick={() => navigate('/jobs')}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F8FA] text-[#101828] text-xs sm:text-sm font-semibold border border-[#D0D5DD] transition-colors cursor-pointer min-h-[44px]"
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F8FA] text-[#101828] text-xs sm:text-sm font-semibold border border-[#D4DCE6] transition-colors cursor-pointer min-h-[44px]"
                   >
                     Browse Jobs
                   </button>
@@ -281,7 +281,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                   <button
                     type="button"
                     onClick={() => navigate('/candidates')}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F8FA] text-[#101828] text-xs sm:text-sm font-semibold border border-[#D0D5DD] transition-colors cursor-pointer min-h-[44px]"
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F8FA] text-[#101828] text-xs sm:text-sm font-semibold border border-[#D4DCE6] transition-colors cursor-pointer min-h-[44px]"
                   >
                     Discover Talent
                   </button>
@@ -293,7 +293,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
       </section>
 
       {/* 3. Core Principles / Pillars */}
-      <section className="py-10 bg-white border-y border-[#E4E7EC]">
+      <section className="py-10 bg-white border-y border-[#E5EAF0]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal direction="up" distance={16}>
             <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
@@ -308,9 +308,9 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
 
           <StaggerGroup staggerDelay={0.07} className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StaggerItem>
-              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E4E7EC] space-y-3 h-full">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center border border-teal-100">
-                  <Target className="w-6 h-6 text-[#004D40]" />
+              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E5EAF0] space-y-3 h-full">
+                <div className="w-12 h-12 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center border border-[#E5EAF0]">
+                  <Target className="w-6 h-6 text-[#102B4E]" />
                 </div>
                 <h3 className="text-base font-bold text-[#101828]">1. Skill Verification</h3>
                 <p className="text-xs text-[#667085] leading-relaxed">
@@ -320,9 +320,9 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
             </StaggerItem>
 
             <StaggerItem>
-              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E4E7EC] space-y-3 h-full">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center border border-teal-100">
-                  <Zap className="w-6 h-6 text-[#004D40]" />
+              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E5EAF0] space-y-3 h-full">
+                <div className="w-12 h-12 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center border border-[#E5EAF0]">
+                  <Zap className="w-6 h-6 text-[#102B4E]" />
                 </div>
                 <h3 className="text-base font-bold text-[#101828]">2. Integrated Upskilling</h3>
                 <p className="text-xs text-[#667085] leading-relaxed">
@@ -332,9 +332,9 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
             </StaggerItem>
 
             <StaggerItem>
-              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E4E7EC] space-y-3 h-full">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center border border-teal-100">
-                  <ShieldCheck className="w-6 h-6 text-[#004D40]" />
+              <div className="p-6 rounded-2xl bg-[#F7F8FA] border border-[#E5EAF0] space-y-3 h-full">
+                <div className="w-12 h-12 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center border border-[#E5EAF0]">
+                  <ShieldCheck className="w-6 h-6 text-[#102B4E]" />
                 </div>
                 <h3 className="text-base font-bold text-[#101828]">3. Direct Accountability</h3>
                 <p className="text-xs text-[#667085] leading-relaxed">
@@ -363,7 +363,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
           {faqs.map((faq, idx) => (
             <div
               key={faq.question}
-              className="rounded-2xl border border-[#E4E7EC] bg-white overflow-hidden transition-all shadow-xs"
+              className="rounded-2xl border border-[#E5EAF0] bg-white overflow-hidden transition-all shadow-xs"
             >
               <button
                 type="button"
@@ -386,7 +386,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ navigate }) => {
                     transition={{ duration: 0.22, ease: EASE_PREMIUM }}
                     className="overflow-hidden"
                   >
-                    <div className="px-4 pb-5 sm:px-5 sm:pb-5 text-xs sm:text-sm text-[#667085] leading-relaxed border-t border-[#E4E7EC] pt-3">
+                    <div className="px-4 pb-5 sm:px-5 sm:pb-5 text-xs sm:text-sm text-[#667085] leading-relaxed border-t border-[#E5EAF0] pt-3">
                       {faq.answer}
                     </div>
                   </motion.div>

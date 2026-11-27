@@ -51,8 +51,8 @@ import { EmployerSettingsPage } from './pages/employer/EmployerSettingsPage';
 import { EmployerRegisterPage } from './pages/employer/EmployerRegisterPage';
 import { PostJobPage } from './pages/employer/PostJobPage';
 
-// Admin Portal
-import { AdminDashboard } from './pages/admin/AdminDashboard';
+// Admin Portal (Unified Control Center)
+import { AdminControlCenterPage } from './pages/admin/AdminControlCenterPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function AppContent() {
@@ -412,7 +412,7 @@ function AppContent() {
       // Job Seeker Portal Dedicated Routes
       case '/dashboard':
         return isAdmin ? (
-          <AdminDashboard navigate={navigate} />
+          <AdminControlCenterPage currentRoute="/abhi-control-center" navigate={navigate} />
         ) : isEmployer ? (
           <EmployerDashboard navigate={navigate} />
         ) : (
@@ -524,10 +524,12 @@ function AppContent() {
       case '/employer/candidates':
         return <CandidatesPage navigate={navigate} />;
 
-      // Private Central Admin Panel (never linked in public navigation)
+      // Unified ABHI JOBS Admin Control Center
       case '/admin':
+      case '/admin/login':
       case '/abhi-control-center':
-        return <AdminDashboard navigate={navigate} />;
+      case '/abhi-control-center/login':
+        return <AdminControlCenterPage currentRoute={currentRoute} navigate={navigate} />;
 
       case '/404':
         return <NotFoundPage navigate={navigate} />;
@@ -569,6 +571,12 @@ function AppContent() {
             />
           );
         }
+        if (
+          currentRoute.startsWith('/abhi-control-center/') ||
+          currentRoute.startsWith('/admin/')
+        ) {
+          return <AdminControlCenterPage currentRoute={currentRoute} navigate={navigate} />;
+        }
         // If route is explicitly home or empty, render HomePage, otherwise show branded 404
         if (!currentRoute || currentRoute === '/' || currentRoute === '') {
           return <HomePage navigate={navigate} />;
@@ -576,6 +584,13 @@ function AppContent() {
         return <NotFoundPage navigate={navigate} />;
     }
   };
+
+  const isAdminChromeRoute =
+    currentRoute === '/abhi-control-center' ||
+    currentRoute.startsWith('/abhi-control-center/') ||
+    currentRoute === '/admin' ||
+    currentRoute.startsWith('/admin/') ||
+    (currentRoute === '/dashboard' && isAdmin);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F6F8FB] text-[#253449] font-sans selection:bg-[#102B4E] selection:text-white">
@@ -592,8 +607,8 @@ function AppContent() {
         loadingMessage={globalLoadingMessage}
       />
 
-      {/* Top Navbar */}
-      <Navbar currentRoute={currentRoute} navigate={navigate} />
+      {/* Top Navbar (hidden on dedicated Admin Portal routes) */}
+      {!isAdminChromeRoute && <Navbar currentRoute={currentRoute} navigate={navigate} />}
 
       {/* Dynamic Page Content with Smooth Transition */}
       <main className="flex-1 w-full overflow-x-clip">
@@ -611,8 +626,10 @@ function AppContent() {
         </AnimatePresence>
       </main>
 
-      {/* Bottom Footer */}
-      <Footer navigate={navigate} onReplayIntro={handleReplayIntro} />
+      {/* Bottom Footer (hidden on dedicated Admin Portal routes) */}
+      {!isAdminChromeRoute && (
+        <Footer navigate={navigate} onReplayIntro={handleReplayIntro} />
+      )}
 
       {/* Global Toast Notifications */}
       <ToastContainer />

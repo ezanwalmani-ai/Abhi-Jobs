@@ -91,8 +91,8 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
         <ScrollReveal direction="up" distance={16}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 text-[#004D40] text-xs font-bold border border-teal-200/70 mb-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" />
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F5FA] text-[#102B4E] text-xs font-bold border border-[#D4DCE6]/70 mb-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#102B4E]" />
                 <span>ABHI JOBS Skill-Certified Network</span>
               </div>
               <TextMaskReveal
@@ -119,9 +119,9 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
 
         {/* Filter Bar */}
         <ScrollReveal direction="up" delay={0.06} distance={18}>
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E4E7EC] shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5EAF0] shadow-xs space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Search className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -132,7 +132,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <MapPin className="w-4 h-4 text-[#667085] shrink-0" />
                 <input
                   type="text"
@@ -143,7 +143,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Briefcase className="w-4 h-4 text-[#667085] shrink-0" />
                 <select
                   value={expLevel}
@@ -158,7 +158,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D0D5DD] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#D4DCE6] bg-[#F7F8FA] focus-within:border-[#102B4E] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#102B4E]/10 transition-all">
                 <Users className="w-4 h-4 text-[#667085] shrink-0" />
                 <select
                   value={availability}
@@ -174,7 +174,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
             </div>
 
             {/* Skill pills */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E4E7EC]">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E5EAF0]">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] font-bold text-[#667085] uppercase tracking-wider mr-1">Skills:</span>
                 <button
@@ -213,7 +213,7 @@ export const CandidatesPage: React.FC<CandidatesPageProps> = ({ navigate }) => {
 
         {/* Candidates Grid */}
         {filteredCandidates.length === 0 ? (
-          <div className="p-6 text-center bg-white rounded-2xl border border-[#E4E7EC] shadow-xs space-y-3">
+          <div className="p-6 text-center bg-white rounded-2xl border border-[#E5EAF0] shadow-xs space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#F7F8FA] text-[#667085] flex items-center justify-center mx-auto">
               <Users className="w-6 h-6" />
             </div>

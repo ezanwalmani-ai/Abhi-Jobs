@@ -26,7 +26,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
         transition={{ duration: 0.8, ease: EASE_PREMIUM }}
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] h-[350px] bg-[#F47A24]/10 rounded-full blur-3xl pointer-events-none"
       />
-      <div className="absolute bottom-10 right-1/4 w-[350px] h-[350px] bg-[#004D40]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-[350px] h-[350px] bg-[#102B4E]/20 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -140,8 +140,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate('/companies')}
               className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all text-left group cursor-pointer"
             >
-              <Building2 className="w-4 h-4 text-teal-400 mb-1.5 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-white group-hover:text-teal-300 transition-colors">
+              <Building2 className="w-4 h-4 text-[#F47A24] mb-1.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs font-bold text-white group-hover:text-[#F47A24] transition-colors">
                 Top Companies
               </div>
               <div className="text-[11px] text-slate-400">Actively hiring</div>

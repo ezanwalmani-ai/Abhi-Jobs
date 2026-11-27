@@ -14,7 +14,7 @@
     "test:rules": "firebase emulators:exec --only firestore --project demo-abhi-jobs \"node --test firebase/tests/firestore.rules.test.mjs\""
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
+    "@google/genai": "^3.6.1",
     "@supabase/server": "^1.6.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.1.14",

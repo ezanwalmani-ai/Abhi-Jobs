@@ -97,7 +97,7 @@ export const EmployerJobsPage: React.FC<EmployerJobsPageProps> = ({ navigate }) 
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold capitalize border ${
                           job.status === 'published'
-                            ? 'bg-teal-50 text-[#004D40] border-teal-200'
+                            ? 'bg-[#F1F5FA] text-[#102B4E] border-[#D4DCE6]'
                             : job.status === 'paused'
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -130,7 +130,7 @@ export const EmployerJobsPage: React.FC<EmployerJobsPageProps> = ({ navigate }) 
                   <div className="flex items-center gap-4 self-end md:self-center shrink-0">
                     <div className="text-right">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 justify-end">
-                        <Users className="w-3.5 h-3.5 text-[#004D40]" />
+                        <Users className="w-3.5 h-3.5 text-[#102B4E]" />
                         <span>{applicantsForJob.length} Applicants</span>
                       </div>
                       <span className="text-[11px] text-slate-500">

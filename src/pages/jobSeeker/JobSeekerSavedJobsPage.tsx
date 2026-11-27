@@ -286,13 +286,13 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
     return (
       <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 text-[#004D40] flex items-center justify-center mx-auto">
-            <UserCheck className="w-8 h-8 text-[#004D40]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] flex items-center justify-center mx-auto">
+            <UserCheck className="w-8 h-8 text-[#102B4E]" />
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-[#004D40] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#004D40]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#102B4E]" />
               <span>Job Seeker Authentication Required</span>
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900">Sign In to Access Your Saved Jobs</h1>
@@ -324,7 +324,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
             </button>
             <button
               onClick={() => navigate('/jobs')}
-              className="text-xs text-[#004D40] hover:text-[#F47A24] font-semibold pt-1 cursor-pointer"
+              className="text-xs text-[#102B4E] hover:text-[#F47A24] font-semibold pt-1 cursor-pointer"
             >
               Browse Open Jobs Without Signing In →
             </button>
@@ -410,8 +410,8 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
         {/* Page Header (Requirement 4 & 5) */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
           <div className="space-y-1 min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-[#004D40] text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40] shrink-0" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-[#102B4E] shrink-0" />
               <span>ABHI JOBS Career Portal</span>
             </div>
             
@@ -457,8 +457,8 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
         {totalSavedCount === 0 ? (
           /* Proper Empty State (Requirement 8): ZERO saved jobs */
           <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 text-center space-y-6 shadow-2xs max-w-3xl mx-auto">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-teal-50 border border-teal-100 text-[#004D40] mx-auto flex items-center justify-center">
-              <Bookmark className="w-8 h-8 sm:w-10 sm:h-10 text-[#004D40]" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#F1F5FA] border border-[#E5EAF0] text-[#102B4E] mx-auto flex items-center justify-center">
+              <Bookmark className="w-8 h-8 sm:w-10 sm:h-10 text-[#102B4E]" />
             </div>
 
             <div className="max-w-md mx-auto space-y-2">
@@ -490,7 +490,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
 
             <div className="max-w-lg mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-left">
               <div className="font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-                <BookmarkCheck className="w-4 h-4 text-[#004D40]" />
+                <BookmarkCheck className="w-4 h-4 text-[#102B4E]" />
                 <span>How Job Bookmarks Work on ABHI JOBS:</span>
               </div>
               <p className="leading-relaxed">
@@ -617,7 +617,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                   <span className="text-slate-300">•</span>
                   <button
                     onClick={resetAllFilters}
-                    className="text-[#004D40] font-semibold hover:underline cursor-pointer"
+                    className="text-[#102B4E] font-semibold hover:underline cursor-pointer"
                   >
                     Clear all filters
                   </button>
@@ -698,7 +698,7 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                     <div
                       key={job.id}
                       className={`bg-white rounded-2xl border p-5 sm:p-6 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4 ${
-                        isClosed ? 'border-amber-200 bg-amber-50/20' : 'border-[#E4E7EC] hover:border-slate-300'
+                        isClosed ? 'border-amber-200 bg-amber-50/20' : 'border-[#E5EAF0] hover:border-slate-300'
                       }`}
                     >
                       {/* Card Header: Company, Logo, Verified badge, Save action */}
@@ -724,8 +724,8 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                                   {job.companyName}
                                 </span>
                                 {job.isVerifiedCompany && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-50 text-[#004D40] text-[10px] font-bold border border-teal-200/60">
-                                    <Check className="w-3 h-3 text-[#004D40]" />
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] text-[10px] font-bold border border-[#D4DCE6]">
+                                    <Check className="w-3 h-3 text-[#102B4E]" />
                                     Verified
                                   </span>
                                 )}
@@ -745,11 +745,11 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                           {/* Quick Remove Saved Button (Requirement 7: Remove Saved) */}
                           <button
                             onClick={() => handleRemoveSaved(job.id, job.title)}
-                            className="p-2 rounded-xl border border-teal-200 bg-teal-50 text-[#004D40] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-all cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold"
+                            className="p-2 rounded-xl border border-[#D4DCE6] bg-[#F1F5FA] text-[#102B4E] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-all cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold"
                             title="Remove from Saved Jobs"
                             aria-label="Remove from Saved Jobs"
                           >
-                            <BookmarkCheck className="w-4 h-4 text-[#004D40]" />
+                            <BookmarkCheck className="w-4 h-4 text-[#102B4E]" />
                             <span className="hidden sm:inline text-[11px] font-bold">Saved</span>
                           </button>
                         </div>
@@ -838,8 +838,8 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                         <div>
                           {matchScore ? (
                             <div className="flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-[#004D40] shrink-0" />
-                              <span className="text-xs font-bold text-[#004D40]">{matchScore}% Match</span>
+                              <Sparkles className="w-3.5 h-3.5 text-[#102B4E] shrink-0" />
+                              <span className="text-xs font-bold text-[#102B4E]">{matchScore}% Match</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1 text-[11px] text-slate-400">
@@ -867,10 +867,10 @@ export const JobSeekerSavedJobsPage: React.FC<JobSeekerSavedJobsPageProps> = ({ 
                           {hasApplied ? (
                             <button
                               onClick={() => navigate('/applications')}
-                              className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] text-xs font-bold inline-flex items-center justify-center gap-1.5 min-h-[40px] hover:bg-teal-100 transition-colors cursor-pointer"
+                              className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] text-xs font-bold inline-flex items-center justify-center gap-1.5 min-h-[40px] hover:bg-[#E5EAF0] transition-colors cursor-pointer"
                               title="View your submitted application"
                             >
-                              <Check className="w-3.5 h-3.5 text-[#004D40]" />
+                              <Check className="w-3.5 h-3.5 text-[#102B4E]" />
                               <span>Already Applied</span>
                             </button>
                           ) : isClosed ? (

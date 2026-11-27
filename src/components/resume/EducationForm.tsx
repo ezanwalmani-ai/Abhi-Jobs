@@ -57,7 +57,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-[#004D40]" />
+            <GraduationCap className="w-4 h-4 text-[#102B4E]" />
             Education
           </h3>
           <p className="text-xs text-slate-500">
@@ -68,7 +68,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
         <button
           type="button"
           onClick={handleAddEducation}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#102B4E] hover:bg-[#081D36] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Add Education</span>
@@ -85,7 +85,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
           <button
             type="button"
             onClick={handleAddEducation}
-            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#004D40] text-xs font-semibold border border-teal-200 cursor-pointer"
+            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#F1F5FA] hover:bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold border border-[#D4DCE6] cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Education</span>
@@ -110,7 +110,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                   >
                     <ChevronRight
                       className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
-                        isExpanded ? 'rotate-90 text-[#004D40]' : ''
+                        isExpanded ? 'rotate-90 text-[#102B4E]' : ''
                       }`}
                     />
                     <div className="min-w-0 truncate">
@@ -165,7 +165,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                           value={edu.degree}
                           onChange={(e) => handleUpdate(edu.id, { degree: e.target.value })}
                           placeholder="e.g. Bachelor of Commerce (B.Com)"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -178,7 +178,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                           value={edu.institution}
                           onChange={(e) => handleUpdate(edu.id, { institution: e.target.value })}
                           placeholder="e.g. Bangalore University"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -191,7 +191,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                           value={edu.location}
                           onChange={(e) => handleUpdate(edu.id, { location: e.target.value })}
                           placeholder="e.g. Bengaluru, India"
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                         />
                       </div>
 
@@ -206,7 +206,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                             value={edu.startDate}
                             onChange={(e) => handleUpdate(edu.id, { startDate: e.target.value })}
                             placeholder="YYYY"
-                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                           />
                         </div>
 
@@ -220,7 +220,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                             value={edu.endDate}
                             onChange={(e) => handleUpdate(edu.id, { endDate: e.target.value })}
                             placeholder="YYYY"
-                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                           />
                         </div>
                       </div>
@@ -235,7 +235,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ education, onChang
                         value={edu.description}
                         onChange={(e) => handleUpdate(edu.id, { description: e.target.value })}
                         placeholder="e.g. Graduated First Class with Distinction, Major in Finance"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20"
                       />
                     </div>
                   </div>

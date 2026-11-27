@@ -36,7 +36,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-[#E4E7EC] hover:border-slate-300 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-300 md:hover:-translate-y-1 flex flex-col justify-between">
+    <div className="group bg-white rounded-2xl border border-[#E5EAF0] hover:border-slate-300 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-300 md:hover:-translate-y-1 flex flex-col justify-between">
       <div>
         {/* Top profile banner */}
         <div className="flex items-start gap-4">
@@ -45,7 +45,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
               <img
                 src={candidate.avatar}
                 alt={candidate.name}
-                className="w-14 h-14 rounded-2xl object-cover border border-[#E4E7EC] shadow-xs group-hover:scale-[1.02] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                className="w-14 h-14 rounded-2xl object-cover border border-[#E5EAF0] shadow-xs group-hover:scale-[1.02] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
                 loading="lazy"
               />
             ) : (
@@ -58,7 +58,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
             )}
             <span
               className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                candidate.availableForOpportunities ? 'bg-[#004D40]' : 'bg-slate-400'
+                candidate.availableForOpportunities ? 'bg-[#102B4E]' : 'bg-slate-400'
               }`}
               title={candidate.availableForOpportunities ? 'Available immediately' : 'Not actively looking'}
             />
@@ -72,8 +72,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
               >
                 {candidate.name}
               </h3>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-50 text-[#004D40] text-[10px] font-bold border border-teal-200/70">
-                <ShieldCheck className="w-3 h-3 text-[#004D40]" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#F1F5FA] text-[#102B4E] text-[10px] font-bold border border-[#D4DCE6]/70">
+                <ShieldCheck className="w-3 h-3 text-[#102B4E]" />
                 ABHI JOBS Verified
               </span>
             </div>
@@ -91,7 +91,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 text-slate-400" />
-                <span className="text-[#004D40] font-semibold">{candidate.availability}</span>
+                <span className="text-[#102B4E] font-semibold">{candidate.availability}</span>
               </div>
             </div>
           </div>
@@ -109,13 +109,13 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
           {(candidate.skills || []).slice(0, 5).map((skill) => (
             <span
               key={skill}
-              className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#101828] text-[11px] font-medium border border-[#E4E7EC]"
+              className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#101828] text-[11px] font-medium border border-[#E5EAF0]"
             >
               {skill}
             </span>
           ))}
           {(candidate.skills || []).length > 5 && (
-            <span className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#667085] text-[11px] border border-[#E4E7EC]">
+            <span className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#667085] text-[11px] border border-[#E5EAF0]">
               +{(candidate.skills || []).length - 5}
             </span>
           )}
@@ -123,7 +123,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
       </div>
 
       {/* Action Footer */}
-      <div className="pt-4 mt-5 border-t border-[#E4E7EC] flex items-center justify-between gap-2 relative">
+      <div className="pt-4 mt-5 border-t border-[#E5EAF0] flex items-center justify-between gap-2 relative">
         <button
           onClick={() => onViewProfile(candidate)}
           className="text-xs font-semibold text-[#101828] hover:text-[#F47A24] transition-colors flex items-center gap-1 cursor-pointer"
@@ -149,7 +149,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 4 }}
                 transition={{ duration: 0.2, ease: EASE_PREMIUM }}
-                className="absolute right-0 bottom-10 w-64 bg-white rounded-2xl shadow-xl border border-[#E4E7EC] p-3.5 z-30"
+                className="absolute right-0 bottom-10 w-64 bg-white rounded-2xl shadow-xl border border-[#E5EAF0] p-3.5 z-30"
               >
                 <div className="text-xs font-bold text-[#101828] mb-2">Select Active Job Opening:</div>
                 {activeJobs.length === 0 ? (
@@ -159,7 +159,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, onViewP
                     <select
                       value={inviteJobId}
                       onChange={(e) => setInviteJobId(e.target.value)}
-                      className="w-full text-xs p-2 rounded-xl border border-[#D0D5DD] bg-white focus:outline-hidden focus:border-[#102B4E]"
+                      className="w-full text-xs p-2 rounded-xl border border-[#D4DCE6] bg-white focus:outline-hidden focus:border-[#102B4E]"
                     >
                       <option value="">Select a job...</option>
                       {activeJobs.map((j) => (

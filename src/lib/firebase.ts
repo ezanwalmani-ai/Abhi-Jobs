@@ -25,15 +25,21 @@ import {
   updateDoc,
   deleteDoc,
   collection,
+  collectionGroup,
   query,
   where,
   orderBy,
   limit,
+  startAfter,
   getDocs,
   getCountFromServer,
   writeBatch,
+  runTransaction,
   serverTimestamp,
   getDocFromServer,
+  onSnapshot,
+  type QueryDocumentSnapshot,
+  type DocumentData,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -152,35 +158,47 @@ export async function testConnection(): Promise<boolean> {
   }
 }
 
-async function ensureUserProfileDoc(
+export async function ensureUserProfileDoc(
   fbUser: FirebaseUser,
   role: 'job_seeker' | 'employer' = 'job_seeker',
   explicitName?: string
 ): Promise<{ name: string; email: string; avatar: string }> {
-  const name =
+  const rawName =
     explicitName?.trim() ||
     fbUser.displayName ||
     fbUser.email?.split('@')[0] ||
     'ABHI JOBS Member';
-  const email = fbUser.email || '';
-  const avatar =
+  const name = rawName.slice(0, 100);
+  const email = (fbUser.email || '').trim().toLowerCase().slice(0, 150);
+  const rawAvatar =
     fbUser.photoURL ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
+  const avatar = rawAvatar.startsWith('data:') ? '' : rawAvatar.slice(0, 500);
 
   try {
     const userRef = doc(db, 'users', fbUser.uid);
     const userSnap = await getDoc(userRef);
+    const nowLabel = new Date().toISOString().slice(0, 16).replace('T', ' ');
     if (!userSnap.exists()) {
       await setDoc(userRef, {
         id: fbUser.uid,
         name,
         email,
         role,
-        avatar,
-        createdAt: new Date().toISOString(),
-        lastActive: 'Just now',
+        ...(avatar ? { avatar } : {}),
+        createdAt: fbUser.metadata?.creationTime
+          ? new Date(fbUser.metadata.creationTime).toISOString()
+          : new Date().toISOString(),
+        lastActive: nowLabel,
         status: 'active',
       });
+    } else {
+      const existingData = userSnap.data();
+      if (existingData?.status !== 'suspended') {
+        await updateDoc(userRef, {
+          lastActive: nowLabel,
+        }).catch(() => {});
+      }
     }
   } catch (fsErr) {
     console.warn('Firestore user profile sync notice:', fsErr);
@@ -282,13 +300,18 @@ export {
   updateDoc,
   deleteDoc,
   collection,
+  collectionGroup,
   query,
   where,
   orderBy,
   limit,
+  startAfter,
   getDocs,
   getCountFromServer,
   writeBatch,
+  runTransaction,
   serverTimestamp,
+  getDocFromServer,
+  onSnapshot,
 };
-export type { FirebaseUser };
+export type { FirebaseUser, QueryDocumentSnapshot, DocumentData };

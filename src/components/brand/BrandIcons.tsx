@@ -39,7 +39,7 @@ export const FalconBeaconIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -99,7 +99,7 @@ export const VerifiedSkillIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -153,7 +153,7 @@ export const CareerApexIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -209,7 +209,7 @@ export const TalentNexusIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -261,7 +261,7 @@ export const OpportunityRadarIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -303,7 +303,7 @@ export const EnterpriseMonolithIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -352,7 +352,7 @@ export const VerifiedDossierIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg
@@ -399,7 +399,7 @@ export const CompassTargetIcon: React.FC<BrandIconProps> = ({
   const px = resolveSize(size);
   const navy = colorMode === 'white' ? '#FFFFFF' : '#061226';
   const red = colorMode === 'white' ? '#FF4D3D' : '#FF2B1A';
-  const teal = colorMode === 'white' ? '#14B8A6' : '#004D40';
+  const teal = colorMode === 'white' ? '#14B8A6' : '#102B4E';
 
   return (
     <svg

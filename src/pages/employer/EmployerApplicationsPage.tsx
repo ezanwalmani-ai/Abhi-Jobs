@@ -134,7 +134,7 @@ export const EmployerApplicationsPage: React.FC<EmployerApplicationsPageProps> =
                       >
                         {app.candidateName}
                       </button>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-teal-50 text-[#004D40] border border-teal-200">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6]">
                         {app.matchScore}% Verified Match
                       </span>
                     </div>

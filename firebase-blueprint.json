@@ -516,23 +516,36 @@
       "properties": {
         "id": { "type": "string", "description": "Candidate document ID (matches auth UID)", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "userId": { "type": "string", "description": "Owner Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateCode": { "type": "string", "description": "Immutable 4-digit numeric ABHI JOBS Candidate ID (1000-9999)", "pattern": "^[1-9][0-9]{3}$" },
         "name": { "type": "string", "description": "Candidate full name", "maxLength": 120 },
         "email": { "type": "string", "description": "Candidate private email", "maxLength": 150 },
         "phone": { "type": "string", "description": "Candidate private phone number", "maxLength": 30 },
+        "altPhone": { "type": "string", "description": "Alternative mobile number", "maxLength": 30 },
         "location": { "type": "string", "description": "Current location label", "maxLength": 120 },
         "city": { "type": "string", "description": "City", "maxLength": 80 },
         "state": { "type": "string", "description": "State or region", "maxLength": 80 },
+        "country": { "type": "string", "description": "Country", "maxLength": 80 },
+        "pinCode": { "type": "string", "description": "Postal / PIN code", "maxLength": 20 },
         "headline": { "type": "string", "description": "Professional headline", "maxLength": 200 },
         "about": { "type": "string", "description": "Profile summary", "maxLength": 2500 },
+        "careerObjective": { "type": "string", "description": "Career objective statement", "maxLength": 1000 },
         "currentRole": { "type": "string", "description": "Current job title", "maxLength": 120 },
+        "currentCompany": { "type": "string", "description": "Current employer name", "maxLength": 140 },
         "desiredRole": { "type": "string", "description": "Target role", "maxLength": 120 },
+        "noticePeriod": { "type": "string", "description": "Notice period", "maxLength": 60 },
         "experienceLevel": { "type": "string", "description": "Seniority tier", "enum": ["Fresher", "Junior", "Mid", "Senior", "Lead"] },
         "experienceType": { "type": "string", "description": "Fresher vs experienced indicator", "enum": ["fresher", "experienced"] },
         "workStatus": { "type": "string", "description": "Current employment status label", "maxLength": 80 },
         "yearsOfExperience": { "type": "number", "description": "Total years of work experience (0-60)" },
         "preferredLocation": { "type": "string", "description": "Preferred job location", "maxLength": 120 },
+        "preferredLocations": { "type": "array", "description": "Bounded list of preferred locations (max 15)" },
+        "preferredJobTitles": { "type": "array", "description": "Bounded list of preferred job titles (max 15)" },
+        "preferredEmploymentTypes": { "type": "array", "description": "Bounded list of preferred employment types (max 10)" },
+        "preferredShift": { "type": "string", "description": "Preferred work shift", "maxLength": 40 },
+        "jobSearchStatus": { "type": "string", "description": "Job search urgency status", "maxLength": 80 },
         "workPreference": { "type": "string", "description": "Preferred work mode", "enum": ["Remote", "Hybrid", "On-site", "Flexible"] },
         "preferredIndustry": { "type": "string", "description": "Preferred industry sector", "maxLength": 100 },
+        "currentSalary": { "type": "object", "description": "Private current compensation object (max 4 keys)" },
         "expectedSalary": { "type": "object", "description": "Private expected compensation range object (max 5 keys)" },
         "willingToRelocate": { "type": "boolean", "description": "Relocation preference" },
         "gender": { "type": "string", "description": "Optional self-reported gender", "maxLength": 40 },
@@ -542,10 +555,23 @@
         "profileVisibility": { "type": "string", "description": "Discovery visibility preference", "enum": ["employers_only", "private"] },
         "availableForOpportunities": { "type": "boolean", "description": "Whether actively open to roles" },
         "skills": { "type": "array", "description": "Bounded list of skill strings (max 40)" },
+        "detailedSkills": { "type": "array", "description": "Bounded list of detailed skill objects with proficiency and category (max 40)" },
         "education": { "type": "array", "description": "Bounded list of education objects (max 15)" },
         "experiences": { "type": "array", "description": "Bounded list of experience objects (max 20)" },
         "certifications": { "type": "array", "description": "Bounded list of certification objects (max 25)" },
+        "projects": { "type": "array", "description": "Bounded list of project objects (max 15)" },
+        "languages": { "type": "array", "description": "Bounded list of language objects (max 15)" },
+        "linkedinUrl": { "type": "string", "description": "LinkedIn URL", "maxLength": 300 },
+        "githubUrl": { "type": "string", "description": "GitHub URL", "maxLength": 300 },
+        "portfolioUrl": { "type": "string", "description": "Portfolio URL", "maxLength": 300 },
+        "personalWebsiteUrl": { "type": "string", "description": "Personal website URL", "maxLength": 300 },
+        "otherLinks": { "type": "array", "description": "Bounded list of other professional links (max 10)" },
         "primaryResumeId": { "type": "string", "description": "Optional ID of candidate's primary structured resume", "maxLength": 128 },
+        "resumeDocId": { "type": "string", "description": "Latest uploaded private resume document ID", "maxLength": 128 },
+        "resumeName": { "type": "string", "description": "Original filename of latest uploaded resume", "maxLength": 160 },
+        "resumeSize": { "type": "string", "description": "Human-readable size of latest uploaded resume", "maxLength": 40 },
+        "resumeUpdated": { "type": "string", "description": "ISO date of last resume upload", "maxLength": 64 },
+        "recruitmentStatus": { "type": "string", "description": "Admin-managed recruitment pipeline status", "enum": ["Active", "Under Review", "Shortlisted", "Interviewing", "Placed", "On Hold", "Archived"] },
         "completionPercentage": { "type": "number", "description": "Profile completeness score (0-100)" },
         "avatar": { "type": "string", "description": "Avatar HTTPS URL", "maxLength": 500 },
         "createdAt": { "type": "string", "description": "Server timestamp of creation" },
@@ -840,6 +866,7 @@
         "jobTitle": { "type": "string", "description": "Snapshot job title", "maxLength": 160 },
         "companyName": { "type": "string", "description": "Snapshot company name", "maxLength": 150 },
         "candidateId": { "type": "string", "description": "Applicant Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateCode": { "type": "string", "description": "Applicant 4-digit ABHI JOBS Candidate ID (1000-9999)", "pattern": "^[1-9][0-9]{3}$" },
         "candidateName": { "type": "string", "description": "Applicant full name", "maxLength": 120 },
         "candidateEmail": { "type": "string", "description": "Applicant email submitted with application", "maxLength": 150 },
         "candidatePhone": { "type": "string", "description": "Applicant phone submitted with application", "maxLength": 30 },
@@ -1068,6 +1095,112 @@
         "requestedAt",
         "updatedAt"
       ]
+    },
+    "CandidateIdRegistry": {
+      "title": "CandidateIdRegistry",
+      "description": "Immutable hard-uniqueness registry mapping each assigned 4-digit numeric ABHI JOBS Candidate ID (1000-9999) to exactly one Firebase Auth UID. Never updated or deleted once assigned.",
+      "type": "object",
+      "properties": {
+        "candidateCode": { "type": "string", "description": "Standard 4-digit numeric ABHI JOBS Candidate ID (1000-9999)", "pattern": "^[1-9][0-9]{3}$" },
+        "userId": { "type": "string", "description": "Internal Firebase Auth UID owning this Candidate ID", "maxLength": 128 },
+        "assignedAt": { "type": "string", "description": "Server timestamp of assignment" }
+      },
+      "required": ["candidateCode", "userId", "assignedAt"]
+    },
+    "CandidateDocument": {
+      "title": "CandidateDocument",
+      "description": "Immutable versioned metadata record for privately uploaded candidate resumes, certificates, and supporting documents. Readable strictly by owner and authorised recruitment/support/super admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document identifier", "maxLength": 128 },
+        "candidateUid": { "type": "string", "description": "Candidate Firebase Auth UID", "maxLength": 128 },
+        "category": { "type": "string", "description": "Document category", "enum": ["resume", "certificate", "supporting"] },
+        "originalFilename": { "type": "string", "description": "Sanitized original filename", "maxLength": 200 },
+        "mimeType": { "type": "string", "description": "Validated MIME type", "maxLength": 120 },
+        "extension": { "type": "string", "description": "Validated file extension", "maxLength": 16 },
+        "sizeBytes": { "type": "number", "description": "File size in bytes (1 to 10485760)" },
+        "versionNumber": { "type": "number", "description": "Monotonically increasing version number per category" },
+        "isLatest": { "type": "boolean", "description": "Whether this version was the latest at upload time" },
+        "uploadedByUid": { "type": "string", "description": "Uploader Firebase Auth UID", "maxLength": 128 },
+        "sha256": { "type": "string", "description": "Optional SHA-256 checksum", "maxLength": 128 },
+        "uploadedAt": { "type": "string", "description": "Server timestamp of upload" }
+      },
+      "required": [
+        "id",
+        "candidateUid",
+        "category",
+        "originalFilename",
+        "mimeType",
+        "extension",
+        "sizeBytes",
+        "versionNumber",
+        "isLatest",
+        "uploadedByUid",
+        "uploadedAt"
+      ]
+    },
+    "CandidateInternalNote": {
+      "title": "CandidateInternalNote",
+      "description": "Private admin-only recruitment notes on a candidate profile. Candidates are strictly denied read and write access.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Note document ID", "maxLength": 128 },
+        "candidateUid": { "type": "string", "description": "Candidate Firebase Auth UID", "maxLength": 128 },
+        "authorUid": { "type": "string", "description": "Admin Firebase Auth UID", "maxLength": 128 },
+        "authorEmail": { "type": "string", "description": "Admin email", "maxLength": 150 },
+        "authorName": { "type": "string", "description": "Admin display name", "maxLength": 120 },
+        "text": { "type": "string", "description": "Private recruitment note content", "maxLength": 2000 },
+        "category": { "type": "string", "description": "Note category", "maxLength": 40 },
+        "createdAt": { "type": "string", "description": "Server timestamp of note creation" }
+      },
+      "required": ["id", "candidateUid", "authorUid", "authorEmail", "authorName", "text", "createdAt"]
+    },
+    "JobSearchAlert": {
+      "title": "JobSearchAlert",
+      "description": "Private per-job-seeker email alert preference for a specific normalized job search query and filter set under /users/{userId}/job_alerts/{alertId}",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Deterministic alert document ID matching queryKey", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "description": "Destination email address for alert preferences", "maxLength": 150 },
+        "label": { "type": "string", "description": "Human-readable summary of the saved search query", "maxLength": 180 },
+        "queryKey": { "type": "string", "description": "Deterministic normalized query hash key", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "search": { "type": "string", "description": "Keyword search query", "maxLength": 120 },
+        "location": { "type": "string", "description": "City or location filter", "maxLength": 100 },
+        "workMode": { "type": "string", "description": "Work mode filter", "enum": ["All", "Remote", "Hybrid", "On-site"] },
+        "employmentType": { "type": "string", "description": "Employment type filter", "enum": ["All", "Full-time", "Part-time", "Contract", "Internship", "Temporary", "Freelance"] },
+        "experienceLevel": { "type": "string", "description": "Experience level filter", "enum": ["All", "Fresher", "1-2_years", "3-5_years", "5_plus_years", "Junior", "Mid", "Senior", "Lead"] },
+        "salaryRange": { "type": "string", "description": "Salary bracket filter", "enum": ["All", "0_20k", "20k_40k", "40k_60k", "60k_plus"] },
+        "department": { "type": "string", "description": "Department filter or All", "maxLength": 80 },
+        "industry": { "type": "string", "description": "Industry filter or All", "maxLength": 80 },
+        "selectedSkill": { "type": "string", "description": "Selected skill filter or All", "maxLength": 80 },
+        "quickMinSalary": { "type": "boolean", "description": "Whether quick minimum salary toggle is active" },
+        "frequency": { "type": "string", "description": "Preferred email alert cadence", "enum": ["instant", "daily", "weekly"] },
+        "enabled": { "type": "boolean", "description": "Whether email alerts are enabled for this search query" },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of last update" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "email",
+        "label",
+        "queryKey",
+        "search",
+        "location",
+        "workMode",
+        "employmentType",
+        "experienceLevel",
+        "salaryRange",
+        "department",
+        "industry",
+        "selectedSkill",
+        "quickMinSalary",
+        "frequency",
+        "enabled",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -1110,6 +1243,10 @@
     "/users/{userId}/notifications/{notificationId}": {
       "schema": "UserNotification",
       "description": "Private per-user in-app notifications"
+    },
+    "/users/{userId}/job_alerts/{alertId}": {
+      "schema": "JobSearchAlert",
+      "description": "Private per-job-seeker email alert preferences for specific job search queries keyed by deterministic queryKey"
     },
     "/public_certificates/{certificateId}": {
       "schema": "PublicCertificateVerification",
@@ -1154,6 +1291,18 @@
     "/candidates/{uid}": {
       "schema": "CandidateProfile",
       "description": "Private candidate profiles containing PII and career details keyed by Firebase Auth UID"
+    },
+    "/candidates/{uid}/documents/{docId}": {
+      "schema": "CandidateDocument",
+      "description": "Immutable uploaded resume and supporting document metadata and version history (owner and authorized recruitment/support admins only)"
+    },
+    "/candidates/{uid}/internal_notes/{noteId}": {
+      "schema": "CandidateInternalNote",
+      "description": "Private admin-only internal recruitment notes per candidate (strictly denied to candidates)"
+    },
+    "/candidate_id_registry/{candidateCode}": {
+      "schema": "CandidateIdRegistry",
+      "description": "Immutable uniqueness registry for standard 4-digit numeric ABHI JOBS Candidate IDs (1000-9999); never overwritten or reused"
     },
     "/candidate_directory/{uid}": {
       "schema": "CandidateDirectoryEntry",

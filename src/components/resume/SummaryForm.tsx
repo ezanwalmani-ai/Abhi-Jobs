@@ -47,7 +47,7 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ summary, onChange }) =
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <AlignLeft className="w-4 h-4 text-[#004D40]" />
+            <AlignLeft className="w-4 h-4 text-[#102B4E]" />
             Professional Summary
           </h3>
           <p className="text-xs text-slate-500">
@@ -59,7 +59,7 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ summary, onChange }) =
           type="button"
           onClick={handleImproveSummary}
           disabled={isImproving}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#004D40] text-xs font-semibold border border-teal-200 transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F1F5FA] hover:bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold border border-[#D4DCE6] transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-60"
         >
           {isImproving ? (
             <>
@@ -68,7 +68,7 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ summary, onChange }) =
             </>
           ) : (
             <>
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#102B4E]" />
               <span>Improve with AI</span>
             </>
           )}
@@ -76,7 +76,7 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ summary, onChange }) =
       </div>
 
       {improveMessage && (
-        <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-xs text-[#004D40] flex items-center gap-2 animate-in fade-in">
+        <div className="p-2.5 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-xs text-[#102B4E] flex items-center gap-2 animate-in fade-in">
           <Check className="w-3.5 h-3.5 shrink-0" />
           <span>{improveMessage}</span>
         </div>
@@ -88,7 +88,7 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ summary, onChange }) =
           value={summary}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Write 2–4 sentences describing your professional background, strengths, and career goals."
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#004D40]/20 leading-relaxed text-slate-800 placeholder:text-slate-400 resize-y"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#102B4E]/20 leading-relaxed text-slate-800 placeholder:text-slate-400 resize-y"
         />
         <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
           <span>Tip: Focus on quantifiable accomplishments and core expertise.</span>

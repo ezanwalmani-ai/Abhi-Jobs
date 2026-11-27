@@ -302,7 +302,7 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-xs text-[#004D40] hover:text-[#102B4E] font-semibold flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[#102B4E] hover:text-[#102B4E] font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     <span>{showPassword ? 'Hide' : 'Show'}</span>
@@ -334,14 +334,14 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded text-[#004D40] focus:ring-[#102B4E] border-slate-300 cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded text-[#102B4E] focus:ring-[#102B4E] border-slate-300 cursor-pointer"
                 />
                 <span>
                   I confirm that I represent this organization and agree to ABHI JOBS's{' '}
                   <button
                     type="button"
                     onClick={() => navigate('/terms')}
-                    className="text-[#004D40] font-semibold underline hover:text-black"
+                    className="text-[#102B4E] font-semibold underline hover:text-black"
                   >
                     Terms of Service
                   </button>{' '}
@@ -349,7 +349,7 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
                   <button
                     type="button"
                     onClick={() => navigate('/privacy')}
-                    className="text-[#004D40] font-semibold underline hover:text-black"
+                    className="text-[#102B4E] font-semibold underline hover:text-black"
                   >
                     Privacy Policy
                   </button>
@@ -382,8 +382,8 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
 
             {/* Status & Error messages under the form */}
             {confirmationMessage && (
-              <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] text-sm font-semibold text-center mt-3 flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#004D40] shrink-0" />
+              <div className="p-4 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] text-sm font-semibold text-center mt-3 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[#102B4E] shrink-0" />
                 <span>{confirmationMessage}</span>
               </div>
             )}
@@ -402,7 +402,7 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="font-bold text-[#004D40] hover:underline cursor-pointer"
+                className="font-bold text-[#102B4E] hover:underline cursor-pointer"
               >
                 Sign In here
               </button>
@@ -412,7 +412,7 @@ export const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ navi
               <button
                 type="button"
                 onClick={() => navigate('/register/job-seeker')}
-                className="font-bold text-[#004D40] hover:underline cursor-pointer"
+                className="font-bold text-[#102B4E] hover:underline cursor-pointer"
               >
                 Register as Job Seeker
               </button>

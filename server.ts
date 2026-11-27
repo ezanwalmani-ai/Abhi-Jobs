@@ -53,12 +53,22 @@ import {
   getModule11PracticeWorkbookBuffer,
   getModule12PracticeWorkbookBuffer,
 } from './server/modules05To12WorkbookGenerators';
+import {
+  defaultCandidateIdStore,
+  isValidFourDigitCandidateId,
+} from './server/candidateIdStore';
+import {
+  defaultCandidateDocumentStore,
+  type CandidateDocumentCategory,
+} from './server/candidateDocumentStore';
+import { defaultAdminAuditStore } from './server/adminAuditStore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load Firebase projectId from firebase-applet-config.json if available
+// Load Firebase projectId & firestoreDatabaseId from firebase-applet-config.json if available
 let FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'geometric-centaur-c6pck';
+let FIRESTORE_DATABASE_ID = process.env.FIRESTORE_DATABASE_ID || '(default)';
 try {
   const cfgPath = path.resolve(__dirname, 'firebase-applet-config.json');
   if (fs.existsSync(cfgPath)) {
@@ -66,13 +76,75 @@ try {
     if (typeof parsed.projectId === 'string' && parsed.projectId.trim()) {
       FIREBASE_PROJECT_ID = parsed.projectId.trim();
     }
+    if (typeof parsed.firestoreDatabaseId === 'string' && parsed.firestoreDatabaseId.trim()) {
+      FIRESTORE_DATABASE_ID = parsed.firestoreDatabaseId.trim();
+    }
   }
 } catch {
   // Keep fallback projectId
 }
 
 const ADMIN_EMAILS = new Set(['ezanwalmani@gmail.com']);
+const CANDIDATE_DATA_ADMIN_ROLES = new Set([
+  'super_admin',
+  'recruitment_admin',
+  'support_admin',
+]);
+const ALL_ACTIVE_ADMIN_ROLES = new Set([
+  'super_admin',
+  'recruitment_admin',
+  'learning_admin',
+  'content_admin',
+  'support_admin',
+]);
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+interface CachedAdminRole {
+  role: string;
+  active: boolean;
+  expiresAt: number;
+}
+const firestoreAdminRoleCache = new Map<string, CachedAdminRole>();
+
+async function verifyFirestoreDelegatedAdminRole(
+  uid: string,
+  idToken: string
+): Promise<{ active: boolean; role: string } | null> {
+  const cached = firestoreAdminRoleCache.get(uid);
+  if (cached && cached.expiresAt > Date.now()) {
+    return { active: cached.active, role: cached.role };
+  }
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(
+      FIREBASE_PROJECT_ID
+    )}/databases/${encodeURIComponent(FIRESTORE_DATABASE_ID)}/documents/admins/${encodeURIComponent(
+      uid
+    )}`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!resp.ok) {
+      firestoreAdminRoleCache.set(uid, {
+        active: false,
+        role: '',
+        expiresAt: Date.now() + 30_000,
+      });
+      return null;
+    }
+    const docData: any = await resp.json();
+    const role = String(docData?.fields?.role?.stringValue || '');
+    const status = String(docData?.fields?.status?.stringValue || '');
+    const active = status === 'active' && ALL_ACTIVE_ADMIN_ROLES.has(role);
+    firestoreAdminRoleCache.set(uid, {
+      active,
+      role,
+      expiresAt: Date.now() + 60_000,
+    });
+    return { active, role };
+  } catch {
+    return null;
+  }
+}
 
 // ============================================================================
 // CRYPTOGRAPHIC FIREBASE ID TOKEN VERIFICATION
@@ -276,6 +348,8 @@ async function resolveAdminAuth(req: Request): Promise<{
   authorized: boolean;
   method?: 'firebase' | 'passcode';
   actor?: string;
+  uid?: string;
+  role?: string;
 }> {
   const token = extractBearerToken(req);
   if (!token) return { authorized: false };
@@ -284,15 +358,42 @@ async function resolveAdminAuth(req: Request): Promise<{
   if (token.startsWith('adm.')) {
     const verified = verifyAdminSessionToken(token);
     if (verified) {
-      return { authorized: true, method: 'passcode', actor: verified.sub };
+      return {
+        authorized: true,
+        method: 'passcode',
+        actor: verified.sub,
+        uid: verified.sub,
+        role: 'super_admin',
+      };
     }
     return { authorized: false };
   }
 
   // 2. Check cryptographic Firebase ID token
   const fbUser = await verifyFirebaseIdToken(token);
-  if (fbUser && fbUser.emailVerified && ADMIN_EMAILS.has(fbUser.email)) {
-    return { authorized: true, method: 'firebase', actor: fbUser.email };
+  if (!fbUser || !fbUser.emailVerified) {
+    return { authorized: false };
+  }
+  if (ADMIN_EMAILS.has(fbUser.email)) {
+    return {
+      authorized: true,
+      method: 'firebase',
+      actor: fbUser.email,
+      uid: fbUser.uid,
+      role: 'super_admin',
+    };
+  }
+
+  // 3. Check active delegated admin RBAC record in Firestore /admins/{uid}
+  const delegated = await verifyFirestoreDelegatedAdminRole(fbUser.uid, token);
+  if (delegated && delegated.active) {
+    return {
+      authorized: true,
+      method: 'firebase',
+      actor: fbUser.email,
+      uid: fbUser.uid,
+      role: delegated.role,
+    };
   }
 
   return { authorized: false };
@@ -308,6 +409,8 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction): Pr
     return;
   }
   (req as any).adminActor = authResult.actor || 'admin';
+  (req as any).adminUid = authResult.uid || 'admin';
+  (req as any).adminRole = authResult.role || 'super_admin';
   next();
 }
 
@@ -1754,6 +1857,332 @@ async function startServer() {
       }
     }
   );
+
+  // --------------------------------------------------------------------------
+  // STANDARD 4-DIGIT CANDIDATE ID SYSTEM (1000–9999)
+  // --------------------------------------------------------------------------
+
+  app.post('/api/candidates/assign-id', async (req: Request, res: Response) => {
+    try {
+      const token = extractBearerToken(req);
+      if (!token) {
+        res.status(401).json({ error: 'Authentication token is required.', code: 'AUTH_REQUIRED' });
+        return;
+      }
+
+      const adminAuth = await resolveAdminAuth(req);
+      const fbUser = token.startsWith('adm.') ? null : await verifyFirebaseIdToken(token);
+
+      if (!adminAuth.authorized && !fbUser) {
+        res.status(401).json({ error: 'Invalid or expired authentication token.', code: 'TOKEN_INVALID' });
+        return;
+      }
+
+      const requestedUid = sanitizeShortText(req.body?.targetUid, 128);
+      const targetUid = requestedUid || fbUser?.uid || '';
+
+      if (!targetUid) {
+        res.status(400).json({ error: 'Target candidate UID is required.', code: 'INVALID_UID' });
+        return;
+      }
+
+      // Candidates may only request an ID for their own authenticated UID;
+      // Recruitment/Super Admins may assign missing IDs for existing accounts during backfill.
+      const isSelf = Boolean(fbUser && fbUser.uid === targetUid);
+      const isAuthorizedAdminBackfill = Boolean(
+        adminAuth.authorized &&
+          (adminAuth.role === 'super_admin' || adminAuth.role === 'recruitment_admin')
+      );
+
+      if (!isSelf && !isAuthorizedAdminBackfill) {
+        res.status(403).json({
+          error: 'You are not authorized to assign a Candidate ID for another user.',
+          code: 'CANDIDATE_ID_FORBIDDEN',
+        });
+        return;
+      }
+
+      // Sync any known Firestore mappings supplied by the caller so restarts never collide
+      if (Array.isArray(req.body?.knownMappings) && req.body.knownMappings.length > 0) {
+        const sanitizedMappings = req.body.knownMappings
+          .slice(0, 9000)
+          .filter(
+            (m: any) =>
+              m &&
+              typeof m.userUid === 'string' &&
+              isValidFourDigitCandidateId(m.candidateCode)
+          )
+          .map((m: any) => ({
+            userUid: String(m.userUid).trim(),
+            candidateCode: String(m.candidateCode).trim(),
+          }));
+        defaultCandidateIdStore.syncKnownMappings(sanitizedMappings);
+      }
+
+      const excludeCodes = Array.isArray(req.body?.excludeCodes)
+        ? req.body.excludeCodes.filter((c: unknown) => isValidFourDigitCandidateId(c))
+        : undefined;
+      const existingCode = isValidFourDigitCandidateId(req.body?.existingCode)
+        ? String(req.body.existingCode).trim()
+        : undefined;
+      const forceNewOnCollision = Boolean(req.body?.forceNewOnCollision);
+
+      const result = defaultCandidateIdStore.assignCandidateId(targetUid, {
+        existingCode,
+        excludeCodes,
+        forceNewOnCollision,
+      });
+
+      if (!result.ok) {
+        if ('errorCode' in result && result.errorCode === 'CANDIDATE_ID_CAPACITY_EXHAUSTED') {
+          defaultAdminAuditStore.append({
+            action: 'candidate_id_capacity_exhausted',
+            actorUid: adminAuth.uid || fbUser?.uid || 'system',
+            actorEmail: adminAuth.actor || fbUser?.email || 'system',
+            actorRole: adminAuth.role || 'candidate',
+            targetType: 'candidate_id_registry',
+            targetId: targetUid,
+            summary:
+              'Candidate ID pool (1000–9999) reached 100% capacity. Stopped safely without duplicates or format changes.',
+          });
+          res.status(507).json(result);
+          return;
+        }
+        res.status(400).json(result);
+        return;
+      }
+
+      if (!result.alreadyAssigned && isAuthorizedAdminBackfill && !isSelf) {
+        defaultAdminAuditStore.append({
+          action: 'candidate_id_backfilled',
+          actorUid: adminAuth.uid || 'admin',
+          actorEmail: adminAuth.actor || 'admin',
+          actorRole: adminAuth.role || 'super_admin',
+          targetType: 'candidate',
+          targetId: targetUid,
+          candidateCode: result.candidateCode,
+          summary: `Assigned ABHI JOBS Candidate ID ${result.candidateCode} to existing account ${targetUid}.`,
+        });
+      }
+
+      res.json(result);
+    } catch (err) {
+      handleLearningRouteError(res, err);
+    }
+  });
+
+  app.get(
+    '/api/admin/candidates/id-capacity',
+    requireAdmin,
+    (_req: Request, res: Response) => {
+      try {
+        res.json(defaultCandidateIdStore.getCapacityStats());
+      } catch (err) {
+        handleLearningRouteError(res, err);
+      }
+    }
+  );
+
+  // --------------------------------------------------------------------------
+  // PRIVATE CANDIDATE RESUME & DOCUMENT STORAGE (OWNER OR AUTHORIZED ADMIN ONLY)
+  // --------------------------------------------------------------------------
+
+  const largeDocJsonParser = express.json({ limit: '15mb' });
+
+  app.post(
+    '/api/candidates/:uid/documents/upload',
+    largeDocJsonParser,
+    async (req: Request, res: Response) => {
+      try {
+        const candidateUid = sanitizeShortText(req.params.uid, 128);
+        const fbUser = await requireVerifiedCandidate(req, res, candidateUid);
+        if (!fbUser) return;
+
+        const originalFilename = sanitizeShortText(req.body?.originalFilename, 160);
+        const rawCategory = sanitizeShortText(req.body?.category, 32);
+        const category: CandidateDocumentCategory =
+          rawCategory === 'certificate' || rawCategory === 'supporting'
+            ? rawCategory
+            : 'resume';
+        const contentBase64 = typeof req.body?.contentBase64 === 'string' ? req.body.contentBase64.trim() : '';
+
+        if (!originalFilename || !contentBase64) {
+          res.status(400).json({
+            error: 'Filename and file content are required.',
+            code: 'INVALID_DOCUMENT_PAYLOAD',
+          });
+          return;
+        }
+
+        const buffer = Buffer.from(contentBase64, 'base64');
+        const saved = defaultCandidateDocumentStore.saveDocument({
+          candidateUid: fbUser.uid,
+          uploadedByUid: fbUser.uid,
+          originalFilename,
+          category,
+          buffer,
+          declaredMimeType: sanitizeShortText(req.body?.mimeType, 120),
+        });
+
+        const { storedRelativePath: _omit, ...publicDoc } = saved;
+        res.status(201).json({ document: publicDoc });
+      } catch (err: any) {
+        const msg = err instanceof Error ? err.message : 'Document upload failed.';
+        res.status(400).json({ error: msg, code: 'DOCUMENT_UPLOAD_REJECTED' });
+      }
+    }
+  );
+
+  app.get('/api/candidates/:uid/documents', async (req: Request, res: Response) => {
+    try {
+      const candidateUid = sanitizeShortText(req.params.uid, 128);
+      if (!candidateUid) {
+        res.status(400).json({ error: 'Candidate identifier is required.' });
+        return;
+      }
+
+      const token = extractBearerToken(req);
+      if (!token) {
+        res.status(401).json({ error: 'Authentication required to access candidate documents.' });
+        return;
+      }
+
+      const adminAuth = await resolveAdminAuth(req);
+      const isAllowedAdmin = Boolean(
+        adminAuth.authorized && CANDIDATE_DATA_ADMIN_ROLES.has(adminAuth.role || '')
+      );
+      const fbUser = token.startsWith('adm.') ? null : await verifyFirebaseIdToken(token);
+      const isOwner = Boolean(fbUser && fbUser.emailVerified && fbUser.uid === candidateUid);
+
+      if (!isOwner && !isAllowedAdmin) {
+        res.status(403).json({
+          error: 'Access denied. Only the candidate or authorized recruitment/support administrators may view these documents.',
+          code: 'DOCUMENT_ACCESS_DENIED',
+        });
+        return;
+      }
+
+      const documents = defaultCandidateDocumentStore.listDocuments(candidateUid);
+      res.json({ documents });
+    } catch (err) {
+      handleLearningRouteError(res, err);
+    }
+  });
+
+  app.get('/api/candidates/:uid/documents/:docId/content', async (req: Request, res: Response) => {
+    try {
+      const candidateUid = sanitizeShortText(req.params.uid, 128);
+      const docId = sanitizeShortText(req.params.docId, 128);
+      if (!candidateUid || !docId) {
+        res.status(400).json({ error: 'Candidate and document identifiers are required.' });
+        return;
+      }
+
+      const token = extractBearerToken(req);
+      if (!token) {
+        res.status(401).json({ error: 'Authentication required.' });
+        return;
+      }
+
+      const adminAuth = await resolveAdminAuth(req);
+      const isAllowedAdmin = Boolean(
+        adminAuth.authorized && CANDIDATE_DATA_ADMIN_ROLES.has(adminAuth.role || '')
+      );
+      const fbUser = token.startsWith('adm.') ? null : await verifyFirebaseIdToken(token);
+      const isOwner = Boolean(fbUser && fbUser.emailVerified && fbUser.uid === candidateUid);
+
+      if (!isOwner && !isAllowedAdmin) {
+        res.status(403).json({
+          error: 'Access denied. Document access is restricted to the owner and authorized administrators.',
+          code: 'DOCUMENT_ACCESS_DENIED',
+        });
+        return;
+      }
+
+      const found = defaultCandidateDocumentStore.readDocumentContent(candidateUid, docId);
+      if (!found) {
+        res.status(404).json({ error: 'Document not found.' });
+        return;
+      }
+
+      const dispositionMode = req.query.disposition === 'inline' ? 'inline' : 'attachment';
+      const safeHeaderFilename = found.meta.originalFilename.replace(/["\\\r\n]/g, '_');
+
+      if (isAllowedAdmin && !isOwner) {
+        defaultAdminAuditStore.append({
+          action: dispositionMode === 'inline' ? 'candidate_document_previewed' : 'candidate_document_downloaded',
+          actorUid: adminAuth.uid || 'admin',
+          actorEmail: adminAuth.actor || 'admin',
+          actorRole: adminAuth.role || 'super_admin',
+          targetType: 'document',
+          targetId: candidateUid,
+          summary: `${dispositionMode === 'inline' ? 'Previewed' : 'Downloaded'} ${found.meta.category} "${found.meta.originalFilename}" (v${found.meta.versionNumber}).`,
+          metadata: { docId: found.meta.id, category: found.meta.category },
+        });
+      }
+
+      res.setHeader('Content-Type', found.meta.mimeType);
+      res.setHeader('Content-Disposition', `${dispositionMode}; filename="${safeHeaderFilename}"`);
+      res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.status(200).send(found.buffer);
+    } catch (err) {
+      handleLearningRouteError(res, err);
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // ADMIN AUDIT LOG API
+  // --------------------------------------------------------------------------
+
+  app.post('/api/admin/audit-log', requireAdmin, (req: Request, res: Response) => {
+    try {
+      const action = sanitizeShortText(req.body?.action, 80);
+      const targetTypeRaw = sanitizeShortText(req.body?.targetType, 40);
+      const targetType =
+        targetTypeRaw === 'candidate' ||
+        targetTypeRaw === 'application' ||
+        targetTypeRaw === 'document' ||
+        targetTypeRaw === 'candidate_id_registry'
+          ? targetTypeRaw
+          : 'system';
+      const targetId = sanitizeShortText(req.body?.targetId, 128);
+      const candidateCode = isValidFourDigitCandidateId(req.body?.candidateCode)
+        ? String(req.body.candidateCode).trim()
+        : undefined;
+      const summary = sanitizeShortText(req.body?.summary, 400);
+
+      if (!action || !targetId || !summary) {
+        res.status(400).json({ error: 'action, targetId, and summary are required.' });
+        return;
+      }
+
+      const entry = defaultAdminAuditStore.append({
+        action,
+        actorUid: (req as any).adminUid || 'admin',
+        actorEmail: (req as any).adminActor || 'admin',
+        actorRole: (req as any).adminRole || 'super_admin',
+        targetType,
+        targetId,
+        candidateCode,
+        summary,
+      });
+      res.status(201).json({ entry });
+    } catch (err) {
+      handleLearningRouteError(res, err);
+    }
+  });
+
+  app.get('/api/admin/audit-log', requireAdmin, (req: Request, res: Response) => {
+    try {
+      const targetId = sanitizeShortText(req.query?.targetId, 128) || undefined;
+      const limit = Number(req.query?.limit) || 100;
+      const entries = defaultAdminAuditStore.list({ targetId, limit });
+      res.json({ entries });
+    } catch (err) {
+      handleLearningRouteError(res, err);
+    }
+  });
 
   // --------------------------------------------------------------------------
   // VITE MIDDLEWARE (DEV) OR STATIC DIST SERVING (PROD)

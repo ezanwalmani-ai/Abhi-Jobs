@@ -119,33 +119,48 @@ export function stripUndefined<T extends Record<string, unknown>>(obj: T): Parti
 // CANDIDATES (/candidates/{uid} + opt-in non-PII /candidate_directory/{uid})
 // ============================================================================
 
-export async function fetchCandidateProfileFromFirestore(
-  uid: string
-): Promise<CandidateProfile | null> {
-  const snap = await getDoc(doc(db, 'candidates', uid));
-  if (!snap.exists()) return null;
-  const d = snap.data();
+export function mapCandidateProfileDoc(docId: string, d: Record<string, any>): CandidateProfile {
   return {
-    id: String(d.id || uid),
-    userId: String(d.userId || uid),
+    id: String(d.id || docId),
+    userId: String(d.userId || docId),
+    candidateCode:
+      typeof d.candidateCode === 'string' && /^[1-9][0-9]{3}$/.test(d.candidateCode.trim())
+        ? d.candidateCode.trim()
+        : undefined,
     name: String(d.name || ''),
     email: String(d.email || ''),
     phone: String(d.phone || ''),
+    altPhone: typeof d.altPhone === 'string' ? d.altPhone : undefined,
     location: String(d.location || ''),
     city: typeof d.city === 'string' ? d.city : undefined,
     state: typeof d.state === 'string' ? d.state : undefined,
+    country: typeof d.country === 'string' ? d.country : undefined,
+    pinCode: typeof d.pinCode === 'string' ? d.pinCode : undefined,
     headline: String(d.headline || ''),
     about: String(d.about || ''),
+    careerObjective: typeof d.careerObjective === 'string' ? d.careerObjective : undefined,
     currentRole: String(d.currentRole || ''),
+    currentCompany: typeof d.currentCompany === 'string' ? d.currentCompany : undefined,
     desiredRole: String(d.desiredRole || ''),
+    noticePeriod: typeof d.noticePeriod === 'string' ? d.noticePeriod : undefined,
     experienceLevel: (d.experienceLevel as CandidateProfile['experienceLevel']) || 'Fresher',
     experienceType: d.experienceType === 'experienced' ? 'experienced' : 'fresher',
     workStatus: typeof d.workStatus === 'string' ? d.workStatus : undefined,
     yearsOfExperience: typeof d.yearsOfExperience === 'number' ? d.yearsOfExperience : 0,
     preferredLocation: String(d.preferredLocation || ''),
+    preferredLocations: Array.isArray(d.preferredLocations) ? d.preferredLocations.map(String) : undefined,
+    preferredJobTitles: Array.isArray(d.preferredJobTitles) ? d.preferredJobTitles.map(String) : undefined,
+    preferredEmploymentTypes: Array.isArray(d.preferredEmploymentTypes)
+      ? d.preferredEmploymentTypes.map(String)
+      : undefined,
+    preferredShift: typeof d.preferredShift === 'string' ? d.preferredShift : undefined,
+    jobSearchStatus: typeof d.jobSearchStatus === 'string' ? d.jobSearchStatus : undefined,
     workPreference: (d.workPreference as CandidateProfile['workPreference']) || 'Hybrid',
     preferredIndustry: typeof d.preferredIndustry === 'string' ? d.preferredIndustry : undefined,
-    expectedSalary: d.expectedSalary && typeof d.expectedSalary === 'object' ? d.expectedSalary : undefined,
+    currentSalary:
+      d.currentSalary && typeof d.currentSalary === 'object' ? d.currentSalary : undefined,
+    expectedSalary:
+      d.expectedSalary && typeof d.expectedSalary === 'object' ? d.expectedSalary : undefined,
     willingToRelocate: typeof d.willingToRelocate === 'boolean' ? d.willingToRelocate : undefined,
     gender: typeof d.gender === 'string' ? d.gender : undefined,
     dob: typeof d.dob === 'string' ? d.dob : undefined,
@@ -154,14 +169,41 @@ export async function fetchCandidateProfileFromFirestore(
     profileVisibility: d.profileVisibility === 'private' ? 'private' : 'employers_only',
     availableForOpportunities: Boolean(d.availableForOpportunities),
     skills: Array.isArray(d.skills) ? d.skills.map(String) : [],
+    detailedSkills: Array.isArray(d.detailedSkills) ? d.detailedSkills : undefined,
     education: Array.isArray(d.education) ? d.education : [],
     experiences: Array.isArray(d.experiences) ? d.experiences : [],
     certifications: Array.isArray(d.certifications) ? d.certifications : [],
+    projects: Array.isArray(d.projects) ? d.projects : [],
+    languages: Array.isArray(d.languages) ? d.languages : [],
+    linkedinUrl: typeof d.linkedinUrl === 'string' ? d.linkedinUrl : undefined,
+    githubUrl: typeof d.githubUrl === 'string' ? d.githubUrl : undefined,
+    portfolioUrl: typeof d.portfolioUrl === 'string' ? d.portfolioUrl : undefined,
+    personalWebsiteUrl: typeof d.personalWebsiteUrl === 'string' ? d.personalWebsiteUrl : undefined,
+    otherLinks: Array.isArray(d.otherLinks) ? d.otherLinks : [],
+    primaryResumeId: typeof d.primaryResumeId === 'string' ? d.primaryResumeId : undefined,
+    resumeDocId: typeof d.resumeDocId === 'string' ? d.resumeDocId : undefined,
+    resumeName: typeof d.resumeName === 'string' ? d.resumeName : undefined,
+    resumeSize: typeof d.resumeSize === 'string' ? d.resumeSize : undefined,
+    resumeUpdated: typeof d.resumeUpdated === 'string' ? d.resumeUpdated : undefined,
+    recruitmentStatus:
+      typeof d.recruitmentStatus === 'string'
+        ? (d.recruitmentStatus as CandidateProfile['recruitmentStatus'])
+        : undefined,
     completionPercentage: typeof d.completionPercentage === 'number' ? d.completionPercentage : 0,
     recommendations: [],
     avatar: typeof d.avatar === 'string' ? d.avatar : undefined,
-    lastActive: toIso(d.updatedAt),
+    createdAt: toIso(d.createdAt),
+    updatedAt: toIso(d.updatedAt || d.createdAt),
+    lastActive: toIso(d.updatedAt || d.createdAt),
   };
+}
+
+export async function fetchCandidateProfileFromFirestore(
+  uid: string
+): Promise<CandidateProfile | null> {
+  const snap = await getDoc(doc(db, 'candidates', uid));
+  if (!snap.exists()) return null;
+  return mapCandidateProfileDoc(uid, snap.data());
 }
 
 export async function saveCandidateProfileToFirestore(
@@ -170,6 +212,7 @@ export async function saveCandidateProfileToFirestore(
 ): Promise<void> {
   const ref = doc(db, 'candidates', uid);
   const existing = await getDoc(ref);
+  const existingData = existing.exists() ? existing.data() : null;
   const visibility: 'employers_only' | 'private' =
     profile.profileVisibility === 'private' ? 'private' : 'employers_only';
 
@@ -178,19 +221,39 @@ export async function saveCandidateProfileToFirestore(
       ? profile.avatar
       : undefined;
 
+  const validExistingCode =
+    typeof existingData?.candidateCode === 'string' &&
+    /^[1-9][0-9]{3}$/.test(existingData.candidateCode.trim())
+      ? existingData.candidateCode.trim()
+      : undefined;
+  const validProfileCode =
+    typeof profile.candidateCode === 'string' &&
+    /^[1-9][0-9]{3}$/.test(profile.candidateCode.trim())
+      ? profile.candidateCode.trim()
+      : undefined;
+  // Preserve immutability: never overwrite an already assigned candidateCode
+  const candidateCodeToPersist = validExistingCode || validProfileCode;
+
   const baseDoc = stripUndefined({
     id: uid,
     userId: uid,
+    candidateCode: candidateCodeToPersist,
     name: (profile.name || 'Candidate').trim().slice(0, 120),
     email: (profile.email || auth.currentUser?.email || 'user@abhijobs.careers').trim().slice(0, 150),
     phone: profile.phone ? profile.phone.trim().slice(0, 30) : undefined,
+    altPhone: profile.altPhone ? profile.altPhone.trim().slice(0, 30) : undefined,
     location: (profile.location || 'India').trim().slice(0, 120),
     city: profile.city ? profile.city.trim().slice(0, 80) : undefined,
     state: profile.state ? profile.state.trim().slice(0, 80) : undefined,
+    country: profile.country ? profile.country.trim().slice(0, 80) : undefined,
+    pinCode: profile.pinCode ? profile.pinCode.trim().slice(0, 20) : undefined,
     headline: (profile.headline || '').trim().slice(0, 200),
     about: profile.about ? profile.about.trim().slice(0, 2500) : undefined,
+    careerObjective: profile.careerObjective ? profile.careerObjective.trim().slice(0, 1000) : undefined,
     currentRole: profile.currentRole ? profile.currentRole.trim().slice(0, 120) : undefined,
+    currentCompany: profile.currentCompany ? profile.currentCompany.trim().slice(0, 140) : undefined,
     desiredRole: profile.desiredRole ? profile.desiredRole.trim().slice(0, 120) : undefined,
+    noticePeriod: profile.noticePeriod ? profile.noticePeriod.trim().slice(0, 60) : undefined,
     experienceLevel: ['Fresher', 'Junior', 'Mid', 'Senior', 'Lead'].includes(profile.experienceLevel)
       ? profile.experienceLevel
       : 'Fresher',
@@ -198,10 +261,22 @@ export async function saveCandidateProfileToFirestore(
     workStatus: profile.workStatus ? String(profile.workStatus).slice(0, 80) : undefined,
     yearsOfExperience: Math.max(0, Math.min(60, Number(profile.yearsOfExperience) || 0)),
     preferredLocation: profile.preferredLocation ? profile.preferredLocation.slice(0, 120) : undefined,
+    preferredLocations: Array.isArray(profile.preferredLocations)
+      ? profile.preferredLocations.slice(0, 15).map((s) => String(s).slice(0, 80))
+      : undefined,
+    preferredJobTitles: Array.isArray(profile.preferredJobTitles)
+      ? profile.preferredJobTitles.slice(0, 15).map((s) => String(s).slice(0, 100))
+      : undefined,
+    preferredEmploymentTypes: Array.isArray(profile.preferredEmploymentTypes)
+      ? profile.preferredEmploymentTypes.slice(0, 10).map((s) => String(s).slice(0, 40))
+      : undefined,
+    preferredShift: profile.preferredShift ? String(profile.preferredShift).slice(0, 40) : undefined,
+    jobSearchStatus: profile.jobSearchStatus ? String(profile.jobSearchStatus).slice(0, 80) : undefined,
     workPreference: ['Remote', 'Hybrid', 'On-site', 'Flexible'].includes(profile.workPreference)
       ? profile.workPreference
       : 'Hybrid',
     preferredIndustry: profile.preferredIndustry ? profile.preferredIndustry.slice(0, 100) : undefined,
+    currentSalary: profile.currentSalary,
     expectedSalary: profile.expectedSalary,
     willingToRelocate: profile.willingToRelocate,
     gender: profile.gender ? profile.gender.slice(0, 40) : undefined,
@@ -213,15 +288,41 @@ export async function saveCandidateProfileToFirestore(
     profileVisibility: visibility,
     availableForOpportunities: Boolean(profile.availableForOpportunities),
     skills: (profile.skills || []).slice(0, 40).map((s) => String(s).slice(0, 80)),
+    detailedSkills: Array.isArray(profile.detailedSkills) ? profile.detailedSkills.slice(0, 40) : undefined,
     education: (profile.education || []).slice(0, 15),
     experiences: (profile.experiences || []).slice(0, 20),
     certifications: (profile.certifications || []).slice(0, 25),
+    projects: Array.isArray(profile.projects) ? profile.projects.slice(0, 15) : undefined,
+    languages: Array.isArray(profile.languages) ? profile.languages.slice(0, 15) : undefined,
+    linkedinUrl: profile.linkedinUrl && isSafeHttpUrl(profile.linkedinUrl) ? profile.linkedinUrl.slice(0, 300) : undefined,
+    githubUrl: profile.githubUrl && isSafeHttpUrl(profile.githubUrl) ? profile.githubUrl.slice(0, 300) : undefined,
+    portfolioUrl: profile.portfolioUrl && isSafeHttpUrl(profile.portfolioUrl) ? profile.portfolioUrl.slice(0, 300) : undefined,
+    personalWebsiteUrl:
+      profile.personalWebsiteUrl && isSafeHttpUrl(profile.personalWebsiteUrl)
+        ? profile.personalWebsiteUrl.slice(0, 300)
+        : undefined,
+    otherLinks: Array.isArray(profile.otherLinks)
+      ? profile.otherLinks
+          .filter((l) => l && isSafeHttpUrl(l.url))
+          .slice(0, 10)
+          .map((l) => ({
+            id: String(l.id || '').slice(0, 64),
+            label: String(l.label || 'Link').slice(0, 80),
+            url: String(l.url).slice(0, 300),
+          }))
+      : undefined,
+    primaryResumeId: profile.primaryResumeId ? String(profile.primaryResumeId).slice(0, 128) : undefined,
+    resumeDocId: profile.resumeDocId ? String(profile.resumeDocId).slice(0, 128) : undefined,
+    resumeName: profile.resumeName ? String(profile.resumeName).slice(0, 160) : undefined,
+    resumeSize: profile.resumeSize ? String(profile.resumeSize).slice(0, 40) : undefined,
+    resumeUpdated: profile.resumeUpdated ? String(profile.resumeUpdated).slice(0, 64) : undefined,
     completionPercentage: Math.max(0, Math.min(100, Math.round(profile.completionPercentage || 0))),
     avatar: safeAvatar,
     updatedAt: serverTimestamp(),
   });
 
   if (existing.exists()) {
+    // Never send recruitmentStatus from candidate-side updates so admin status stays untouched
     await updateDoc(ref, baseDoc);
   } else {
     await setDoc(ref, {
@@ -262,41 +363,11 @@ export async function saveCandidateProfileToFirestore(
   }
 }
 
-export async function listCandidatesAdminFromFirestore(maxItems = 100): Promise<CandidateProfile[]> {
-  const q = query(collection(db, 'candidates'), orderBy('updatedAt', 'desc'), limit(maxItems));
+export async function listCandidatesAdminFromFirestore(maxItems = 250): Promise<CandidateProfile[]> {
+  const q = query(collection(db, 'candidates'), limit(maxItems));
   const snap = await getDocs(q);
-  const results: CandidateProfile[] = [];
-  snap.forEach((docSnap) => {
-    const d = docSnap.data();
-    results.push({
-      id: String(d.id || docSnap.id),
-      userId: String(d.userId || docSnap.id),
-      name: String(d.name || ''),
-      email: String(d.email || ''),
-      phone: String(d.phone || ''),
-      location: String(d.location || ''),
-      headline: String(d.headline || ''),
-      about: String(d.about || ''),
-      currentRole: String(d.currentRole || ''),
-      desiredRole: String(d.desiredRole || ''),
-      experienceLevel: (d.experienceLevel as CandidateProfile['experienceLevel']) || 'Fresher',
-      yearsOfExperience: typeof d.yearsOfExperience === 'number' ? d.yearsOfExperience : 0,
-      preferredLocation: String(d.preferredLocation || ''),
-      workPreference: (d.workPreference as CandidateProfile['workPreference']) || 'Hybrid',
-      availability: (d.availability as CandidateProfile['availability']) || 'Immediate',
-      profileVisibility: d.profileVisibility === 'private' ? 'private' : 'employers_only',
-      availableForOpportunities: Boolean(d.availableForOpportunities),
-      skills: Array.isArray(d.skills) ? d.skills.map(String) : [],
-      education: Array.isArray(d.education) ? d.education : [],
-      experiences: Array.isArray(d.experiences) ? d.experiences : [],
-      certifications: Array.isArray(d.certifications) ? d.certifications : [],
-      completionPercentage: typeof d.completionPercentage === 'number' ? d.completionPercentage : 0,
-      recommendations: [],
-      avatar: typeof d.avatar === 'string' ? d.avatar : undefined,
-      lastActive: toIso(d.updatedAt),
-    });
-  });
-  return results;
+  const results = snap.docs.map((docSnap) => mapCandidateProfileDoc(docSnap.id, docSnap.data()));
+  return results.sort((a, b) => (b.lastActive || '').localeCompare(a.lastActive || ''));
 }
 
 // ============================================================================
@@ -421,7 +492,7 @@ export async function listVerifiedEmployersFromFirestore(maxItems = 100): Promis
 }
 
 export async function listAllEmployersAdminFromFirestore(maxItems = 150): Promise<EmployerProfile[]> {
-  const q = query(collection(db, 'employers'), orderBy('updatedAt', 'desc'), limit(maxItems));
+  const q = query(collection(db, 'employers'), limit(maxItems));
   const snap = await getDocs(q);
   const results: EmployerProfile[] = [];
   for (const docSnap of snap.docs) {
@@ -474,7 +545,8 @@ export async function createEmployerInFirestore(params: {
   recruiterEmail: string;
   recruiterPhone: string;
 }): Promise<EmployerProfile> {
-  const employerId = sanitizeFirestoreId(`emp_${params.ownerUid}`, 'emp');
+  // Must match firestore.rules /employers/{employerId} where employerId == request.auth.uid
+  const employerId = params.ownerUid;
   const batch = writeBatch(db);
 
   const publicRef = doc(db, 'employers', employerId);
@@ -568,6 +640,7 @@ function mapJobDoc(docId: string, d: Record<string, any>): Job {
   return {
     id: String(d.id || docId),
     employerId: String(d.employerId || ''),
+    employerOwnerUid: String(d.employerOwnerUid || d.employerId || ''),
     companyName: String(d.companyName || ''),
     companyLogo: String(d.companyLogo || ''),
     title: String(d.title || ''),
@@ -605,17 +678,20 @@ export async function listPublishedJobsFromFirestore(maxItems = 100): Promise<Jo
   const q = query(
     collection(db, 'jobs'),
     where('status', '==', 'published'),
-    orderBy('postedAt', 'desc'),
     limit(maxItems)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => mapJobDoc(docSnap.id, docSnap.data()));
+  return snap.docs
+    .map((docSnap) => mapJobDoc(docSnap.id, docSnap.data()))
+    .sort((a, b) => (b.postedDate || '').localeCompare(a.postedDate || ''));
 }
 
 export async function listAllJobsAdminFromFirestore(maxItems = 150): Promise<Job[]> {
-  const q = query(collection(db, 'jobs'), orderBy('updatedAt', 'desc'), limit(maxItems));
+  const q = query(collection(db, 'jobs'), limit(maxItems));
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => mapJobDoc(docSnap.id, docSnap.data()));
+  return snap.docs
+    .map((docSnap) => mapJobDoc(docSnap.id, docSnap.data()))
+    .sort((a, b) => (b.postedDate || '').localeCompare(a.postedDate || ''));
 }
 
 export async function saveJobToFirestore(params: {
@@ -629,7 +705,7 @@ export async function saveJobToFirestore(params: {
 
   const payload = stripUndefined({
     id: jobId,
-    employerId: sanitizeFirestoreId(params.job.employerId || `emp_${params.employerOwnerUid}`, 'emp'),
+    employerId: sanitizeFirestoreId(params.job.employerId || params.employerOwnerUid, 'emp'),
     employerOwnerUid: params.employerOwnerUid,
     companyName: (params.job.companyName || 'Company').slice(0, 150),
     companyLogo:
@@ -701,6 +777,10 @@ function mapApplicationDoc(docId: string, d: Record<string, any>): Application {
     companyName: String(d.companyName || ''),
     companyLogo: '',
     candidateId: String(d.candidateId || ''),
+    candidateCode:
+      typeof d.candidateCode === 'string' && /^[1-9][0-9]{3}$/.test(d.candidateCode.trim())
+        ? d.candidateCode.trim()
+        : undefined,
     candidateName: String(d.candidateName || ''),
     candidateEmail: String(d.candidateEmail || ''),
     candidatePhone: String(d.candidatePhone || ''),
@@ -725,11 +805,12 @@ export async function listCandidateApplicationsFromFirestore(
   const q = query(
     collection(db, 'applications'),
     where('candidateId', '==', candidateUid),
-    orderBy('appliedAt', 'desc'),
     limit(100)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()));
+  return snap.docs
+    .map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()))
+    .sort((a, b) => (b.appliedAt || b.appliedDate || '').localeCompare(a.appliedAt || a.appliedDate || ''));
 }
 
 export async function listEmployerApplicationsFromFirestore(
@@ -738,17 +819,20 @@ export async function listEmployerApplicationsFromFirestore(
   const q = query(
     collection(db, 'applications'),
     where('employerOwnerUid', '==', employerOwnerUid),
-    orderBy('appliedAt', 'desc'),
     limit(150)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()));
+  return snap.docs
+    .map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()))
+    .sort((a, b) => (b.appliedAt || b.appliedDate || '').localeCompare(a.appliedAt || a.appliedDate || ''));
 }
 
 export async function listAllApplicationsAdminFromFirestore(maxItems = 150): Promise<Application[]> {
-  const q = query(collection(db, 'applications'), orderBy('appliedAt', 'desc'), limit(maxItems));
+  const q = query(collection(db, 'applications'), limit(maxItems));
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()));
+  return snap.docs
+    .map((docSnap) => mapApplicationDoc(docSnap.id, docSnap.data()))
+    .sort((a, b) => (b.appliedAt || b.appliedDate || '').localeCompare(a.appliedAt || a.appliedDate || ''));
 }
 
 export async function submitApplicationToFirestore(params: {
@@ -776,6 +860,11 @@ export async function submitApplicationToFirestore(params: {
       jobTitle: params.job.title.slice(0, 160),
       companyName: params.job.companyName.slice(0, 150),
       candidateId: params.candidate.userId,
+      candidateCode:
+        typeof params.candidate.candidateCode === 'string' &&
+        /^[1-9][0-9]{3}$/.test(params.candidate.candidateCode.trim())
+          ? params.candidate.candidateCode.trim()
+          : undefined,
       candidateName: (params.candidate.name || 'Candidate').slice(0, 120),
       candidateEmail: params.candidate.email.slice(0, 150),
       candidatePhone: params.candidate.phone ? params.candidate.phone.slice(0, 30) : undefined,
@@ -800,6 +889,7 @@ export async function submitApplicationToFirestore(params: {
     companyName: params.job.companyName,
     companyLogo: params.job.companyLogo,
     candidateId: params.candidate.userId,
+    candidateCode: params.candidate.candidateCode,
     candidateName: params.candidate.name,
     candidateEmail: params.candidate.email,
     candidatePhone: params.candidate.phone,
@@ -918,29 +1008,31 @@ export async function scheduleInterviewInFirestore(params: {
   return { ...params.interview, id: interviewId };
 }
 
-export async function listInterviewsAdminFromFirestore(maxItems = 100): Promise<Interview[]> {
-  const q = query(collection(db, 'interviews'), orderBy('updatedAt', 'desc'), limit(maxItems));
+export async function listInterviewsAdminFromFirestore(maxItems = 150): Promise<Interview[]> {
+  const q = query(collection(db, 'interviews'), limit(maxItems));
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
-    const d = docSnap.data();
-    return {
-      id: String(d.id || docSnap.id),
-      applicationId: String(d.applicationId || ''),
-      jobId: String(d.jobId || ''),
-      jobTitle: String(d.jobTitle || ''),
-      candidateId: String(d.candidateId || ''),
-      candidateName: String(d.candidateName || ''),
-      employerId: String(d.employerId || ''),
-      companyName: String(d.companyName || ''),
-      date: String(d.scheduledDate || ''),
-      time: String(d.scheduledTime || ''),
-      type: (d.type as Interview['type']) || 'Video',
-      meetingLink: typeof d.meetingLink === 'string' ? d.meetingLink : undefined,
-      location: typeof d.location === 'string' ? d.location : undefined,
-      notes: typeof d.notes === 'string' ? d.notes : undefined,
-      status: (d.status as Interview['status']) || 'Scheduled',
-    };
-  });
+  return snap.docs
+    .map((docSnap) => {
+      const d = docSnap.data();
+      return {
+        id: String(d.id || docSnap.id),
+        applicationId: String(d.applicationId || ''),
+        jobId: String(d.jobId || ''),
+        jobTitle: String(d.jobTitle || ''),
+        candidateId: String(d.candidateId || ''),
+        candidateName: String(d.candidateName || ''),
+        employerId: String(d.employerId || ''),
+        companyName: String(d.companyName || ''),
+        date: String(d.scheduledDate || ''),
+        time: String(d.scheduledTime || ''),
+        type: (d.type as Interview['type']) || 'Video',
+        meetingLink: typeof d.meetingLink === 'string' ? d.meetingLink : undefined,
+        location: typeof d.location === 'string' ? d.location : undefined,
+        notes: typeof d.notes === 'string' ? d.notes : undefined,
+        status: (d.status as Interview['status']) || 'Scheduled',
+      };
+    })
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 }
 
 // ============================================================================
@@ -1078,27 +1170,29 @@ export async function createHiringEnquiryInFirestore(
   return { ...input, id, status: 'New', createdAt: nowIso };
 }
 
-export async function listHiringEnquiriesAdminFromFirestore(maxItems = 100): Promise<HiringEnquiry[]> {
-  const q = query(collection(db, 'hiring_enquiries'), orderBy('createdAt', 'desc'), limit(maxItems));
+export async function listHiringEnquiriesAdminFromFirestore(maxItems = 150): Promise<HiringEnquiry[]> {
+  const q = query(collection(db, 'hiring_enquiries'), limit(maxItems));
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
-    const d = docSnap.data();
-    return {
-      id: String(d.id || docSnap.id),
-      companyName: String(d.companyName || ''),
-      contactPerson: String(d.contactPerson || ''),
-      businessEmail: String(d.businessEmail || ''),
-      phoneNumber: String(d.phoneNumber || ''),
-      jobTitle: String(d.jobTitle || ''),
-      vacancies: typeof d.vacancies === 'number' ? d.vacancies : 1,
-      jobLocation: String(d.jobLocation || ''),
-      additionalRequirements: String(d.additionalRequirements || ''),
-      status: (d.status as HiringEnquiry['status']) || 'New',
-      assignedRecruiter: typeof d.assignedRecruiter === 'string' ? d.assignedRecruiter : undefined,
-      internalNotes: typeof d.internalNotes === 'string' ? d.internalNotes : undefined,
-      createdAt: toIso(d.createdAt),
-    };
-  });
+  return snap.docs
+    .map((docSnap) => {
+      const d = docSnap.data();
+      return {
+        id: String(d.id || docSnap.id),
+        companyName: String(d.companyName || ''),
+        contactPerson: String(d.contactPerson || ''),
+        businessEmail: String(d.businessEmail || ''),
+        phoneNumber: String(d.phoneNumber || ''),
+        jobTitle: String(d.jobTitle || ''),
+        vacancies: typeof d.vacancies === 'number' ? d.vacancies : 1,
+        jobLocation: String(d.jobLocation || ''),
+        additionalRequirements: String(d.additionalRequirements || ''),
+        status: (d.status as HiringEnquiry['status']) || 'New',
+        assignedRecruiter: typeof d.assignedRecruiter === 'string' ? d.assignedRecruiter : undefined,
+        internalNotes: typeof d.internalNotes === 'string' ? d.internalNotes : undefined,
+        createdAt: toIso(d.createdAt),
+      };
+    })
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 }
 
 export async function updateHiringEnquiryAdminInFirestore(
@@ -1145,25 +1239,27 @@ export async function createCourseEnquiryInFirestore(
 }
 
 export async function listCourseEnquiriesAdminFromFirestore(
-  maxItems = 100
+  maxItems = 150
 ): Promise<(CourseEnquiry & { status: 'New' | 'Contacted' | 'Enrolled' | 'Closed'; internalNotes?: string })[]> {
-  const q = query(collection(db, 'course_enquiries'), orderBy('createdAt', 'desc'), limit(maxItems));
+  const q = query(collection(db, 'course_enquiries'), limit(maxItems));
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
-    const d = docSnap.data();
-    return {
-      id: String(d.id || docSnap.id),
-      courseId: String(d.courseId || ''),
-      courseTitle: String(d.courseTitle || ''),
-      name: String(d.name || ''),
-      email: String(d.email || ''),
-      phone: String(d.phone || ''),
-      message: typeof d.message === 'string' ? d.message : undefined,
-      status: (d.status as 'New' | 'Contacted' | 'Enrolled' | 'Closed') || 'New',
-      internalNotes: typeof d.internalNotes === 'string' ? d.internalNotes : undefined,
-      createdAt: toIso(d.createdAt),
-    };
-  });
+  return snap.docs
+    .map((docSnap) => {
+      const d = docSnap.data();
+      return {
+        id: String(d.id || docSnap.id),
+        courseId: String(d.courseId || ''),
+        courseTitle: String(d.courseTitle || ''),
+        name: String(d.name || ''),
+        email: String(d.email || ''),
+        phone: String(d.phone || ''),
+        message: typeof d.message === 'string' ? d.message : undefined,
+        status: (d.status as 'New' | 'Contacted' | 'Enrolled' | 'Closed') || 'New',
+        internalNotes: typeof d.internalNotes === 'string' ? d.internalNotes : undefined,
+        createdAt: toIso(d.createdAt),
+      };
+    })
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 }
 
 export async function updateCourseEnquiryAdminInFirestore(

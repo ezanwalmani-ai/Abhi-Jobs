@@ -24,7 +24,7 @@ export interface BrandPlaceholderProps {
 
 /**
  * Professional Brand Placeholder Component
- * Uses the ABHI JOBS palette (Navy #102B4E, Brand Red #F47A24, Teal #004D40)
+ * Uses the ABHI JOBS palette (Navy #102B4E, Brand Red #F47A24, Teal #102B4E)
  * and geometric textures to render pristine, high-fidelity placeholder imagery.
  */
 export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
@@ -89,7 +89,7 @@ export const BrandPlaceholder: React.FC<BrandPlaceholderProps> = ({
         <BrandPattern pattern={pattern} theme={theme} opacity={0.9} />
         {/* Subtle radial ambient glows */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#F47A24]/15 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#004D40]/25 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#102B4E]/25 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center gap-4 sm:gap-6 min-w-0">
           <div className="shrink-0">{renderIcon()}</div>

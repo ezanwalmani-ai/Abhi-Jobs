@@ -49,8 +49,8 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
       <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl space-y-5">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-[#004D40]" />
+            <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-[#102B4E]" />
             </div>
             <div>
               <h3 className="font-bold text-slate-900 text-base">Import from Profile</h3>
@@ -85,7 +85,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.personalInfo}
                 onChange={() => toggleKey('personalInfo')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Name & Contact Details</span>
@@ -100,7 +100,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.title}
                 onChange={() => toggleKey('title')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Professional Title</span>
@@ -115,7 +115,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.summary}
                 onChange={() => toggleKey('summary')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Professional Summary</span>
@@ -130,7 +130,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.skills}
                 onChange={() => toggleKey('skills')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Skills</span>
@@ -145,7 +145,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.experience}
                 onChange={() => toggleKey('experience')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Work Experience</span>
@@ -160,7 +160,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                 type="checkbox"
                 checked={selected.education}
                 onChange={() => toggleKey('education')}
-                className="w-4 h-4 text-[#004D40] rounded-sm border-slate-300 focus:ring-[#004D40]"
+                className="w-4 h-4 text-[#102B4E] rounded-sm border-slate-300 focus:ring-[#102B4E]"
               />
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-slate-900">Education</span>
@@ -181,7 +181,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
           <button
             type="button"
             onClick={handleConfirm}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs sm:text-sm font-bold shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-bold shadow-xs cursor-pointer"
           >
             <ArrowDownToLine className="w-4 h-4" />
             <span>Import Selected</span>

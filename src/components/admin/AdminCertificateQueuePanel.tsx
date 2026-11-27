@@ -152,7 +152,7 @@ export const AdminCertificateQueuePanel: React.FC<AdminCertificateQueuePanelProp
                   <p className="text-xs font-semibold text-[#F47A24]">{req.courseTitle}</p>
                   <p className="text-xs text-[#778397]">
                     UID: <span className="font-mono">{req.userId}</span> &middot; Completed lessons:{' '}
-                    {req.completedLessonsCount} &middot; Requested: {req.requestedAt.slice(0, 10)}
+                    {req.completedLessonsCount} &middot; Requested: {(req.requestedAt || '').slice(0, 10) || '—'}
                   </p>
                   {req.candidateNote && (
                     <p className="text-xs text-[#253449] bg-[#F6F8FB] p-2.5 rounded-lg border border-[#E5EAF0] mt-1">

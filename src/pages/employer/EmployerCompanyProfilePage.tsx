@@ -63,7 +63,7 @@ export const EmployerCompanyProfilePage: React.FC<EmployerCompanyProfilePageProp
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-slate-900">{formData.companyName}</h2>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 text-[#004D40] text-xs font-bold border border-teal-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F1F5FA] text-[#102B4E] text-xs font-bold border border-[#D4DCE6]">
                     <ShieldCheck className="w-3.5 h-3.5" /> Verified Employer
                   </span>
                 </div>
@@ -73,7 +73,7 @@ export const EmployerCompanyProfilePage: React.FC<EmployerCompanyProfilePageProp
 
             <button
               onClick={() => navigate('/companies')}
-              className="text-xs text-[#004D40] font-semibold hover:underline cursor-pointer"
+              className="text-xs text-[#102B4E] font-semibold hover:underline cursor-pointer"
             >
               View in Directory &rarr;
             </button>
@@ -170,7 +170,7 @@ export const EmployerCompanyProfilePage: React.FC<EmployerCompanyProfilePageProp
                     href={formData.website}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs sm:text-sm font-bold text-[#004D40] mt-1 flex items-center gap-1.5 hover:underline"
+                    className="text-xs sm:text-sm font-bold text-[#102B4E] mt-1 flex items-center gap-1.5 hover:underline"
                   >
                     <Globe className="w-3.5 h-3.5" />
                     Visit Website

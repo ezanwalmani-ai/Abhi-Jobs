@@ -6,58 +6,62 @@ html {
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sora: 'Plus Jakarta Sans', 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sora: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* ABHI JOBS Official Corporate Color Tokens */
+  /* ABHI JOBS Official Corporate Color System */
   --color-navy: #102B4E;
   --color-navy-deep: #081D36;
   --color-navy-logo: #0A2A73;
+  --color-navy-tint: #F1F5FA;
   --color-orange: #F47A24;
   --color-orange-hover: #DE6816;
+  --color-orange-active: #C75A10;
   --color-orange-light: #FFF4EC;
   --color-brand: #F47A24;
   --color-brand-hover: #DE6816;
   --color-brand-light: #FFF4EC;
+
+  /* Neutral Surface & Text Hierarchy */
   --color-bg-page: #F6F8FB;
   --color-surface: #FFFFFF;
   --color-surface-subtle: #FAFBFD;
   --color-border: #E5EAF0;
   --color-border-strong: #D4DCE6;
-  --color-text-primary: #253449;
-  --color-text-secondary: #566479;
-  --color-text-muted: #778397;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
 
-  /* Classic Professional Layout & Sizing Tokens */
+  /* Structured Layout & Spacing Tokens */
   --abhi-header-height: 70px;
   --abhi-container-max: 1200px;
-  --abhi-sidebar-width: 292px;
-  --abhi-space-section: 2rem;      /* 32px */
-  --abhi-space-section-sm: 1.5rem; /* 24px */
-  --abhi-space-card: 1.25rem;      /* 20px */
-  --abhi-space-card-lg: 1.5rem;    /* 24px */
+  --abhi-sidebar-width: 288px;
+  --abhi-space-section: 3rem;       /* 48px */
+  --abhi-space-section-sm: 2rem;    /* 32px */
+  --abhi-space-card: 1.25rem;       /* 20px */
+  --abhi-space-card-lg: 1.5rem;     /* 24px */
 
-  /* Classic Professional Typography Scale */
-  --abhi-text-h1: clamp(1.875rem, 2.5vw, 2.5rem);     /* 30px -> 40px */
-  --abhi-text-h2: clamp(1.375rem, 1.9vw, 1.75rem);    /* 22px -> 28px */
-  --abhi-text-h3: clamp(1.0625rem, 1.2vw, 1.25rem);   /* 17px -> 20px */
-  --abhi-text-body: 0.9375rem;                        /* 15px */
-  --abhi-text-secondary: 0.875rem;                    /* 14px */
-  --abhi-text-label: 0.75rem;                         /* 12px */
-  --abhi-text-button: 0.875rem;                       /* 14px */
+  /* Unified Inter Typography Scale */
+  --abhi-text-h1: clamp(1.875rem, 2.6vw, 2.625rem);  /* 30px -> 42px */
+  --abhi-text-h2: clamp(1.375rem, 1.9vw, 1.75rem);   /* 22px -> 28px */
+  --abhi-text-h3: clamp(1.0625rem, 1.2vw, 1.25rem);  /* 17px -> 20px */
+  --abhi-text-body: 0.9375rem;                       /* 15px */
+  --abhi-text-secondary: 0.875rem;                   /* 14px */
+  --abhi-text-label: 0.75rem;                        /* 12px */
+  --abhi-text-button: 0.875rem;                      /* 14px */
 
-  /* Border Radius Tokens */
-  --abhi-radius-control: 0.625rem; /* 10px */
-  --abhi-radius-card: 0.875rem;    /* 14px */
-  --abhi-radius-modal: 1rem;       /* 16px */
+  /* Disciplined Border Radius Tokens */
+  --abhi-radius-control: 0.5rem;    /* 8px — buttons, inputs, selects */
+  --abhi-radius-card: 0.75rem;      /* 12px — cards, panels */
+  --abhi-radius-modal: 0.875rem;    /* 14px — modals, drawers */
 
-  /* Unified Motion Timing Tokens */
+  /* Restrained Motion Timing Tokens */
   --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-micro: 180ms;
-  --duration-ui: 240ms;
-  --duration-reveal: 420ms;
+  --duration-micro: 150ms;
+  --duration-ui: 200ms;
+  --duration-reveal: 360ms;
 }
 
 .font-sora,
@@ -78,10 +82,11 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 /* ============================================================================
-   ABHI JOBS — Classic Professional Shared Layout & Component Primitives
+   ABHI JOBS — Shared Layout & Component Primitives
    ============================================================================ */
 
 .abhi-container {
@@ -108,30 +113,31 @@ body {
 }
 
 .abhi-section {
-  padding-top: 2.25rem;
-  padding-bottom: 2.25rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
 }
 
 @media (min-width: 640px) {
   .abhi-section {
-    padding-top: 2.75rem;
-    padding-bottom: 2.75rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
   }
 }
 
 @media (min-width: 1024px) {
   .abhi-section {
-    padding-top: 3.25rem;
-    padding-bottom: 3.25rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
   }
 }
 
 .abhi-page-title {
   font-family: var(--font-display);
   font-size: var(--abhi-text-h1);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  color: var(--color-navy);
   text-wrap: balance;
 }
 
@@ -139,8 +145,9 @@ body {
   font-family: var(--font-display);
   font-size: var(--abhi-text-h2);
   line-height: 1.22;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
   font-weight: 700;
+  color: var(--color-navy);
   text-wrap: balance;
 }
 
@@ -148,7 +155,9 @@ body {
   font-family: var(--font-display);
   font-size: var(--abhi-text-h3);
   line-height: 1.32;
-  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--color-navy);
 }
 
 .abhi-card {
@@ -156,6 +165,7 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--abhi-radius-card);
   padding: var(--abhi-space-card);
+  box-shadow: 0 1px 2px rgba(16, 43, 78, 0.03);
 }
 
 @media (min-width: 640px) {
@@ -171,7 +181,7 @@ body {
   border-radius: var(--abhi-radius-control);
   border: 1px solid var(--color-border-strong);
   background-color: var(--color-surface);
-  color: var(--color-navy);
+  color: var(--color-navy-deep);
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -195,10 +205,12 @@ body {
 .abhi-table th {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
   background-color: var(--color-surface-subtle);
   border-bottom: 1px solid var(--color-border);
-  padding: 0.6875rem 1rem;
+  padding: 0.75rem 1rem;
   text-align: left;
   white-space: nowrap;
 }
@@ -216,14 +228,13 @@ body {
   border-radius: var(--abhi-radius-modal);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
+  box-shadow: 0 20px 44px -16px rgba(8, 29, 54, 0.2);
 }
 
 /* ============================================================================
-   ABHI JOBS — Consistent Tactile Micro-Interaction Primitives
-   Lightweight CSS transitions for form inputs, search fields, checkboxes, links
+   ABHI JOBS — Restrained Tactile Micro-Interaction Primitives
    ============================================================================ */
 
-/* Form inputs, textareas, and selects: crisp focus glow & smooth border shift */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 textarea,
 select {
@@ -239,7 +250,6 @@ select:focus-visible {
   box-shadow: 0 0 0 3px rgba(16, 43, 78, 0.1);
 }
 
-/* Tactile checkbox & radio micro-interactions */
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--color-orange);
@@ -250,7 +260,7 @@ input[type="radio"] {
 
 input[type="checkbox"]:active,
 input[type="radio"]:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
 
 /* Smooth hover underline glide for inline links & nav items */

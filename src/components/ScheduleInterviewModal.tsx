@@ -62,9 +62,9 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200"
           >
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#E4E7EC] flex items-center justify-between bg-[#F7F8FA]">
+            <div className="px-6 py-4 border-b border-[#E5EAF0] flex items-center justify-between bg-[#F7F8FA]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] border border-teal-200 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] flex items-center justify-center">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
@@ -89,7 +89,7 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D0D5DD] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
+                className="w-full text-xs p-2.5 rounded-xl border border-[#D4DCE6] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
                 required
               />
             </div>
@@ -101,7 +101,7 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
                 placeholder="e.g. 2:00 PM IST"
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D0D5DD] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
+                className="w-full text-xs p-2.5 rounded-xl border border-[#D4DCE6] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
                 required
               />
             </div>
@@ -118,7 +118,7 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold capitalize transition-all cursor-pointer ${
                     type === t
                       ? 'bg-red-50 border-red-300 text-[#F47A24] shadow-xs'
-                      : 'border-[#E4E7EC] text-[#667085] hover:bg-[#F7F8FA]'
+                      : 'border-[#E5EAF0] text-[#667085] hover:bg-[#F7F8FA]'
                   }`}
                 >
                   {t}
@@ -134,7 +134,7 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               value={meetingLink}
               onChange={(e) => setMeetingLink(e.target.value)}
               placeholder="e.g. https://meet.google.com/..."
-              className="w-full text-xs p-2.5 rounded-xl border border-[#D0D5DD] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
+              className="w-full text-xs p-2.5 rounded-xl border border-[#D4DCE6] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
             />
           </div>
 
@@ -145,11 +145,11 @@ export const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Brief agenda or instructions for the candidate..."
-              className="w-full text-xs p-2.5 rounded-xl border border-[#D0D5DD] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
+              className="w-full text-xs p-2.5 rounded-xl border border-[#D4DCE6] bg-white mt-1 focus:border-[#102B4E] focus:outline-hidden"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E4E7EC] flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-[#E5EAF0] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}

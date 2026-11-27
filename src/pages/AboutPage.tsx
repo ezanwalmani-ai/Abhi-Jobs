@@ -200,7 +200,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       <section id="who-we-are" aria-label="Who We Are" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
               Who We Are
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -228,121 +228,121 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
           {/* Progressive Journey Flow */}
           <div className="max-w-5xl mx-auto">
-            <h3 className="text-xs font-bold text-[#004D40] uppercase tracking-wider text-center mb-8">
+            <h3 className="text-xs font-bold text-[#102B4E] uppercase tracking-wider text-center mb-8">
               The ABHI JOBS Career Journey
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Step 1 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     01
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-[#004D40]" />
+                    <Compass className="w-4 h-4 text-[#102B4E]" />
                     <span>Discover Potential</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Identify personal strengths, technical interests, and career pathways tailored to your unique capabilities.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Initial self-assessment
                 </div>
               </div>
 
               {/* Step 2 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     02
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-[#004D40]" />
+                    <BookOpen className="w-4 h-4 text-[#102B4E]" />
                     <span>Build Relevant Skills</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Develop in-demand competencies through targeted learning tracks mapped to contemporary workplace requirements.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Capability building
                 </div>
               </div>
 
               {/* Step 3 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     03
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-[#004D40]" />
+                    <FileCheck className="w-4 h-4 text-[#102B4E]" />
                     <span>Create Profile</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Construct a standardized, professional profile showcasing verified skills, work history, and portfolio projects.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Standardized credentials
                 </div>
               </div>
 
               {/* Step 4 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     04
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <Search className="w-4 h-4 text-[#004D40]" />
+                    <Search className="w-4 h-4 text-[#102B4E]" />
                     <span>Discover Opportunities</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Explore curated positions published by verified employers with transparent compensation and skill criteria.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Transparent job matching
                 </div>
               </div>
 
               {/* Step 5 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     05
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <Send className="w-4 h-4 text-[#004D40]" />
+                    <Send className="w-4 h-4 text-[#102B4E]" />
                     <span>Apply for Roles</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Submit applications with verified profile data and monitor real-time review, interview, and decision milestones.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Direct submission &amp; tracking
                 </div>
               </div>
 
               {/* Step 6 */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#004D40]/30 transition-colors relative flex flex-col justify-between">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#102B4E]/30 transition-colors relative flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                     06
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#004D40]" />
+                    <TrendingUp className="w-4 h-4 text-[#102B4E]" />
                     <span>Continuous Growth</span>
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Continue learning, benchmark new competencies, and unlock higher-impact opportunities as your career progresses.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                   Long-term career mobility
                 </div>
               </div>
@@ -444,7 +444,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       <section id="our-approach" aria-label="Our Approach" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
               Guiding Principles
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -459,18 +459,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Principle 01 */}
             <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
+                <div className="text-xs font-black text-[#102B4E] tracking-wider uppercase mb-3">
                   01 &mdash; Skills
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-[#004D40]" />
+                  <Target className="w-5 h-5 text-[#102B4E]" />
                   <span>Demonstrated Capability</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Focus on what people can actually do. We evaluate candidates through demonstrated competencies, practical projects, and tangible skills rather than resume length alone.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#004D40]">
+              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#102B4E]">
                 Capability over pedigree
               </div>
             </div>
@@ -478,18 +478,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Principle 02 */}
             <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
+                <div className="text-xs font-black text-[#102B4E] tracking-wider uppercase mb-3">
                   02 &mdash; Learning
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#004D40]" />
+                  <BookOpen className="w-5 h-5 text-[#102B4E]" />
                   <span>Continuous Development</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Encourage ongoing upskilling and professional preparation. The platform helps individuals identify gaps and systematically strengthen their employability.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#004D40]">
+              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#102B4E]">
                 Lifelong competency growth
               </div>
             </div>
@@ -497,18 +497,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Principle 03 */}
             <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
+                <div className="text-xs font-black text-[#102B4E] tracking-wider uppercase mb-3">
                   03 &mdash; Opportunity
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-[#004D40]" />
+                  <Briefcase className="w-5 h-5 text-[#102B4E]" />
                   <span>Direct Connection</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Connect skilled individuals with genuine, verified career opportunities published directly by active hiring teams and accredited employers.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#004D40]">
+              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#102B4E]">
                 Direct employer access
               </div>
             </div>
@@ -516,18 +516,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Principle 04 */}
             <div className="p-5 sm:p-6 rounded-xl bg-slate-50 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="text-xs font-black text-[#004D40] tracking-wider uppercase mb-3">
+                <div className="text-xs font-black text-[#102B4E] tracking-wider uppercase mb-3">
                   04 &mdash; Growth
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-[#004D40]" />
+                  <TrendingUp className="w-5 h-5 text-[#102B4E]" />
                   <span>Sustainable Trajectory</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Support long-term professional development rather than only the next job application. Foster career resilience, upward mobility, and sustained relevance.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#004D40]">
+              <div className="mt-6 pt-4 border-t border-slate-200/60 text-xs font-semibold text-[#102B4E]">
                 Enduring career resilience
               </div>
             </div>
@@ -623,7 +623,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12 max-w-6xl mx-auto">
             {/* Left Header */}
             <div className="lg:max-w-md space-y-4">
-              <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+              <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
                 For Job Seekers
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -649,7 +649,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Discover */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <Search className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Discover</h3>
@@ -660,7 +660,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
               {/* Build */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <Zap className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Build</h3>
@@ -671,7 +671,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
               {/* Showcase */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <FileCheck className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Showcase</h3>
@@ -682,7 +682,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
               {/* Apply */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <Send className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Apply</h3>
@@ -693,7 +693,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
               {/* Learn */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Learn</h3>
@@ -704,7 +704,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
               {/* Grow */}
               <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-xs transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mb-3">
                   <TrendingUp className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">Grow</h3>
@@ -750,7 +750,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Right Capabilities Grid */}
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   01
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Publish Job Opportunities</h3>
@@ -760,7 +760,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   02
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Discover Skilled Candidates</h3>
@@ -770,7 +770,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   03
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Search for Relevant Talent</h3>
@@ -780,7 +780,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   04
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Evaluate Candidates Objectively</h3>
@@ -790,7 +790,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   05
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Connect Skills with Requirements</h3>
@@ -800,7 +800,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   06
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Build Stronger Teams</h3>
@@ -819,7 +819,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       <section id="abhi-jobs-ecosystem" aria-label="The ABHI JOBS Ecosystem" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
               Interconnected Platform
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -836,13 +836,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 1 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     01
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Foundation</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Foundation</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#004D40]" />
+                  <Users className="w-4 h-4 text-[#102B4E]" />
                   <span>Job Seekers</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -853,13 +853,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 2 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     02
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Currency</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Currency</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-[#004D40]" />
+                  <Target className="w-4 h-4 text-[#102B4E]" />
                   <span>Skills</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -870,13 +870,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 3 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     03
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Preparation</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Preparation</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-[#004D40]" />
+                  <BookOpen className="w-4 h-4 text-[#102B4E]" />
                   <span>Learning</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -887,13 +887,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 4 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     04
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Destination</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Destination</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-[#004D40]" />
+                  <Briefcase className="w-4 h-4 text-[#102B4E]" />
                   <span>Opportunities</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -904,13 +904,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 5 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     05
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Partners</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Partners</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#004D40]" />
+                  <Building2 className="w-4 h-4 text-[#102B4E]" />
                   <span>Employers</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -921,13 +921,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               {/* Node 6 */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                     06
                   </div>
-                  <span className="text-[11px] font-bold text-[#004D40] uppercase tracking-wider">Outcome</span>
+                  <span className="text-[11px] font-bold text-[#102B4E] uppercase tracking-wider">Outcome</span>
                 </div>
                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#004D40]" />
+                  <TrendingUp className="w-4 h-4 text-[#102B4E]" />
                   <span>Career Growth</span>
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -952,7 +952,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center space-y-4 mb-14">
-              <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+              <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
                 Preparation &amp; Readiness
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -965,7 +965,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   01
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Identify Areas for Improvement</h3>
@@ -975,7 +975,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   02
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Develop Relevant Skills</h3>
@@ -985,7 +985,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   03
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Become Career-Ready</h3>
@@ -995,7 +995,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   04
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Prepare for Opportunities</h3>
@@ -1005,7 +1005,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   05
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Stay Competitive</h3>
@@ -1015,7 +1015,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                   06
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Continue Professional Development</h3>
@@ -1061,7 +1061,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 1 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   01
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Create Your Profile</h3>
@@ -1069,7 +1069,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Establish your professional identity, state your career goals, and document your academic and vocational background.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Foundational identity
               </div>
             </div>
@@ -1077,7 +1077,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 2 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   02
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Showcase Your Skills</h3>
@@ -1085,7 +1085,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Highlight verified proficiencies, technical tools, and project evidence so hiring managers understand what you can build.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Demonstrated capability
               </div>
             </div>
@@ -1093,7 +1093,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 3 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   03
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Learn &amp; Upskill</h3>
@@ -1101,7 +1101,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Close competency gaps with role-relevant learning modules and prepare for interview expectations before applying.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Continuous readiness
               </div>
             </div>
@@ -1109,7 +1109,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 4 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   04
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Discover Opportunities</h3>
@@ -1117,7 +1117,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Browse curated, verified vacancies published by accredited employers with transparent requirements and compensation.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Transparent matching
               </div>
             </div>
@@ -1125,7 +1125,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 5 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   05
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Apply &amp; Connect</h3>
@@ -1133,7 +1133,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Submit applications directly to active hiring teams and track review, interview, and decision stages in real time.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Direct recruiter loops
               </div>
             </div>
@@ -1141,7 +1141,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Step 6 */}
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-[#004D40] font-extrabold flex items-center justify-center text-sm mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] font-extrabold flex items-center justify-center text-sm mb-4">
                   06
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-2">Continue Growing</h3>
@@ -1149,7 +1149,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                   Maintain your credentials, benchmark new skills, and unlock senior-level roles as your professional experience deepens.
                 </p>
               </div>
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#004D40]">
+              <div className="mt-6 pt-3 border-t border-slate-100 text-[11px] font-semibold text-[#102B4E]">
                 Enduring trajectory
               </div>
             </div>
@@ -1166,8 +1166,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* Mission Card */}
             <div className="p-5 sm:p-6 rounded-xl bg-white border border-slate-200 shadow-xs space-y-6 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
-                  <Target className="w-3.5 h-3.5 text-[#004D40]" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
+                  <Target className="w-3.5 h-3.5 text-[#102B4E]" />
                   <span>Our Mission</span>
                 </div>
 
@@ -1181,19 +1181,19 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
                 <ul className="space-y-2.5 pt-2 text-xs sm:text-sm text-slate-700">
                   <li className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0 mt-0.5" />
                     <span><strong>Improving access:</strong> Expanding opportunity for candidates from diverse and non-traditional backgrounds.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0 mt-0.5" />
                     <span><strong>Connecting skills with careers:</strong> Bridging demonstrated capabilities directly to verified job vacancies.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0 mt-0.5" />
                     <span><strong>Encouraging continuous learning:</strong> Fostering professional upskilling as a standard career practice.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#004D40] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#102B4E] shrink-0 mt-0.5" />
                     <span><strong>Empowering employers:</strong> Giving hiring managers objective signals to discover reliable talent quickly.</span>
                   </li>
                 </ul>
@@ -1254,7 +1254,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
       <section id="why-abhi-jobs" aria-label="Why ABHI JOBS" className="py-10 sm:py-12 bg-white border-b border-slate-200/80">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-[#004D40] border border-teal-200 text-xs font-bold uppercase tracking-wider">
+            <span className="px-3.5 py-1.5 rounded-full bg-[#F1F5FA] text-[#102B4E] border border-[#D4DCE6] text-xs font-bold uppercase tracking-wider">
               Distinct Advantages
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -1268,7 +1268,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {/* 1. Skills-First Thinking */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 01
               </div>
               <h3 className="text-base font-bold text-slate-900">Skills-First Thinking</h3>
@@ -1279,7 +1279,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             {/* 2. Career-Focused Learning */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 02
               </div>
               <h3 className="text-base font-bold text-slate-900">Career-Focused Learning</h3>
@@ -1290,7 +1290,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             {/* 3. Opportunity Discovery */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 03
               </div>
               <h3 className="text-base font-bold text-slate-900">Opportunity Discovery</h3>
@@ -1301,7 +1301,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             {/* 4. Professional Profiles */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 04
               </div>
               <h3 className="text-base font-bold text-slate-900">Professional Profiles</h3>
@@ -1312,7 +1312,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             {/* 5. Centralized Job Application Experience */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 05
               </div>
               <h3 className="text-base font-bold text-slate-900">Centralized Applications</h3>
@@ -1323,7 +1323,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
             {/* 6. Continuous Growth */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs">
                 06
               </div>
               <h3 className="text-base font-bold text-slate-900">Continuous Growth</h3>
@@ -1335,7 +1335,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             {/* 7. Employer-Talent Connection */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-2 md:col-span-2 lg:col-span-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#004D40] flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center font-bold text-xs shrink-0">
                   07
                 </div>
                 <h3 className="text-base font-bold text-slate-900">Direct Employer-Talent Connection</h3>
@@ -1367,7 +1367,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-              <ShieldCheck className="w-6 h-6 text-[#004D40]" />
+              <ShieldCheck className="w-6 h-6 text-[#102B4E]" />
               <h3 className="text-sm font-bold text-slate-900">Verified Openings</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Job vacancies are created by approved employers and verified moderators with confirmed hiring intent.
@@ -1375,7 +1375,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-              <Layers className="w-6 h-6 text-[#004D40]" />
+              <Layers className="w-6 h-6 text-[#102B4E]" />
               <h3 className="text-sm font-bold text-slate-900">No Inflated Metrics</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 We do not display fabricated statistics or synthetic user counts. Content reflects authentic platform activity.
@@ -1383,7 +1383,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-              <Users className="w-6 h-6 text-[#004D40]" />
+              <Users className="w-6 h-6 text-[#102B4E]" />
               <h3 className="text-sm font-bold text-slate-900">Direct Communication</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Candidates communicate directly with employers, eliminating unauthorized brokers or undisclosed intermediaries.
@@ -1391,7 +1391,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
             </div>
 
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-              <Lock className="w-6 h-6 text-[#004D40]" />
+              <Lock className="w-6 h-6 text-[#102B4E]" />
               <h3 className="text-sm font-bold text-slate-900">Candidate Data Privacy</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Job seekers retain full ownership of personal documentation, portfolio assets, and profile visibility settings.
@@ -1437,7 +1437,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ navigate }) => {
                     <span className="text-xs sm:text-sm">{item.question}</span>
                     <ChevronDown
                       className={`w-4 h-4 text-slate-500 shrink-0 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180 text-[#004D40]' : ''
+                        isOpen ? 'rotate-180 text-[#102B4E]' : ''
                       }`}
                     />
                   </button>

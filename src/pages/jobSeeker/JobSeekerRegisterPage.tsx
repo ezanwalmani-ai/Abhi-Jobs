@@ -199,13 +199,13 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xl text-center space-y-6 animate-in zoom-in-95 duration-200">
-          <div className="w-20 h-20 rounded-2xl bg-teal-50 border border-teal-200 text-[#102B4E] flex items-center justify-center mx-auto shadow-sm">
-            <CheckCircle2 className="w-10 h-10 text-[#004D40]" />
+          <div className="w-20 h-20 rounded-2xl bg-[#F1F5FA] border border-[#D4DCE6] text-[#102B4E] flex items-center justify-center mx-auto shadow-sm">
+            <CheckCircle2 className="w-10 h-10 text-[#102B4E]" />
           </div>
 
           <div className="space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100/80 text-[#004D40] text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-[#004D40]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E5EAF0] text-[#102B4E] text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-[#102B4E]" />
               Account Created Successfully
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
@@ -218,7 +218,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600 space-y-2">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
-              <ShieldCheck className="w-4 h-4 text-[#004D40]" />
+              <ShieldCheck className="w-4 h-4 text-[#102B4E]" />
               <span>Job Seeker Credentials Registered</span>
             </div>
             <p className="text-slate-500">
@@ -380,7 +380,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-xs font-semibold text-[#004D40] hover:text-[#102B4E] flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-semibold text-[#102B4E] hover:text-[#102B4E] flex items-center gap-1 cursor-pointer"
                 >
                   {showPassword ? (
                     <>
@@ -584,12 +584,12 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                             setStateSearchQuery('');
                             if (errors.currentState) setErrors((prev) => ({ ...prev, currentState: '' }));
                           }}
-                          className={`w-full text-left px-4 py-2.5 text-xs hover:bg-teal-50 hover:text-[#102B4E] transition-colors flex items-center justify-between cursor-pointer ${
-                            currentState === st ? 'bg-teal-50 font-bold text-[#004D40]' : 'text-slate-700'
+                          className={`w-full text-left px-4 py-2.5 text-xs hover:bg-[#F1F5FA] hover:text-[#102B4E] transition-colors flex items-center justify-between cursor-pointer ${
+                            currentState === st ? 'bg-[#F1F5FA] font-bold text-[#102B4E]' : 'text-slate-700'
                           }`}
                         >
                           <span>{st}</span>
-                          {currentState === st && <Check className="w-3.5 h-3.5 text-[#004D40]" />}
+                          {currentState === st && <Check className="w-3.5 h-3.5 text-[#102B4E]" />}
                         </button>
                       ))}
                       {filteredStates.length === 0 && (
@@ -609,7 +609,7 @@ export const JobSeekerRegisterPage: React.FC<JobSeekerRegisterPageProps> = ({ na
                   type="checkbox"
                   checked={marketingConsent}
                   onChange={(e) => setMarketingConsent(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#004D40] focus:ring-[#004D40] cursor-pointer"
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#102B4E] focus:ring-[#102B4E] cursor-pointer"
                 />
                 <span className="text-xs text-slate-700 leading-relaxed">
                   Send me important updates &amp; promotions via SMS, email, and{' '}

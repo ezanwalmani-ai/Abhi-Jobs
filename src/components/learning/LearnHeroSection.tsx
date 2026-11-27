@@ -45,8 +45,8 @@ export const LearnHeroSection: React.FC<LearnHeroSectionProps> = ({
             <motion.h1
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.05, ease: EASE_PREMIUM }}
-              className="font-display text-[30px] sm:text-[36px] lg:text-[40px] font-extrabold text-[#102B4E] tracking-tight leading-[1.14] [text-wrap:balance] max-w-2xl"
+              transition={{ duration: 0.4, delay: 0.05, ease: EASE_PREMIUM }}
+              className="font-display text-[30px] sm:text-[38px] lg:text-[42px] font-bold text-[#102B4E] tracking-[-0.025em] leading-[1.14] [text-wrap:balance] max-w-2xl"
             >
               Learn Skills. Build Confidence. Grow Your Career.
             </motion.h1>
@@ -54,8 +54,8 @@ export const LearnHeroSection: React.FC<LearnHeroSectionProps> = ({
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.42, delay: 0.1, ease: EASE_PREMIUM }}
-              className="text-[15px] sm:text-base text-[#566479] leading-relaxed max-w-xl"
+              transition={{ duration: 0.38, delay: 0.1, ease: EASE_PREMIUM }}
+              className="text-[15px] sm:text-base text-[#475569] leading-relaxed max-w-xl"
             >
               Free practical courses designed to help you develop workplace skills, explore new career opportunities and become job-ready.
             </motion.p>
@@ -63,13 +63,13 @@ export const LearnHeroSection: React.FC<LearnHeroSectionProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.16, ease: EASE_PREMIUM }}
+              transition={{ duration: 0.36, delay: 0.15, ease: EASE_PREMIUM }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1"
             >
               <button
                 type="button"
                 onClick={onExploreCourses}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-sm font-semibold shadow-2xs transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2"
+                className="min-h-[44px] px-5 py-2.5 rounded-lg bg-[#F47A24] hover:bg-[#DE6816] active:scale-[0.98] text-white text-sm font-semibold shadow-2xs transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47A24] focus-visible:ring-offset-2"
               >
                 <span>Explore Free Courses</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
@@ -78,7 +78,7 @@ export const LearnHeroSection: React.FC<LearnHeroSectionProps> = ({
               <button
                 type="button"
                 onClick={onTakeAssessment}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white hover:bg-[#F6F8FB] active:scale-[0.98] border border-[#D4DCE6] hover:border-[#102B4E] text-[#102B4E] text-sm font-semibold transition-all duration-150 inline-flex items-center justify-center whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2"
+                className="min-h-[44px] px-5 py-2.5 rounded-lg bg-white hover:bg-[#F6F8FB] active:scale-[0.98] border border-[#D4DCE6] hover:border-[#102B4E] text-[#102B4E] text-sm font-semibold transition-all duration-150 inline-flex items-center justify-center whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#102B4E] focus-visible:ring-offset-2"
               >
                 Take Your Career Assessment
               </button>

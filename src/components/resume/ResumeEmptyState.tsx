@@ -14,8 +14,8 @@ export const ResumeEmptyState: React.FC<ResumeEmptyStateProps> = ({
 }) => {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 text-center max-w-2xl mx-auto shadow-sm space-y-6">
-      <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#004D40] flex items-center justify-center mx-auto shadow-inner">
-        <FileText className="w-8 h-8 text-[#004D40]" />
+      <div className="w-16 h-16 rounded-2xl bg-[#F1F5FA] text-[#102B4E] flex items-center justify-center mx-auto shadow-inner">
+        <FileText className="w-8 h-8 text-[#102B4E]" />
       </div>
 
       <div className="space-y-2 max-w-md mx-auto">
@@ -32,7 +32,7 @@ export const ResumeEmptyState: React.FC<ResumeEmptyStateProps> = ({
           <button
             type="button"
             onClick={onStartWithProfile}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#102B4E] hover:bg-[#081D36] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
           >
             <UserCheck className="w-4 h-4" />
             <span>Start with Profile Information</span>

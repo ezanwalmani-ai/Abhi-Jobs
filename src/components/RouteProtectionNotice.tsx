@@ -62,7 +62,7 @@ export const RouteProtectionNotice: React.FC<RouteProtectionNoticeProps> = ({
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-[#E4E7EC] hover:border-slate-300 text-[#101828] text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-[#E5EAF0] hover:border-slate-300 text-[#101828] text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5 text-[#667085]" />
               <span>Sign In with Another Account</span>

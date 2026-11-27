@@ -2,6 +2,7 @@ export type UserRole = 'job_seeker' | 'employer' | 'admin' | 'candidate';
 
 export interface User {
   id: string;
+  candidateCode?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -16,18 +17,28 @@ export interface EducationItem {
   qualification: string;
   institution: string;
   fieldOfStudy: string;
+  courseType?: 'Full-time' | 'Part-time' | 'Distance' | 'Online' | string;
   startYear: string;
   endYear: string;
+  grade?: string;
+  status?: 'Completed' | 'Pursuing' | string;
+  location?: string;
+  description?: string;
 }
 
 export interface ExperienceItem {
   id: string;
   company: string;
   jobTitle: string;
+  employmentType?: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Freelance' | string;
+  industry?: string;
+  location?: string;
   startDate: string;
   endDate: string;
   current: boolean;
   description: string;
+  achievements?: string[];
+  skillsUsed?: string[];
 }
 
 export interface CertificationItem {
@@ -35,29 +46,118 @@ export interface CertificationItem {
   title: string;
   issuer: string;
   issueDate: string;
+  expiryDate?: string;
+  credentialId?: string;
   credentialUrl?: string;
+  certificateDocId?: string;
+}
+
+export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+
+export interface CandidateSkillItem {
+  name: string;
+  proficiency: SkillProficiency;
+  isPrimary: boolean;
+  category?: string;
+}
+
+export interface CandidateProjectItem {
+  id: string;
+  title: string;
+  role?: string;
+  startDate?: string;
+  endDate?: string;
+  ongoing?: boolean;
+  description: string;
+  technologies: string[];
+  url?: string;
+}
+
+export type LanguageProficiency = 'Native' | 'Fluent' | 'Professional' | 'Conversational' | 'Basic';
+
+export interface CandidateLanguageItem {
+  id: string;
+  language: string;
+  proficiency: LanguageProficiency;
+  canRead: boolean;
+  canWrite: boolean;
+  canSpeak: boolean;
+}
+
+export interface CandidateLinkItem {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export type CandidateRecruitmentStatus =
+  | 'Active'
+  | 'Under Review'
+  | 'Shortlisted'
+  | 'Interviewing'
+  | 'Placed'
+  | 'On Hold'
+  | 'Archived';
+
+export interface CandidateDocumentRecord {
+  id: string;
+  candidateUid: string;
+  category: 'resume' | 'certificate' | 'supporting';
+  originalFilename: string;
+  mimeType: string;
+  extension: string;
+  sizeBytes: number;
+  versionNumber: number;
+  isLatest: boolean;
+  uploadedAt: string;
+  uploadedByUid: string;
+  sha256?: string;
+}
+
+export interface CandidateInternalNoteRecord {
+  id: string;
+  candidateUid: string;
+  authorUid: string;
+  authorEmail: string;
+  authorName: string;
+  text: string;
+  category?: 'Screening' | 'Interview' | 'Verification' | 'General' | string;
+  createdAt: string;
 }
 
 export interface CandidateProfile {
   id: string;
   userId: string;
+  candidateCode?: string;
   name: string;
   email: string;
   phone: string;
+  altPhone?: string;
   location: string;
   city?: string;
   state?: string;
+  country?: string;
+  pinCode?: string;
   headline: string;
   about: string;
+  careerObjective?: string;
   currentRole: string;
+  currentCompany?: string;
   desiredRole: string;
+  noticePeriod?: string;
   experienceLevel: 'Fresher' | 'Junior' | 'Mid' | 'Senior' | 'Lead';
   experienceType?: 'fresher' | 'experienced';
   workStatus?: 'Working' | 'Looking for a job' | 'Currently not working' | 'Student' | string;
   yearsOfExperience: number;
   preferredLocation: string;
+  preferredLocations?: string[];
+  preferredJobTitles?: string[];
+  preferredEmploymentTypes?: string[];
+  preferredShift?: string;
+  jobSearchStatus?: string;
   workPreference: 'Remote' | 'Hybrid' | 'On-site' | 'Flexible';
   preferredIndustry?: string;
+  currentSalary?: { amount?: number; currency?: string };
   expectedSalary?: { min?: number; max?: number; currency?: string };
   willingToRelocate?: boolean;
   gender?: string;
@@ -67,16 +167,29 @@ export interface CandidateProfile {
   profileVisibility: 'public' | 'employers_only' | 'private';
   availableForOpportunities: boolean;
   skills: string[];
+  detailedSkills?: CandidateSkillItem[];
   education: EducationItem[];
   experiences: ExperienceItem[];
   certifications: CertificationItem[];
+  projects?: CandidateProjectItem[];
+  languages?: CandidateLanguageItem[];
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  personalWebsiteUrl?: string;
+  otherLinks?: CandidateLinkItem[];
+  primaryResumeId?: string;
+  resumeDocId?: string;
   resumeUrl?: string;
   resumeName?: string;
   resumeSize?: string;
   resumeUpdated?: string;
+  recruitmentStatus?: CandidateRecruitmentStatus;
   completionPercentage: number;
   recommendations: string[];
   avatar?: string;
+  createdAt?: string;
+  updatedAt?: string;
   lastAction?: string;
   lastActive?: string;
 }
@@ -114,6 +227,7 @@ export interface EmployerProfile {
 export interface Job {
   id: string;
   employerId: string;
+  employerOwnerUid?: string;
   companyName: string;
   companyLogo: string;
   title: string;
@@ -196,6 +310,7 @@ export interface Application {
   companyName: string;
   companyLogo: string;
   candidateId: string;
+  candidateCode?: string;
   candidateName: string;
   candidateEmail: string;
   candidatePhone: string;
@@ -315,3 +430,31 @@ export interface SupportTicket {
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   createdAt: string;
 }
+
+export type JobSearchAlertFrequency = 'instant' | 'daily' | 'weekly';
+
+export interface JobSearchAlertCriteria {
+  search: string;
+  location: string;
+  workMode: string;
+  employmentType: string;
+  experienceLevel: string;
+  salaryRange: string;
+  department: string;
+  industry: string;
+  selectedSkill: string;
+  quickMinSalary: boolean;
+}
+
+export interface JobSearchAlert extends JobSearchAlertCriteria {
+  id: string;
+  userId: string;
+  email: string;
+  label: string;
+  queryKey: string;
+  frequency: JobSearchAlertFrequency;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
